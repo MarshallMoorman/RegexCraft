@@ -1,33 +1,37 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: 0.4.0 (Phase 3 complete)  
+**Current Version**: 0.5.0 (Phase 4 complete)  
 **Date**: 2026-07-11  
-**Next Phase**: Phase 4  
+**Next Phase**: Phase 5  
 
 ---
 
-## What Was Completed in Phase 3
+## What Was Completed in Phase 4
 
-- **Window title fixed properly**: `Application.Name = "RegexCraft"` (macOS menu bar / system chrome no longer “Avalonia Application”), assembly `ApplicationTitle` / `Product`, window `Title` bound to mode-aware `WindowTitle`
-- **GREP** fully implemented:
-  - Search + replace across folders using current engine/pattern/options
-  - Folder browse, recursive, include/exclude globs (`FileGlobMatcher`)
-  - Async + cancellable with progress text
-  - Results list + file preview with match highlighting
-  - Dry-run replace and optional `.bak` backups on write
-  - Both .NET and PCRE2 via `IRegexEngine`
-- **Settings** persistence: theme, flavor, options, GREP paths/globs, window size/position
-- Library polish: favorites, category, tags, favorite-first sort
-- Generate polish: clearer language headers, C# match timeout
-- Options tooltips / engine context labels refined
-- Root **README.md** rewritten as a professional, timeless project README (no “Phase X” language)
-- Docs: `docs/user/grepping.md`, architecture, CHANGELOG, user getting-started shortcuts
-- NUnit: **143** tests including GREP, globs, settings, library favorites, VM GREP
-- Version **0.4.0**
+- **Critical: light-mode regex editor readability**
+  - Full editor theming (background, foreground, selection, caret, line numbers, current line)
+  - High-contrast `RegexSyntaxPalette` for light and dark
+  - Theme resources: `Editor*`, `Syntax*` brushes in `Colors.axaml`
+  - `ApplyEditorTheme` reapplies on every theme change
+- **Critical: equal-width token category panels**
+  - Shared `tokenCategory` Expander style + stretch layout
+  - Consistent borders, padding, hover
+- **Full light-theme polish**
+  - Options row spacing, status bar contrast, panel headers
+  - GREP: grouped globs/options chrome, clearer empty state, progress labels
+  - Generate: helper text + engine notes in snippets
+  - Library/History empty states and token row density
+  - Analysis tree selection / spacing
+- **Token catalog expansion**
+  - More lookarounds, groups, Unicode, quantifiers, common patterns
+  - Multi-word search documented/tested
+- **Codegen**: engine-source notes, dialect warnings (Go RE2 / Rust / JS / etc.)
+- Version **0.5.0**; docs + AGENTS/HANDOFF updated
+- NUnit: **147** tests (all green)
 
-## Exact Next Steps for Phase 4
+## Exact Next Steps for Phase 5
 
-Author or load `docs/development/PHASE-4-REQUIREMENTS.md` first, then implement. Suggested focus:
+Author or load `docs/development/PHASE-5-REQUIREMENTS.md` first, then implement. Suggested focus (product-facing features deferred from polish phases):
 
 1. **Debug / step-through** — step match engine (at least .NET), show current position, captures; backtrack visualization if feasible.
 2. **Compare mode** — side-by-side .NET vs PCRE2 results for the same pattern/subject (diff match counts, first divergence).
@@ -38,9 +42,9 @@ Author or load `docs/development/PHASE-4-REQUIREMENTS.md` first, then implement.
 7. **UX polish** — GREP open-in-external-editor, multi-select replace, panel layout persistence, high-DPI refinements.
 8. When green → bump version, update AGENTS.md + this file, CHANGELOG, commit.
 
-**Out of scope until later unless Phase 4 requirements say otherwise**: cloud library sync, plugin system, advanced visual regex builder.
+**Out of scope until later unless Phase 5 requirements say otherwise**: cloud library sync, plugin system, advanced visual regex builder.
 
-## Known Issues / TODOs from Phase 3
+## Known Issues / TODOs from Phase 4
 
 - Analysis tree is structural/heuristic — not a full flavor-faithful AST; exotic constructs may show as “Special group”.
 - Go/Rust codegen notes RE2/regex crate limits (no lookbehind/backrefs) but still emits the pattern as-is.
@@ -50,27 +54,28 @@ Author or load `docs/development/PHASE-4-REQUIREMENTS.md` first, then implement.
 - Large multi-MB subjects still not stress-tested for live debounce / UI virtualization.
 - Avalonia.AvaloniaEdit is 12.0.0 while Avalonia is 12.1.0 (compatible; watch for package updates).
 - History records on successful non-live runs and when the pattern changes in live mode — not every keystroke.
+- Free-spacing `# …` end-of-line comments are not syntax-highlighted (to avoid false positives on `#hex` patterns).
 
 ## How to Continue in a New Conversation
 
-1. Open latest `main` at v0.4.0.  
+1. Open latest `main` at v0.5.0.  
 2. Read this `HANDOFF.md` and `AGENTS.md`.  
-3. Read `docs/development/architecture.md` and `docs/development/PHASE-3-REQUIREMENTS.md` for history.  
-4. Author or load `docs/development/PHASE-4-REQUIREMENTS.md`, then implement.  
-5. Do not re-build Phase 0–3 foundations unless blocked.  
+3. Read `docs/development/architecture.md` and `docs/development/PHASE-4-REQUIREMENTS.md` for history.  
+4. Author or load `docs/development/PHASE-5-REQUIREMENTS.md`, then implement.  
+5. Do not re-build Phase 0–4 foundations unless blocked.  
 6. Do not commit `docs/development/current_screenshot.png` unless intentionally updating the baseline.
 
 ## Key Files to Review First
 
 | Path | Why |
 |------|-----|
-| `src/RegexCraft.App/Views/MainWindow.axaml` | Multi-panel layout, modes including GREP |
+| `src/RegexCraft.App/Themes/Colors.axaml` | Light/dark design tokens including editor + syntax |
+| `src/RegexCraft.App/Highlighting/RegexHighlightingDefinition.cs` | Regex syntax palette |
+| `src/RegexCraft.App/Views/MainWindow.axaml` | Multi-panel layout, token widths, modes |
+| `src/RegexCraft.App/Views/MainWindow.axaml.cs` | Editor theming, GREP preview, selection |
 | `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Live test/replace/split, GREP, codegen, library, settings |
 | `src/RegexCraft.Core/Grep/` | GREP service, globs, models |
-| `src/RegexCraft.Core/Settings/` | Persisted preferences |
-| `src/RegexCraft.Core/Analysis/RegexAnalysisService.cs` | Rich analysis tree |
+| `src/RegexCraft.Core/Tokens/TokenCatalog.cs` | Token palette |
 | `src/RegexCraft.Core/Codegen/CodeGenerationService.cs` | Language snippets |
-| `src/RegexCraft.Core/Library/` | JSON library + history |
-| `src/RegexCraft.Engines/` | Match / Replace / Split both engines |
-| `Directory.Build.props` | Version 0.4.0 |
+| `Directory.Build.props` | Version 0.5.0 |
 | `docs/user/*.md` | User-facing guides |

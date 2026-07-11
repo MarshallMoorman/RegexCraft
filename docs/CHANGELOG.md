@@ -5,6 +5,27 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — 2026-07-11
+
+### Fixed
+
+- **Light-mode regex editor readability** — AvaloniaEdit now uses dedicated `Editor*` theme brushes (foreground, background, selection, caret, line numbers, current line) so pattern text is highly readable
+- High-contrast **regex syntax highlighting** for light and dark (`Syntax*` resources + `RegexSyntaxPalette`)
+- **Token category panels** all share the same full sidebar width (consistent `tokenCategory` expander style)
+
+### Changed
+
+- Full light-theme visual polish: options row, status bar, panel headers, GREP chrome, Generate helper text, Library/History empty states, Analysis Tree selection
+- Expanded **token catalog** (lookarounds, groups, Unicode, common patterns, possessive quantifiers) with multi-word search coverage
+- **Code generation** snippets include source-engine notes and clearer dialect/limit comments (Go RE2, Rust, JS, Python, …)
+- Theme system hardened with editor + syntax semantic brushes; no hard-coded UI colors
+- Version bumped to **0.5.0**
+- AGENTS.md / HANDOFF.md updated for Phase 4 → Phase 5
+
+### Notes
+
+- Debug stepping, compare mode, export, and additional engines remain future work (Phase 5+)
+
 ## [0.4.0] — 2026-07-11
 
 ### Added

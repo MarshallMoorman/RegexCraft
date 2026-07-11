@@ -96,4 +96,28 @@ public sealed class CodeGenerationServiceTests
 
         Assert.That(code, Does.Contain("a\"\"b").Or.Contain("a\\\"b").Or.Contain("@\""));
     }
+
+    [Test]
+    public void Generate_IncludesEngineNote_ForPcreSource()
+    {
+        var code = _svc.Generate(
+            CodeLanguage.JavaScript,
+            CodegenOperation.IsMatch,
+            @"\d+",
+            "1",
+            null,
+            RegexOptionsEx.None,
+            "pcre2");
+
+        Assert.That(code, Does.Contain("PCRE2").Or.Contain("pcre"));
+    }
+
+    [Test]
+    public void Generate_GoAndRust_IncludeEngineLimitNotes()
+    {
+        var go = _svc.Generate(CodeLanguage.Go, CodegenOperation.Match, "a", "a", null, RegexOptionsEx.None, "dotnet");
+        var rust = _svc.Generate(CodeLanguage.Rust, CodegenOperation.Match, "a", "a", null, RegexOptionsEx.None, "dotnet");
+        Assert.That(go, Does.Contain("RE2").Or.Contain("lookbehind").Or.Contain("backref"));
+        Assert.That(rust, Does.Contain("lookaround").Or.Contain("fancy-regex").Or.Contain("backreference"));
+    }
 }

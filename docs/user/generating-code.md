@@ -24,12 +24,12 @@ Snippets update when you change the pattern, subject, replacement, options, lang
 
 ## Engine notes
 
-RegexCraft tests with **.NET** and **PCRE2**. Generated code targets the **host language’s** native regex engine:
+RegexCraft tests with **.NET** and **PCRE2**. Generated code targets the **host language’s** native regex engine. Snippets include a short comment naming the **source engine** you used in RegexCraft so you can review dialect differences.
 
-- **C#** → `System.Text.RegularExpressions` (closest to the .NET flavor)  
+- **C#** → `System.Text.RegularExpressions` (closest to the .NET flavor; includes match timeout)  
 - **JavaScript / Python / PHP / Java** → PCRE-like or language-specific engines; advanced constructs may differ  
-- **Go** → RE2 (no lookbehind/backreferences) — snippets include a short note  
-- **Rust** → `regex` crate  
+- **Go** → RE2 (no lookbehind/backreferences) — snippets call this out  
+- **Rust** → `regex` crate (RE2-like; no lookaround/backrefs — notes mention `fancy-regex` if needed)  
 
 Always re-test generated code in the target runtime for edge cases.
 

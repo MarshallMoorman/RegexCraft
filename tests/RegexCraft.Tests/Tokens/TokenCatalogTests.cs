@@ -60,6 +60,27 @@ public sealed class TokenCatalogTests
     }
 
     [Test]
+    public void Search_MultiWord_RequiresAllTerms()
+    {
+        var results = _catalog.Search("named group");
+        Assert.That(results, Is.Not.Empty);
+        Assert.That(results.All(t =>
+            t.SearchText.Contains("named", StringComparison.OrdinalIgnoreCase)
+            && t.SearchText.Contains("group", StringComparison.OrdinalIgnoreCase)), Is.True);
+    }
+
+    [Test]
+    public void Catalog_IncludesHighValueTokens()
+    {
+        var inserts = _catalog.GetAllTokens().Select(t => t.InsertText).ToHashSet(StringComparer.Ordinal);
+        Assert.That(inserts, Does.Contain("(?:)"));
+        Assert.That(inserts, Does.Contain("(?=)"));
+        Assert.That(inserts, Does.Contain("(?<=)"));
+        Assert.That(inserts, Does.Contain(@"\p{L}"));
+        Assert.That(inserts, Does.Contain(@"(?<name>)"));
+    }
+
+    [Test]
     public void Tokens_HaveNoIconRequirement_TextOnly()
     {
         // Contract: tokens are identified by Label + InsertText only.

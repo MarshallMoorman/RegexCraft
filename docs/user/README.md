@@ -10,6 +10,7 @@
 | [GREP (file search & replace)](grepping.md) | Search and replace across folders |
 | [Generating code](generating-code.md) | Multi-language code snippets |
 | [Library and History](library-and-history.md) | Save patterns, favorites, restore recent work |
+| [Theme & appearance](theme-and-appearance.md) | Light/dark themes, editor contrast, design tokens |
 
 ## Coming later
 

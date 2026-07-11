@@ -4,6 +4,7 @@
   <!--
     Professional Microsoft-style blue palette.
     All app colors must come from these named resources — never hard-code.
+    Phase 4: editor + syntax brushes for excellent light/dark contrast.
   -->
   <ResourceDictionary.ThemeDictionaries>
 
@@ -17,18 +18,18 @@
       <Color x:Key="AccentBlueSoft">#E5F3FF</Color>
 
       <!-- Surfaces -->
-      <Color x:Key="BackgroundPrimary">#F3F6F9</Color>
+      <Color x:Key="BackgroundPrimary">#F0F3F7</Color>
       <Color x:Key="BackgroundSecondary">#FFFFFF</Color>
       <Color x:Key="BackgroundTertiary">#E8EEF4</Color>
       <Color x:Key="SurfaceElevated">#FFFFFF</Color>
-      <Color x:Key="BorderSubtle">#D0D7DE</Color>
-      <Color x:Key="BorderStrong">#8B9AAB</Color>
+      <Color x:Key="BorderSubtle">#C8D1DB</Color>
+      <Color x:Key="BorderStrong">#7A8B9C</Color>
 
-      <!-- Text -->
-      <Color x:Key="TextPrimary">#1B1F24</Color>
-      <Color x:Key="TextSecondary">#57606A</Color>
+      <!-- Text — high contrast on light surfaces -->
+      <Color x:Key="TextPrimary">#1A1F26</Color>
+      <Color x:Key="TextSecondary">#4A5562</Color>
       <Color x:Key="TextOnPrimary">#FFFFFF</Color>
-      <Color x:Key="TextMuted">#8B949E</Color>
+      <Color x:Key="TextMuted">#6B7683</Color>
 
       <!-- Semantic -->
       <Color x:Key="Success">#1A7F37</Color>
@@ -36,12 +37,33 @@
       <Color x:Key="Error">#CF222E</Color>
       <Color x:Key="Info">#0969DA</Color>
 
-      <!-- Match highlighting (for Phase 1 readiness) -->
-      <Color x:Key="MatchHighlight">#FFF3B0</Color>
-      <Color x:Key="GroupHighlight0">#A5D6FF</Color>
-      <Color x:Key="GroupHighlight1">#B4F0C8</Color>
+      <!-- Match / group highlights (subject text) -->
+      <Color x:Key="MatchHighlight">#FFF2A8</Color>
+      <Color x:Key="GroupHighlight0">#B3D9FF</Color>
+      <Color x:Key="GroupHighlight1">#B6F0C8</Color>
       <Color x:Key="GroupHighlight2">#FFC9B8</Color>
       <Color x:Key="GroupHighlight3">#E0C3FC</Color>
+
+      <!-- Editor surfaces (AvaloniaEdit) — must stay highly readable -->
+      <Color x:Key="EditorBackground">#FFFFFF</Color>
+      <Color x:Key="EditorForeground">#1A1F26</Color>
+      <Color x:Key="EditorLineNumber">#6B7683</Color>
+      <Color x:Key="EditorCurrentLine">#EEF5FC</Color>
+      <Color x:Key="EditorSelection">#B3D7F5</Color>
+      <Color x:Key="EditorSelectionForeground">#1A1F26</Color>
+      <Color x:Key="EditorCaret">#1A1F26</Color>
+
+      <!-- Regex syntax highlighting (light) — high-contrast professional palette -->
+      <Color x:Key="SyntaxGroup">#0550AE</Color>
+      <Color x:Key="SyntaxNamedGroup">#0A3069</Color>
+      <Color x:Key="SyntaxClass">#116329</Color>
+      <Color x:Key="SyntaxQuantifier">#CF222E</Color>
+      <Color x:Key="SyntaxEscape">#0A3069</Color>
+      <Color x:Key="SyntaxAnchor">#A40E26</Color>
+      <Color x:Key="SyntaxComment">#57606A</Color>
+      <Color x:Key="SyntaxAlternation">#9A6700</Color>
+      <Color x:Key="SyntaxLookaround">#6639BA</Color>
+      <Color x:Key="SyntaxLiteral">#1A1F26</Color>
 
       <!-- Brushes -->
       <SolidColorBrush x:Key="PrimaryBlueBrush" Color="{StaticResource PrimaryBlue}" />
@@ -72,6 +94,25 @@
       <SolidColorBrush x:Key="GroupHighlight1Brush" Color="{StaticResource GroupHighlight1}" />
       <SolidColorBrush x:Key="GroupHighlight2Brush" Color="{StaticResource GroupHighlight2}" />
       <SolidColorBrush x:Key="GroupHighlight3Brush" Color="{StaticResource GroupHighlight3}" />
+
+      <SolidColorBrush x:Key="EditorBackgroundBrush" Color="{StaticResource EditorBackground}" />
+      <SolidColorBrush x:Key="EditorForegroundBrush" Color="{StaticResource EditorForeground}" />
+      <SolidColorBrush x:Key="EditorLineNumberBrush" Color="{StaticResource EditorLineNumber}" />
+      <SolidColorBrush x:Key="EditorCurrentLineBrush" Color="{StaticResource EditorCurrentLine}" />
+      <SolidColorBrush x:Key="EditorSelectionBrush" Color="{StaticResource EditorSelection}" />
+      <SolidColorBrush x:Key="EditorSelectionForegroundBrush" Color="{StaticResource EditorSelectionForeground}" />
+      <SolidColorBrush x:Key="EditorCaretBrush" Color="{StaticResource EditorCaret}" />
+
+      <SolidColorBrush x:Key="SyntaxGroupBrush" Color="{StaticResource SyntaxGroup}" />
+      <SolidColorBrush x:Key="SyntaxNamedGroupBrush" Color="{StaticResource SyntaxNamedGroup}" />
+      <SolidColorBrush x:Key="SyntaxClassBrush" Color="{StaticResource SyntaxClass}" />
+      <SolidColorBrush x:Key="SyntaxQuantifierBrush" Color="{StaticResource SyntaxQuantifier}" />
+      <SolidColorBrush x:Key="SyntaxEscapeBrush" Color="{StaticResource SyntaxEscape}" />
+      <SolidColorBrush x:Key="SyntaxAnchorBrush" Color="{StaticResource SyntaxAnchor}" />
+      <SolidColorBrush x:Key="SyntaxCommentBrush" Color="{StaticResource SyntaxComment}" />
+      <SolidColorBrush x:Key="SyntaxAlternationBrush" Color="{StaticResource SyntaxAlternation}" />
+      <SolidColorBrush x:Key="SyntaxLookaroundBrush" Color="{StaticResource SyntaxLookaround}" />
+      <SolidColorBrush x:Key="SyntaxLiteralBrush" Color="{StaticResource SyntaxLiteral}" />
     </ResourceDictionary>
 
     <!-- ========== DARK ========== -->
@@ -110,6 +151,27 @@
       <Color x:Key="GroupHighlight2">#7C2D12</Color>
       <Color x:Key="GroupHighlight3">#4C1D95</Color>
 
+      <!-- Editor surfaces -->
+      <Color x:Key="EditorBackground">#0D1117</Color>
+      <Color x:Key="EditorForeground">#E6EDF3</Color>
+      <Color x:Key="EditorLineNumber">#6E7681</Color>
+      <Color x:Key="EditorCurrentLine">#161B22</Color>
+      <Color x:Key="EditorSelection">#264F78</Color>
+      <Color x:Key="EditorSelectionForeground">#E6EDF3</Color>
+      <Color x:Key="EditorCaret">#E6EDF3</Color>
+
+      <!-- Regex syntax highlighting (dark) — vivid, readable on near-black -->
+      <Color x:Key="SyntaxGroup">#79C0FF</Color>
+      <Color x:Key="SyntaxNamedGroup">#A5D6FF</Color>
+      <Color x:Key="SyntaxClass">#7EE787</Color>
+      <Color x:Key="SyntaxQuantifier">#FFA657</Color>
+      <Color x:Key="SyntaxEscape">#A5D6FF</Color>
+      <Color x:Key="SyntaxAnchor">#FF7B72</Color>
+      <Color x:Key="SyntaxComment">#8B949E</Color>
+      <Color x:Key="SyntaxAlternation">#E3B341</Color>
+      <Color x:Key="SyntaxLookaround">#D2A8FF</Color>
+      <Color x:Key="SyntaxLiteral">#E6EDF3</Color>
+
       <!-- Brushes -->
       <SolidColorBrush x:Key="PrimaryBlueBrush" Color="{StaticResource PrimaryBlue}" />
       <SolidColorBrush x:Key="PrimaryBlueHoverBrush" Color="{StaticResource PrimaryBlueHover}" />
@@ -139,6 +201,25 @@
       <SolidColorBrush x:Key="GroupHighlight1Brush" Color="{StaticResource GroupHighlight1}" />
       <SolidColorBrush x:Key="GroupHighlight2Brush" Color="{StaticResource GroupHighlight2}" />
       <SolidColorBrush x:Key="GroupHighlight3Brush" Color="{StaticResource GroupHighlight3}" />
+
+      <SolidColorBrush x:Key="EditorBackgroundBrush" Color="{StaticResource EditorBackground}" />
+      <SolidColorBrush x:Key="EditorForegroundBrush" Color="{StaticResource EditorForeground}" />
+      <SolidColorBrush x:Key="EditorLineNumberBrush" Color="{StaticResource EditorLineNumber}" />
+      <SolidColorBrush x:Key="EditorCurrentLineBrush" Color="{StaticResource EditorCurrentLine}" />
+      <SolidColorBrush x:Key="EditorSelectionBrush" Color="{StaticResource EditorSelection}" />
+      <SolidColorBrush x:Key="EditorSelectionForegroundBrush" Color="{StaticResource EditorSelectionForeground}" />
+      <SolidColorBrush x:Key="EditorCaretBrush" Color="{StaticResource EditorCaret}" />
+
+      <SolidColorBrush x:Key="SyntaxGroupBrush" Color="{StaticResource SyntaxGroup}" />
+      <SolidColorBrush x:Key="SyntaxNamedGroupBrush" Color="{StaticResource SyntaxNamedGroup}" />
+      <SolidColorBrush x:Key="SyntaxClassBrush" Color="{StaticResource SyntaxClass}" />
+      <SolidColorBrush x:Key="SyntaxQuantifierBrush" Color="{StaticResource SyntaxQuantifier}" />
+      <SolidColorBrush x:Key="SyntaxEscapeBrush" Color="{StaticResource SyntaxEscape}" />
+      <SolidColorBrush x:Key="SyntaxAnchorBrush" Color="{StaticResource SyntaxAnchor}" />
+      <SolidColorBrush x:Key="SyntaxCommentBrush" Color="{StaticResource SyntaxComment}" />
+      <SolidColorBrush x:Key="SyntaxAlternationBrush" Color="{StaticResource SyntaxAlternation}" />
+      <SolidColorBrush x:Key="SyntaxLookaroundBrush" Color="{StaticResource SyntaxLookaround}" />
+      <SolidColorBrush x:Key="SyntaxLiteralBrush" Color="{StaticResource SyntaxLiteral}" />
     </ResourceDictionary>
 
   </ResourceDictionary.ThemeDictionaries>

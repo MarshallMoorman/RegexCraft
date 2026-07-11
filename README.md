@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.4.0 |
+| **Version** | 0.5.0 |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · NUnit · Serilog |
 | **License** | MIT |
@@ -14,7 +14,7 @@
 ## Features
 
 - **Multi-engine testing** — run the same pattern under **.NET** (`System.Text.RegularExpressions`) and **PCRE2** (PCRE.NET)
-- **Professional editor** — AvaloniaEdit with regex syntax highlighting, line numbers, and live analysis
+- **Professional editor** — AvaloniaEdit with high-contrast light/dark regex syntax highlighting, line numbers, and live analysis
 - **Live Match mode** — subject highlighting for matches and capture groups, expandable match list with Copy / Go
 - **Replace & Split** — live preview, substitution highlighting, backreferences (`$1`, `${name}`, …)
 - **GREP** — search and replace across folders with include/exclude globs, async progress, cancellation, dry-run, and backups
@@ -22,7 +22,7 @@
 - **Analysis Tree** — hierarchical breakdown of the pattern; click a node to select it in the editor
 - **Token palette** — searchable text-only tokens (no per-token icons), engine-aware hints
 - **Library & History** — save favorites with categories/tags; automatic recent-pattern history
-- **Light / Dark / System themes** — consistent blue design tokens (no hard-coded UI colors)
+- **Light / Dark / System themes** — consistent blue design tokens, dedicated editor/syntax brushes (no hard-coded UI colors)
 - **Keyboard shortcuts** — Ctrl+Enter to run; Ctrl+1–5 for modes
 
 ## Screenshots

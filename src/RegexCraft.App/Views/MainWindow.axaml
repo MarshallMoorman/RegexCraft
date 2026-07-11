@@ -28,6 +28,7 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
       <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="MinHeight" Value="30" />
     </Style>
     <Style Selector="Button.modeTab:pointerover">
       <Setter Property="Background" Value="{DynamicResource PrimaryBlueHoverBrush}" />
@@ -45,6 +46,7 @@
       <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="CornerRadius" Value="0" />
       <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+      <Setter Property="MinHeight" Value="34" />
     </Style>
     <Style Selector="Button.panelTab:pointerover">
       <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
@@ -64,6 +66,8 @@
       <Setter Property="Foreground" Value="{DynamicResource PrimaryBlueBrush}" />
       <Setter Property="FontSize" Value="11" />
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="MinHeight" Value="26" />
     </Style>
     <Style Selector="Button.ghost:pointerover">
       <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
@@ -75,14 +79,86 @@
       <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
       <Setter Property="CornerRadius" Value="4" />
       <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="MinHeight" Value="30" />
     </Style>
     <Style Selector="Button.primaryAction:pointerover">
       <Setter Property="Background" Value="{DynamicResource PrimaryBlueHoverBrush}" />
     </Style>
 
+    <!-- Token / library category panels: identical full width -->
+    <Style Selector="Expander.tokenCategory">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="{DynamicResource BackgroundTertiaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style Selector="Expander.tokenCategory /template/ ToggleButton#PART_toggle">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="10,8" />
+    </Style>
+    <Style Selector="Expander.tokenCategory:pointerover">
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+    </Style>
+
+    <!-- Token row buttons -->
+    <Style Selector="Button.tokenItem">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="Margin" Value="2,1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.tokenItem:pointerover">
+      <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
+    </Style>
+    <Style Selector="Button.tokenItem:focus">
+      <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
+    </Style>
+
+    <!-- Shared panel chrome -->
+    <Style Selector="Border.panelChrome">
+      <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+    </Style>
+    <Style Selector="Border.panelHeader">
+      <Setter Property="Background" Value="{DynamicResource BackgroundTertiaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+      <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}" />
+      <Setter Property="SelectionBrush" Value="{DynamicResource EditorSelectionBrush}" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="MinHeight" Value="30" />
+    </Style>
+    <Style Selector="CheckBox">
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="MinHeight" Value="30" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="ListBox">
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
     <!-- Analysis tree starts expanded for usefulness -->
     <Style Selector="TreeViewItem">
       <Setter Property="IsExpanded" Value="True" />
+      <Setter Property="Padding" Value="2,1" />
+    </Style>
+    <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+      <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
     </Style>
   </Window.Styles>
 
@@ -194,14 +270,15 @@
             Background="{DynamicResource BackgroundSecondaryBrush}"
             BorderBrush="{DynamicResource BorderSubtleBrush}"
             BorderThickness="0,0,0,1"
-            Padding="14,8">
+            Padding="14,10">
       <Grid ColumnDefinitions="Auto,*,Auto">
-        <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
           <TextBlock Text="Options"
                      FontWeight="SemiBold"
                      Foreground="{DynamicResource TextPrimaryBrush}"
                      VerticalAlignment="Center"
-                     FontSize="12" />
+                     FontSize="12"
+                     Margin="0,0,4,0" />
           <CheckBox Content="Ignore case" IsChecked="{Binding IgnoreCase}" FontSize="12"
                     ToolTip.Tip="Case-insensitive matching (both engines)" />
           <CheckBox Content="Multiline" IsChecked="{Binding Multiline}" FontSize="12"
@@ -219,7 +296,8 @@
                    FontSize="11"
                    Foreground="{DynamicResource TextMutedBrush}"
                    VerticalAlignment="Center"
-                   Margin="16,0,0,0" />
+                   Margin="16,0,0,0"
+                   TextTrimming="CharacterEllipsis" />
       </Grid>
     </Border>
 
@@ -264,7 +342,7 @@
     </Border>
 
     <!-- Body -->
-    <Grid ColumnDefinitions="280,*,400" Margin="0">
+    <Grid ColumnDefinitions="288,*,400" Margin="0">
 
       <!-- LEFT: Tokens / Library / History -->
       <Border Grid.Column="0"
@@ -280,17 +358,20 @@
                     Classes="panelTab"
                     Classes.active="{Binding IsTokensTab}"
                     Command="{Binding SelectLeftTabCommand}"
-                    CommandParameter="Tokens" />
+                    CommandParameter="Tokens"
+                    ToolTip.Tip="Insertable regex tokens" />
             <Button Content="Library"
                     Classes="panelTab"
                     Classes.active="{Binding IsLibraryTab}"
                     Command="{Binding SelectLeftTabCommand}"
-                    CommandParameter="Library" />
+                    CommandParameter="Library"
+                    ToolTip.Tip="Saved patterns" />
             <Button Content="History"
                     Classes="panelTab"
                     Classes.active="{Binding IsHistoryTab}"
                     Command="{Binding SelectLeftTabCommand}"
-                    CommandParameter="History" />
+                    CommandParameter="History"
+                    ToolTip.Tip="Recent patterns" />
           </StackPanel>
 
           <!-- TOKENS -->
@@ -299,43 +380,54 @@
                      Text="{Binding TokenSearch}"
                      PlaceholderText="Search tokens…"
                      Margin="12,10,12,8"
-                     ToolTip.Tip="Filter by label, insert text, or category" />
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-              <ItemsControl ItemsSource="{Binding TokenCategories}" Margin="6,0,6,10">
+                     ToolTip.Tip="Multi-word filter: label, insert text, category, or description" />
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+              <!-- Fixed-width stretch so every category panel is identical width -->
+              <ItemsControl ItemsSource="{Binding TokenCategories}"
+                            Margin="10,0,10,12"
+                            HorizontalAlignment="Stretch">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel HorizontalAlignment="Stretch" Spacing="0" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:TokenCategoryViewModel">
-                    <Expander IsExpanded="True" Margin="2,2">
+                    <Expander Classes="tokenCategory"
+                              IsExpanded="True"
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch">
                       <Expander.Header>
                         <TextBlock Text="{Binding Name}"
                                    FontWeight="SemiBold"
                                    FontSize="12"
-                                   Foreground="{DynamicResource PrimaryBlueBrush}" />
+                                   Foreground="{DynamicResource PrimaryBlueBrush}"
+                                   HorizontalAlignment="Stretch" />
                       </Expander.Header>
-                      <ItemsControl ItemsSource="{Binding Tokens}">
+                      <ItemsControl ItemsSource="{Binding Tokens}"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="2,0,2,6">
                         <ItemsControl.ItemTemplate>
                           <DataTemplate x:DataType="vm:TokenItemViewModel">
-                            <Button HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Left"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Padding="8,5"
-                                    Margin="0,1"
-                                    CornerRadius="4"
+                            <Button Classes="tokenItem"
                                     Opacity="{Binding Opacity}"
                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InsertTokenCommand}"
                                     CommandParameter="{Binding}"
                                     ToolTip.Tip="{Binding Tooltip}">
-                              <Grid ColumnDefinitions="*,Auto">
+                              <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Stretch">
                                 <TextBlock Text="{Binding Label}"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            FontSize="12"
-                                           TextTrimming="CharacterEllipsis" />
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding InsertText}"
                                            FontFamily="Menlo, Consolas, monospace"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="8,0,0,0" />
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center" />
                               </Grid>
                             </Button>
                           </DataTemplate>
@@ -516,8 +608,10 @@
             </Border>
             <ae:TextEditor x:Name="PatternEditor"
                            FontFamily="Menlo, Consolas, monospace"
-                           FontSize="14"
+                           FontSize="15"
                            ShowLineNumbers="True"
+                           Background="{DynamicResource EditorBackgroundBrush}"
+                           Foreground="{DynamicResource EditorForegroundBrush}"
                            HorizontalScrollBarVisibility="Auto"
                            VerticalScrollBarVisibility="Auto" />
           </DockPanel>
@@ -645,6 +739,8 @@
                              FontFamily="Menlo, Consolas, monospace"
                              FontSize="13"
                              WordWrap="True"
+                             Background="{DynamicResource EditorBackgroundBrush}"
+                             Foreground="{DynamicResource EditorForegroundBrush}"
                              HorizontalScrollBarVisibility="Disabled"
                              VerticalScrollBarVisibility="Auto" />
             </Border>
@@ -782,6 +878,8 @@
                              FontSize="13"
                              WordWrap="True"
                              IsReadOnly="True"
+                             Background="{DynamicResource EditorBackgroundBrush}"
+                             Foreground="{DynamicResource EditorForegroundBrush}"
                              HorizontalScrollBarVisibility="Disabled"
                              VerticalScrollBarVisibility="Auto" />
             </Border>
@@ -846,15 +944,22 @@
 
           <!-- GENERATE -->
           <Grid IsVisible="{Binding IsGenerateTab}" RowDefinitions="Auto,Auto,Auto,*" Margin="10">
-            <TextBlock Grid.Row="0"
-                       Text="Code Generation"
-                       FontWeight="SemiBold"
-                       FontSize="13"
-                       Foreground="{DynamicResource TextPrimaryBrush}"
-                       Margin="0,4,0,10" />
+            <StackPanel Grid.Row="0" Spacing="4" Margin="0,4,0,10">
+              <TextBlock Text="Code Generation"
+                         FontWeight="SemiBold"
+                         FontSize="13"
+                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <TextBlock Text="Idiomatic snippets for the current pattern, subject, options, and engine. Engine-specific notes appear as comments."
+                         FontSize="11"
+                         TextWrapping="Wrap"
+                         Foreground="{DynamicResource TextMutedBrush}" />
+            </StackPanel>
             <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,8">
               <StackPanel Margin="0,0,6,0" Spacing="4">
-                <TextBlock Text="Language" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Text="Language"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
                 <ComboBox ItemsSource="{Binding CodeLanguages}"
                           SelectedItem="{Binding SelectedCodeLanguage}"
                           HorizontalAlignment="Stretch">
@@ -866,7 +971,10 @@
                 </ComboBox>
               </StackPanel>
               <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="4">
-                <TextBlock Text="Operation" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Text="Operation"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
                 <ComboBox ItemsSource="{Binding CodegenOperations}"
                           SelectedItem="{Binding SelectedCodegenOperation}"
                           HorizontalAlignment="Stretch">
@@ -888,13 +996,16 @@
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
-                    ClipToBounds="True">
+                    ClipToBounds="True"
+                    Background="{DynamicResource EditorBackgroundBrush}">
               <ae:TextEditor x:Name="GenerateCodeEditor"
                              FontFamily="Menlo, Consolas, monospace"
                              FontSize="12"
                              IsReadOnly="True"
                              WordWrap="False"
                              ShowLineNumbers="True"
+                             Background="{DynamicResource EditorBackgroundBrush}"
+                             Foreground="{DynamicResource EditorForegroundBrush}"
                              HorizontalScrollBarVisibility="Auto"
                              VerticalScrollBarVisibility="Auto" />
             </Border>
@@ -907,13 +1018,14 @@
                        FontWeight="SemiBold"
                        FontSize="13"
                        Foreground="{DynamicResource TextPrimaryBrush}"
-                       Margin="0,2,0,8" />
+                       Margin="0,2,0,10" />
 
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
               <TextBox Text="{Binding GrepRootPath}"
                        PlaceholderText="Folder path…"
                        FontSize="12"
-                       FontFamily="Menlo, Consolas, monospace" />
+                       FontFamily="Menlo, Consolas, monospace"
+                       ToolTip.Tip="Root folder to scan" />
               <Button Grid.Column="1"
                       Content="Browse…"
                       Classes="primaryAction"
@@ -922,54 +1034,65 @@
                       ToolTip.Tip="Pick a folder to search" />
             </Grid>
 
-            <StackPanel Grid.Row="2" Spacing="6" Margin="0,0,0,6">
-              <Grid ColumnDefinitions="Auto,*">
-                <TextBlock Text="Include"
+            <Border Grid.Row="2"
+                    Background="{DynamicResource BackgroundTertiaryBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="10,8"
+                    Margin="0,0,0,8">
+              <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="Auto,*">
+                  <TextBlock Text="Include"
+                             FontSize="11"
+                             FontWeight="SemiBold"
+                             Width="58"
+                             VerticalAlignment="Center"
+                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                  <TextBox Grid.Column="1"
+                           Text="{Binding GrepIncludeGlobs}"
                            FontSize="11"
-                           Width="56"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                <TextBox Grid.Column="1"
-                         Text="{Binding GrepIncludeGlobs}"
-                         FontSize="11"
-                         FontFamily="Menlo, Consolas, monospace"
-                         ToolTip.Tip="Include globs, semicolon-separated (e.g. *.cs;*.json)" />
-              </Grid>
-              <Grid ColumnDefinitions="Auto,*">
-                <TextBlock Text="Exclude"
+                           FontFamily="Menlo, Consolas, monospace"
+                           ToolTip.Tip="Include globs, semicolon-separated (e.g. *.cs;*.json)" />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*">
+                  <TextBlock Text="Exclude"
+                             FontSize="11"
+                             FontWeight="SemiBold"
+                             Width="58"
+                             VerticalAlignment="Center"
+                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                  <TextBox Grid.Column="1"
+                           Text="{Binding GrepExcludeGlobs}"
                            FontSize="11"
-                           Width="56"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                <TextBox Grid.Column="1"
-                         Text="{Binding GrepExcludeGlobs}"
-                         FontSize="11"
-                         FontFamily="Menlo, Consolas, monospace"
-                         ToolTip.Tip="Exclude globs (e.g. bin/**;obj/**;.git/**)" />
-              </Grid>
-              <StackPanel Orientation="Horizontal" Spacing="14">
-                <CheckBox Content="Recursive"
-                          IsChecked="{Binding GrepRecursive}"
-                          FontSize="12" />
-                <CheckBox Content="Dry-run replace"
-                          IsChecked="{Binding GrepDryRun}"
-                          FontSize="12"
-                          ToolTip.Tip="Preview replacements without writing files" />
-                <CheckBox Content="Backup (.bak)"
-                          IsChecked="{Binding GrepCreateBackup}"
-                          FontSize="12"
-                          ToolTip.Tip="Write .bak beside each modified file when applying" />
+                           FontFamily="Menlo, Consolas, monospace"
+                           ToolTip.Tip="Exclude globs (e.g. bin/**;obj/**;.git/**)" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                  <CheckBox Content="Recursive"
+                            IsChecked="{Binding GrepRecursive}"
+                            FontSize="12" />
+                  <CheckBox Content="Dry-run replace"
+                            IsChecked="{Binding GrepDryRun}"
+                            FontSize="12"
+                            ToolTip.Tip="Preview replacements without writing files" />
+                  <CheckBox Content="Backup (.bak)"
+                            IsChecked="{Binding GrepCreateBackup}"
+                            FontSize="12"
+                            ToolTip.Tip="Write .bak beside each modified file when applying" />
+                </StackPanel>
               </StackPanel>
-            </StackPanel>
+            </Border>
 
             <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
-              <StackPanel Orientation="Vertical" Spacing="2">
+              <StackPanel Orientation="Vertical" Spacing="3" VerticalAlignment="Center">
                 <TextBlock Text="{Binding GrepSummary}"
                            FontSize="11"
-                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding GrepProgressText}"
-                           FontSize="10"
+                           FontSize="11"
                            Foreground="{DynamicResource TextMutedBrush}"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding GrepReplaceSummary}"
@@ -996,26 +1119,34 @@
                       Classes="ghost"
                       Command="{Binding CancelGrepCommand}"
                       IsEnabled="{Binding IsGrepRunning}"
-                      Margin="6,0,0,0" />
+                      Margin="6,0,0,0"
+                      ToolTip.Tip="Cancel the running GREP operation" />
             </Grid>
 
             <Panel Grid.Row="4" Margin="0,0,0,8">
-              <TextBlock Text="{Binding GrepEmptyMessage}"
-                         IsVisible="{Binding !GrepHits.Count}"
-                         TextWrapping="Wrap"
-                         FontSize="12"
-                         Foreground="{DynamicResource TextMutedBrush}"
-                         Margin="8,12"
-                         HorizontalAlignment="Center" />
+              <Border IsVisible="{Binding !GrepHits.Count}"
+                      Background="{DynamicResource BackgroundTertiaryBrush}"
+                      BorderBrush="{DynamicResource BorderSubtleBrush}"
+                      BorderThickness="1"
+                      CornerRadius="4"
+                      Padding="16,20">
+                <TextBlock Text="{Binding GrepEmptyMessage}"
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center" />
+              </Border>
               <ListBox ItemsSource="{Binding GrepHits}"
                        SelectedItem="{Binding SelectedGrepHit}"
+                       IsVisible="{Binding GrepHits.Count}"
                        Background="{DynamicResource BackgroundTertiaryBrush}"
                        BorderBrush="{DynamicResource BorderSubtleBrush}"
                        BorderThickness="1"
                        CornerRadius="4">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:GrepHitViewModel">
-                    <Border Padding="8,6" Margin="1">
+                    <Border Padding="8,6" Margin="1" CornerRadius="3">
                       <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Spacing="2">
                           <TextBlock Text="{Binding Summary}"
@@ -1046,6 +1177,7 @@
             <TextBlock Grid.Row="5"
                        Text="{Binding GrepPreviewPath}"
                        FontSize="11"
+                       FontWeight="SemiBold"
                        Foreground="{DynamicResource TextSecondaryBrush}"
                        TextTrimming="CharacterEllipsis"
                        Margin="0,0,0,4" />
@@ -1054,13 +1186,16 @@
                     BorderThickness="1"
                     CornerRadius="4"
                     ClipToBounds="True"
-                    MinHeight="120">
+                    MinHeight="120"
+                    Background="{DynamicResource EditorBackgroundBrush}">
               <ae:TextEditor x:Name="GrepPreviewEditor"
                              FontFamily="Menlo, Consolas, monospace"
                              FontSize="12"
                              IsReadOnly="True"
                              WordWrap="False"
                              ShowLineNumbers="True"
+                             Background="{DynamicResource EditorBackgroundBrush}"
+                             Foreground="{DynamicResource EditorForegroundBrush}"
                              HorizontalScrollBarVisibility="Auto"
                              VerticalScrollBarVisibility="Auto" />
             </Border>

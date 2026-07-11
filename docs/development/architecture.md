@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 0.4.0
+**Version**: 0.5.0
 
 ## Overview
 
@@ -32,10 +32,10 @@
 Toolbar: Flavor | Match | Replace | Split | Generate | GREP | Options | Theme
 ┌──────────┬────────────────────────────┬────────────────────┐
 │ Tokens   │ Regex Editor (AvaloniaEdit)│ Test | Replace     │
-│ Library  │ blue syntax highlighting   │ Split | Generate   │
-│ History  │ ─────────────────────────  │ GREP               │
-│          │ Analysis Tree (rich, live) │ Subject / GREP UI  │
-│          │ click → select in editor   │ Results + preview  │
+│ Library  │ high-contrast light/dark   │ Split | Generate   │
+│ History  │ syntax + Editor* brushes   │ GREP               │
+│ equal-w  │ Analysis Tree (rich, live) │ Subject / GREP UI  │
+│ panels   │ click → select in editor   │ Results + preview  │
 └──────────┴────────────────────────────┴────────────────────┘
 Status: Flavor | Engine | Counts | Time | Shortcuts (Ctrl+1–5)
 ```

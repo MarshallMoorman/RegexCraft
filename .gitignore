@@ -39,6 +39,9 @@ publish/
 *.nupkg
 *.snupkg
 
+## Local development baselines (do not commit)
+docs/development/current_screenshot.png
+
 ## Rider
 *.DotSettings.user
 

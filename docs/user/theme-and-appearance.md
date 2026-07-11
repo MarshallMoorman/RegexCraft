@@ -1,0 +1,30 @@
+# Theme & Appearance
+
+RegexCraft ships **System**, **Light**, and **Dark** themes with a consistent blue design language.
+
+## Switching themes
+
+Use the **Theme** button in the toolbar to cycle:
+
+**System → Light → Dark → …**
+
+Your last choice is saved in `settings.json` and restored on the next launch.
+
+## What is themed
+
+All UI colors come from named resources in `Themes/Colors.axaml` (no hard-coded panel colors):
+
+| Area | Notes |
+|------|--------|
+| Chrome | Toolbar, tabs, options strip, status bar |
+| Editors | Pattern, subject, replace preview, generate, GREP preview |
+| Syntax | Groups, named groups, character classes, quantifiers, escapes, anchors, lookarounds, alternation, comments |
+| Highlights | Match and capture-group backgrounds in subject / GREP preview |
+
+Light mode uses a near-black editor foreground and high-contrast syntax colors so complex patterns stay readable. Dark mode uses a vivid palette on near-black surfaces.
+
+## Tips
+
+- Prefer **Light** or **Dark** explicitly when taking screenshots so system appearance does not change mid-capture.  
+- Token category panels on the left are full-width and equal width for a clean palette layout.  
+- If something looks washed out after a theme change, toggle the theme once more — editors reapply brushes on every theme switch.  

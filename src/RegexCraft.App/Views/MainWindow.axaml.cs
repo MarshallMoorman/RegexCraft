@@ -201,12 +201,9 @@ public partial class MainWindow : Window
         PatternEditor.Options.EnableEmailHyperlinks = false;
         PatternEditor.Options.AllowScrollBelowDocument = false;
         PatternEditor.Options.HighlightCurrentLine = true;
-        PatternEditor.TextArea.TextView.CurrentLineBackground =
-            TryBrush("AccentBlueSoftBrush") ?? new SolidColorBrush(Color.Parse("#E5F3FF"));
-        PatternEditor.TextArea.TextView.CurrentLineBorder =
-            new Pen(TryBrush("PrimaryBlueBrush") ?? Brushes.DodgerBlue, 1);
 
         ApplyRegexHighlighting();
+        ApplyEditorTheme(PatternEditor, patternEditor: true);
         EditorBinding.Attach(PatternEditor);
 
         PatternEditor.TextChanged += (_, _) =>
@@ -241,6 +238,7 @@ public partial class MainWindow : Window
         SubjectEditor.Options.EnableHyperlinks = false;
         SubjectEditor.Options.EnableEmailHyperlinks = false;
         SubjectEditor.TextArea.TextView.LineTransformers.Add(_subjectHighlighter);
+        ApplyEditorTheme(SubjectEditor);
 
         SubjectEditor.TextChanged += (_, _) =>
         {
@@ -268,6 +266,7 @@ public partial class MainWindow : Window
         ReplacePreviewEditor.Options.EnableEmailHyperlinks = false;
         ReplacePreviewEditor.IsReadOnly = true;
         ReplacePreviewEditor.TextArea.TextView.LineTransformers.Add(_replaceHighlighter);
+        ApplyEditorTheme(ReplacePreviewEditor);
     }
 
     private void ConfigureGrepPreviewEditor()
@@ -280,19 +279,39 @@ public partial class MainWindow : Window
         GrepPreviewEditor.Options.EnableEmailHyperlinks = false;
         GrepPreviewEditor.IsReadOnly = true;
         GrepPreviewEditor.TextArea.TextView.LineTransformers.Add(_grepHighlighter);
+        ApplyEditorTheme(GrepPreviewEditor, showLineNumbers: true);
     }
 
     private void ApplyRegexHighlighting()
     {
         var dark = ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
-        PatternEditor.SyntaxHighlighting = RegexHighlightingDefinition.Create(dark);
+        var palette = BuildSyntaxPalette(dark);
+        PatternEditor.SyntaxHighlighting = RegexHighlightingDefinition.Create(palette);
+    }
+
+    private RegexSyntaxPalette BuildSyntaxPalette(bool dark)
+    {
+        var fallback = RegexSyntaxPalette.ForTheme(dark);
+        return new RegexSyntaxPalette
+        {
+            Group = TryColor("SyntaxGroup") ?? fallback.Group,
+            NamedGroup = TryColor("SyntaxNamedGroup") ?? fallback.NamedGroup,
+            CharacterClass = TryColor("SyntaxClass") ?? fallback.CharacterClass,
+            Quantifier = TryColor("SyntaxQuantifier") ?? fallback.Quantifier,
+            Escape = TryColor("SyntaxEscape") ?? fallback.Escape,
+            Anchor = TryColor("SyntaxAnchor") ?? fallback.Anchor,
+            Comment = TryColor("SyntaxComment") ?? fallback.Comment,
+            Alternation = TryColor("SyntaxAlternation") ?? fallback.Alternation,
+            Lookaround = TryColor("SyntaxLookaround") ?? fallback.Lookaround,
+            Literal = TryColor("SyntaxLiteral") ?? fallback.Literal,
+        };
     }
 
     private void ApplyThemeBrushes()
     {
-        var match = TryBrush("MatchHighlightBrush") ?? new SolidColorBrush(Color.Parse("#FFF3B0"));
-        var g0 = TryBrush("GroupHighlight0Brush") ?? new SolidColorBrush(Color.Parse("#A5D6FF"));
-        var g1 = TryBrush("GroupHighlight1Brush") ?? new SolidColorBrush(Color.Parse("#B4F0C8"));
+        var match = TryBrush("MatchHighlightBrush") ?? new SolidColorBrush(Color.Parse("#FFF2A8"));
+        var g0 = TryBrush("GroupHighlight0Brush") ?? new SolidColorBrush(Color.Parse("#B3D9FF"));
+        var g1 = TryBrush("GroupHighlight1Brush") ?? new SolidColorBrush(Color.Parse("#B6F0C8"));
         var g2 = TryBrush("GroupHighlight2Brush") ?? new SolidColorBrush(Color.Parse("#FFC9B8"));
         var g3 = TryBrush("GroupHighlight3Brush") ?? new SolidColorBrush(Color.Parse("#E0C3FC"));
 
@@ -300,31 +319,65 @@ public partial class MainWindow : Window
         _replaceHighlighter.SetBrushes(match, g0, g1, g2, g3);
         _grepHighlighter.SetBrushes(match, g0, g1, g2, g3);
 
-        var bg = TryBrush("BackgroundSecondaryBrush");
-        var fg = TryBrush("TextPrimaryBrush");
-        if (bg is not null)
+        ApplyEditorTheme(PatternEditor, patternEditor: true);
+        ApplyEditorTheme(SubjectEditor);
+        if (ReplacePreviewEditor is not null)
+            ApplyEditorTheme(ReplacePreviewEditor);
+        if (GenerateCodeEditor is not null)
+            ApplyEditorTheme(GenerateCodeEditor, showLineNumbers: true);
+        if (GrepPreviewEditor is not null)
+            ApplyEditorTheme(GrepPreviewEditor, showLineNumbers: true);
+    }
+
+    /// <summary>
+    /// Applies editor background, foreground, selection, caret, line numbers, and
+    /// current-line highlight from theme resources so light mode is never low-contrast.
+    /// </summary>
+    private void ApplyEditorTheme(TextEditor editor, bool patternEditor = false, bool showLineNumbers = false)
+    {
+        var bg = TryBrush("EditorBackgroundBrush")
+                 ?? TryBrush("BackgroundSecondaryBrush")
+                 ?? new SolidColorBrush(Colors.White);
+        var fg = TryBrush("EditorForegroundBrush")
+                 ?? TryBrush("TextPrimaryBrush")
+                 ?? new SolidColorBrush(Color.Parse("#1A1F26"));
+        var lineNum = TryBrush("EditorLineNumberBrush")
+                      ?? TryBrush("TextMutedBrush")
+                      ?? new SolidColorBrush(Color.Parse("#6B7683"));
+        var currentLine = TryBrush("EditorCurrentLineBrush")
+                          ?? TryBrush("AccentBlueSoftBrush")
+                          ?? new SolidColorBrush(Color.Parse("#EEF5FC"));
+        var selection = TryBrush("EditorSelectionBrush")
+                        ?? new SolidColorBrush(Color.Parse("#B3D7F5"));
+        var selectionFg = TryBrush("EditorSelectionForegroundBrush") ?? fg;
+        var caret = TryBrush("EditorCaretBrush") ?? fg;
+        var border = TryBrush("PrimaryBlueBrush") ?? Brushes.DodgerBlue;
+
+        editor.Background = bg;
+        editor.Foreground = fg;
+        editor.LineNumbersForeground = lineNum;
+
+        var area = editor.TextArea;
+        area.Background = bg;
+        area.Foreground = fg;
+        area.SelectionBrush = selection;
+        area.SelectionForeground = selectionFg;
+
+        if (area.Caret is not null)
+            area.Caret.CaretBrush = caret;
+
+        if (patternEditor || showLineNumbers || editor.ShowLineNumbers)
         {
-            PatternEditor.Background = bg;
-            SubjectEditor.Background = bg;
-            if (ReplacePreviewEditor is not null)
-                ReplacePreviewEditor.Background = bg;
-            if (GenerateCodeEditor is not null)
-                GenerateCodeEditor.Background = bg;
-            if (GrepPreviewEditor is not null)
-                GrepPreviewEditor.Background = bg;
+            area.TextView.CurrentLineBackground = currentLine;
+            area.TextView.CurrentLineBorder = new Pen(border, 1);
         }
 
-        if (fg is not null)
+        if (patternEditor)
         {
-            PatternEditor.Foreground = fg;
-            SubjectEditor.Foreground = fg;
-            if (ReplacePreviewEditor is not null)
-                ReplacePreviewEditor.Foreground = fg;
-            if (GenerateCodeEditor is not null)
-                GenerateCodeEditor.Foreground = fg;
-            if (GrepPreviewEditor is not null)
-                GrepPreviewEditor.Foreground = fg;
+            editor.Options.HighlightCurrentLine = true;
         }
+
+        area.TextView.Redraw();
     }
 
     private IBrush? TryBrush(string key)
@@ -332,6 +385,19 @@ public partial class MainWindow : Window
         if (Application.Current?.TryGetResource(key, ActualThemeVariant, out var res) == true
             && res is IBrush brush)
             return brush;
+        return null;
+    }
+
+    private Color? TryColor(string key)
+    {
+        if (Application.Current?.TryGetResource(key, ActualThemeVariant, out var res) == true)
+        {
+            if (res is Color c)
+                return c;
+            if (res is SolidColorBrush scb)
+                return scb.Color;
+        }
+
         return null;
     }
 

@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 3 complete (v0.4.0)  
+**Last updated**: 2026-07-11 — Phase 4 complete (v0.5.0)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -29,25 +29,29 @@ Living guide for AI agents and humans working on RegexCraft.
 | `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
 | `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, GREP, VMs) |
 
-### UI map (Phase 3)
+### UI map (Phase 4)
 
-- Left: Tokens / Library / History tabs  
-- Center: Pattern editor (AvaloniaEdit) + rich Analysis Tree (click → select range)  
+- Left: Tokens / Library / History tabs — **equal-width token category panels**  
+- Center: Pattern editor (AvaloniaEdit) with **high-contrast light/dark syntax** + Analysis Tree  
 - Right: Test / Replace / Split / Generate / **GREP**  
-- Toolbar: Flavor, Match/Replace/Split/Generate/**GREP** modes, Options, Theme  
+- Toolbar: Flavor, Match/Replace/Split/Generate/GREP modes, Options, Theme  
 - Status: flavor/engine, counts, timing, shortcut hints  
 - Shortcuts: Ctrl+Enter run; Ctrl+1–5 modes  
 
-### Key Phase 3 types
+### Key Phase 4 types / theme
+
+- Theme: `EditorForeground` / `EditorBackground` / `EditorSelection` / `Syntax*Brush` resources  
+- `RegexHighlightingDefinition` + `RegexSyntaxPalette` (light + dark high-contrast)  
+- AvaloniaEdit fully themed (fg/bg/selection/caret/line numbers/current line)  
+- Token category expanders: shared `tokenCategory` style, stretch width  
+
+### Still relevant from Phase 3
 
 - `IGrepService` / `GrepService` / `FileGlobMatcher` / GREP models  
 - `ISettingsStore` / `JsonSettingsStore` / `AppSettings`  
 - Library: `Category`, `Tags`, `IsFavorite`  
 - `MainWindowViewModel` (GREP async search/replace, settings, favorites)  
 - `Application.Name` + `WindowTitle` binding for correct window title  
-
-### Still relevant from Phase 2
-
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines`  
 - `RegexAnalysisService` → rich `AnalysisNode` tree  
 - `MatchHighlightBuilder` / `ReplaceHighlightBuilder`  
@@ -74,7 +78,9 @@ dotnet run --project src/RegexCraft.App
 
 `src/RegexCraft.App/Themes/Colors.axaml` — Light/Dark dictionaries.
 
-Use brushes: `{DynamicResource PrimaryBlueBrush}`, `MatchHighlightBrush`, `GroupHighlight0Brush`–`3`, etc.
+Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `EditorBackgroundBrush`, `SyntaxGroupBrush`, `MatchHighlightBrush`, `GroupHighlight0Brush`–`3`, etc.
+
+**Never hard-code UI colors.** Editor and syntax colors must come from theme resources so light mode stays highly readable.
 
 ## After Completing a Phase
 
@@ -106,5 +112,7 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
+- Theme: `src/RegexCraft.App/Themes/Colors.axaml`  
+- Syntax: `src/RegexCraft.App/Highlighting/RegexHighlightingDefinition.cs`  
 - GREP: `src/RegexCraft.Core/Grep/`  
 - Tokens/Analysis/Highlight/Codegen/Library/Settings: `src/RegexCraft.Core/`  
