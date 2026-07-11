@@ -5,6 +5,26 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] — 2026-07-11
+
+### Fixed
+
+- **Right-hand mode panels now fully fill available space** — Test, Replace, Split, Generate, and GREP share a single stretch host so star-sized previews and lists expand correctly (no large empty wasted regions, especially on Replace)
+- Panel resize: column **GridSplitters** between left sidebar, center editor, and right modes
+
+### Changed
+
+- Consistent right-panel chrome: shared `rightMode` / `editorFrame` / `listFrame` styles, section labels, empty states
+- Replace: clearer backreference hint, live-preview footer, preview editor stretches to fill the panel
+- Split / GREP empty states improved; History gains **search** filter
+- Status bar spacing and automation names for key controls
+- Full documentation pass: README, user guides, AGENTS.md, HANDOFF.md (post-Phase-5 roadmap)
+- Version bumped to **0.6.0** (final polish of the original 5-phase plan; 1.0 planned separately)
+
+### Notes
+
+- Debug stepping, compare mode, export, extra engines, and website implementation remain future work
+
 ## [0.5.0] — 2026-07-11
 
 ### Fixed

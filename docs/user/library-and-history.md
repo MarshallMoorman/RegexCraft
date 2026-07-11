@@ -50,6 +50,7 @@ Open the **History** tab.
 
 - After successful tests (and when the pattern stabilizes during live use), RegexCraft records a history entry.  
 - Entries are de-duplicated and capped (default ~40).  
+- Use **Search history…** to filter by pattern, subject, replacement, or flavor id.  
 - Click an entry to restore pattern (and subject/replacement/flavor when available).  
 - **Clear** empties history.  
 

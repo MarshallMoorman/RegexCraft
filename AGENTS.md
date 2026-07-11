@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 4 complete (v0.5.0)  
+**Last updated**: 2026-07-11 — Phase 5 complete (v0.6.0)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -29,28 +29,30 @@ Living guide for AI agents and humans working on RegexCraft.
 | `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
 | `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, GREP, VMs) |
 
-### UI map (Phase 4)
+### UI map (Phase 5)
 
-- Left: Tokens / Library / History tabs — **equal-width token category panels**  
-- Center: Pattern editor (AvaloniaEdit) with **high-contrast light/dark syntax** + Analysis Tree  
-- Right: Test / Replace / Split / Generate / **GREP**  
-- Toolbar: Flavor, Match/Replace/Split/Generate/GREP modes, Options, Theme  
+- Left: Tokens / Library / History tabs — equal-width token category panels; History searchable  
+- Center: Pattern editor (AvaloniaEdit) with high-contrast light/dark syntax + Analysis Tree  
+- Right: **single mode host** — Test / Replace / Split / Generate / GREP each fill the panel completely  
+- Body: resizable columns via GridSplitters (sidebar | center | modes)  
+- Toolbar: Flavor, Match/Replace/Split/Generate/GREP modes, Options, Theme (persisted)  
 - Status: flavor/engine, counts, timing, shortcut hints  
 - Shortcuts: Ctrl+Enter run; Ctrl+1–5 modes  
 
-### Key Phase 4 types / theme
+### Key layout / theme types
 
 - Theme: `EditorForeground` / `EditorBackground` / `EditorSelection` / `Syntax*Brush` resources  
 - `RegexHighlightingDefinition` + `RegexSyntaxPalette` (light + dark high-contrast)  
 - AvaloniaEdit fully themed (fg/bg/selection/caret/line numbers/current line)  
+- Right modes: `Grid.rightMode`, `Border.editorFrame`, `Border.listFrame` styles  
 - Token category expanders: shared `tokenCategory` style, stretch width  
 
-### Still relevant from Phase 3
+### Still relevant from Phase 3–4
 
 - `IGrepService` / `GrepService` / `FileGlobMatcher` / GREP models  
-- `ISettingsStore` / `JsonSettingsStore` / `AppSettings`  
+- `ISettingsStore` / `JsonSettingsStore` / `AppSettings` (theme, flavor, options, GREP, window bounds)  
 - Library: `Category`, `Tags`, `IsFavorite`  
-- `MainWindowViewModel` (GREP async search/replace, settings, favorites)  
+- `MainWindowViewModel` (live test/replace/split, GREP async, settings, favorites, history search)  
 - `Application.Name` + `WindowTitle` binding for correct window title  
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines`  
 - `RegexAnalysisService` → rich `AnalysisNode` tree  
@@ -82,14 +84,14 @@ Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `Edi
 
 **Never hard-code UI colors.** Editor and syntax colors must come from theme resources so light mode stays highly readable.
 
-## After Completing a Phase
+## After Completing a Milestone
 
 1. All tests green  
 2. Update this AGENTS.md if conventions changed  
 3. Rewrite HANDOFF.md with exact next steps  
 4. Bump version in `Directory.Build.props`  
 5. Update `docs/CHANGELOG.md` and user/dev docs  
-6. Commit on `main` with a clear phase message  
+6. Commit on `main` with a clear message  
 
 ## Useful Commands
 

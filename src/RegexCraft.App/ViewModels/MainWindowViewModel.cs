@@ -111,7 +111,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshGeneratedCode();
         UpdateOptionsEnabledState();
 
-        _logger.LogInformation("MainWindowViewModel initialized (Phase 3 / GREP)");
+        _logger.LogInformation("MainWindowViewModel initialized (v{Version})", VersionText);
     }
 
     /// <summary>Design-time / test convenience constructor.</summary>
@@ -196,6 +196,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private CodeLanguageItem? _selectedCodeLanguage;
     [ObservableProperty] private CodegenOperationItem? _selectedCodegenOperation;
     [ObservableProperty] private string _librarySearch = string.Empty;
+    [ObservableProperty] private string _historySearch = string.Empty;
+    [ObservableProperty] private string _historyEmptyMessage = "History is empty. Patterns appear here after you test them.";
     [ObservableProperty] private string _libraryName = string.Empty;
     [ObservableProperty] private string _libraryDescription = string.Empty;
     [ObservableProperty] private string _libraryCategory = string.Empty;
@@ -309,6 +311,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     partial void OnTokenSearchChanged(string value) => RebuildTokenList();
     partial void OnLibrarySearchChanged(string value) => RefreshLibrary();
+    partial void OnHistorySearchChanged(string value) => RefreshHistory();
     partial void OnSelectedCodeLanguageChanged(CodeLanguageItem? value) => RefreshGeneratedCode();
     partial void OnSelectedCodegenOperationChanged(CodegenOperationItem? value) => RefreshGeneratedCode();
 
@@ -983,9 +986,31 @@ public partial class MainWindowViewModel : ViewModelBase
     private void RefreshHistory()
     {
         HistoryItems.Clear();
+        var q = (HistorySearch ?? string.Empty).Trim();
+        var any = false;
         foreach (var e in _historyStore.GetRecent())
+        {
+            if (q.Length > 0 &&
+                !ContainsIgnoreCase(e.Pattern, q) &&
+                !ContainsIgnoreCase(e.Subject, q) &&
+                !ContainsIgnoreCase(e.Replacement, q) &&
+                !ContainsIgnoreCase(e.FlavorId, q))
+            {
+                continue;
+            }
+
             HistoryItems.Add(new HistoryItemViewModel(e));
+            any = true;
+        }
+
+        HistoryEmptyMessage = q.Length > 0 && !any
+            ? "No history entries match your search."
+            : "History is empty. Patterns appear here after you test them.";
     }
+
+    private static bool ContainsIgnoreCase(string? source, string query) =>
+        !string.IsNullOrEmpty(source) &&
+        source.Contains(query, StringComparison.OrdinalIgnoreCase);
 
     private void RefreshGeneratedCode()
     {
@@ -1322,6 +1347,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private static string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.4.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "0.6.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

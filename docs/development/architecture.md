@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 0.5.0
+**Version**: 0.6.0
 
 ## Overview
 
@@ -8,7 +8,8 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │ RegexCraft.App (Avalonia 12 + AvaloniaEdit)                      │
 │  Toolbar · Tokens/Library/History · Editor · Analysis            │
-│  Test / Replace / Split / Generate / GREP · Status               │
+│  Test / Replace / Split / Generate / GREP (single stretch host)  │
+│  Column splitters · Status                                       │
 └───────────────────────────────┬──────────────────────────────────┘
                                 │
         ┌───────────────────────┼───────────────────────┐
@@ -30,15 +31,17 @@
 
 ```
 Toolbar: Flavor | Match | Replace | Split | Generate | GREP | Options | Theme
-┌──────────┬────────────────────────────┬────────────────────┐
-│ Tokens   │ Regex Editor (AvaloniaEdit)│ Test | Replace     │
-│ Library  │ high-contrast light/dark   │ Split | Generate   │
-│ History  │ syntax + Editor* brushes   │ GREP               │
-│ equal-w  │ Analysis Tree (rich, live) │ Subject / GREP UI  │
-│ panels   │ click → select in editor   │ Results + preview  │
-└──────────┴────────────────────────────┴────────────────────┘
+┌──────────┬─┬────────────────────────────┬─┬────────────────────┐
+│ Tokens   │ │ Regex Editor (AvaloniaEdit)│ │ Test | Replace     │
+│ Library  │S│ high-contrast light/dark   │S│ Split | Generate   │
+│ History  │p│ syntax + Editor* brushes   │p│ GREP               │
+│ equal-w  │l│ Analysis Tree (rich, live) │l│ Single host fills  │
+│ panels   │ │ click → select in editor   │ │ all available space│
+└──────────┴─┴────────────────────────────┴─┴────────────────────┘
 Status: Flavor | Engine | Counts | Time | Shortcuts (Ctrl+1–5)
 ```
+
+Right modes share one DockPanel last-child **Grid host**. Only one mode is visible; each mode Grid uses `rightMode` + star rows so previews/lists stretch. Do not place multiple mode panels as competing DockPanel fill children.
 
 ### Modes
 

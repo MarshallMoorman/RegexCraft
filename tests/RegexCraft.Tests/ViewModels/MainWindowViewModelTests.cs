@@ -278,6 +278,30 @@ public sealed class MainWindowViewModelTests
     }
 
     [Test]
+    public void HistorySearch_FiltersEntries()
+    {
+        var vm = CreateVm();
+        vm.Pattern = @"unique_alpha_\d+";
+        vm.Subject = "unique_alpha_1";
+        vm.RunTestCommand.Execute(null);
+        vm.Pattern = @"other_beta_\d+";
+        vm.Subject = "other_beta_2";
+        vm.RunTestCommand.Execute(null);
+
+        var before = vm.HistoryItems.Count;
+        Assert.That(before, Is.GreaterThanOrEqualTo(2));
+
+        vm.HistorySearch = "unique_alpha";
+        Assert.That(vm.HistoryItems.Count, Is.GreaterThanOrEqualTo(1));
+        Assert.That(vm.HistoryItems.All(h =>
+            h.Entry.Pattern.Contains("unique_alpha", StringComparison.OrdinalIgnoreCase)), Is.True);
+
+        vm.HistorySearch = "zzz_no_match_zzz";
+        Assert.That(vm.HistoryItems, Is.Empty);
+        Assert.That(vm.HistoryEmptyMessage, Does.Contain("match").IgnoreCase);
+    }
+
+    [Test]
     public void GenerateCode_ProducesOutputForLanguages()
     {
         var vm = CreateVm();

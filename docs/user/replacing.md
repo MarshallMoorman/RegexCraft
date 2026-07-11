@@ -1,12 +1,13 @@
 # Replacing Text with Regular Expressions
 
-The **Replace** mode previews substitutions using the currently selected flavor/engine (.NET or PCRE2).
+The **Replace** mode previews substitutions using the currently selected flavor/engine (.NET or PCRE2). The replacement field, live preview editor, and replacements footer fill the right panel so you always have room to read the result.
 
 ## Open Replace
 
 - Click **Replace** in the toolbar (or right-panel tab), or press **Ctrl+2**.
-- Enter a **replacement pattern** such as `[$1]`, `${user}`, or a literal string.
+- Enter a **replacement pattern** such as `[$1]`, `${user}`, or a literal string. A short hint under the field lists common backreference forms.
 - The preview updates live while the Replace tab is active. Click **Preview Replace** or **Ctrl+Enter** to force a run.
+- Drag the vertical splitter between the editor and right panel if you need more width for the preview.
 
 ## Backreferences
 

@@ -1,17 +1,18 @@
 # Testing Regular Expressions
 
-Phase 2 makes the **Test** workflow production-ready alongside Replace, Split, and Generate. This guide covers the Test panel, highlighting, groups, engines, and options.
+This guide covers the **Test** panel, highlighting, groups, engines, and options. Replace, Split, Generate, and GREP share the same right-hand panel host.
 
 ## Layout
 
 | Area | Purpose |
 |------|---------|
-| **Toolbar** | Flavor, Match / Replace / Split / Generate modes, Options, theme |
-| **Tokens / Library / History** (left) | Insert constructs, save/load patterns, restore recent work |
+| **Toolbar** | Flavor, Match / Replace / Split / Generate / GREP modes, Options, theme |
+| **Tokens / Library / History** (left) | Insert constructs, save/load patterns, searchable history |
 | **Regex Editor** (center) | AvaloniaEdit with professional regex syntax highlighting |
 | **Analysis Tree** (center bottom) | Live hierarchical explanation — click a node to select it in the editor |
-| **Test / Replace / Split / Generate** (right) | Subject, match highlighting, groups, replace/split/codegen |
+| **Test / Replace / Split / Generate / GREP** (right) | Subject, match highlighting, groups, replace/split/codegen/file search — panels fill available space |
 | **Status bar** | Flavor, engine, counts, timing, shortcut hints |
+| **Splitters** | Drag to resize left sidebar, center, and right panel |
 
 ## Match testing
 

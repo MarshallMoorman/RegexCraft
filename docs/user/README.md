@@ -12,8 +12,10 @@
 | [Library and History](library-and-history.md) | Save patterns, favorites, restore recent work |
 | [Theme & appearance](theme-and-appearance.md) | Light/dark themes, editor contrast, design tokens |
 
-## Coming later
+## Coming later (see root HANDOFF.md)
 
 - Debug stepping  
 - Additional engines  
 - Compare mode  
+- Export  
+- Official 1.0 / website content  

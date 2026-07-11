@@ -1,50 +1,96 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: 0.5.0 (Phase 4 complete)  
+**Current Version**: 0.6.0 (Phase 5 complete — final polish of the original plan)  
 **Date**: 2026-07-11  
-**Next Phase**: Phase 5  
+**Next**: Post-0.6 roadmap toward **1.0** (do not rush version 1.0)
 
 ---
 
-## What Was Completed in Phase 4
+## What Was Completed in Phase 5
 
-- **Critical: light-mode regex editor readability**
-  - Full editor theming (background, foreground, selection, caret, line numbers, current line)
-  - High-contrast `RegexSyntaxPalette` for light and dark
-  - Theme resources: `Editor*`, `Syntax*` brushes in `Colors.axaml`
-  - `ApplyEditorTheme` reapplies on every theme change
-- **Critical: equal-width token category panels**
-  - Shared `tokenCategory` Expander style + stretch layout
-  - Consistent borders, padding, hover
-- **Full light-theme polish**
-  - Options row spacing, status bar contrast, panel headers
-  - GREP: grouped globs/options chrome, clearer empty state, progress labels
-  - Generate: helper text + engine notes in snippets
-  - Library/History empty states and token row density
-  - Analysis tree selection / spacing
-- **Token catalog expansion**
-  - More lookarounds, groups, Unicode, quantifiers, common patterns
-  - Multi-word search documented/tested
-- **Codegen**: engine-source notes, dialect warnings (Go RE2 / Rust / JS / etc.)
-- Version **0.5.0**; docs + AGENTS/HANDOFF updated
-- NUnit: **147** tests (all green)
+- **Critical: right-panel layout**
+  - All five modes (Test / Replace / Split / Generate / GREP) live in a **single stretch host** so star-sized content fills height/width
+  - Replace preview no longer leaves a large empty region; editor frames use shared `editorFrame` / `listFrame` styles
+- **Resizable body**: column GridSplitters between left sidebar, center editor, and right modes
+- **Empty states & polish**: Split/GREP/Test empty frames; History **search**; section labels; status bar spacing; automation names
+- **Theme**: selection still persisted via `AppSettings.Theme` (System → Light → Dark)
+- Documentation: README, user guides, CHANGELOG, AGENTS, this HANDOFF
+- Version **0.6.0**; NUnit **148** tests (all green)
 
-## Exact Next Steps for Phase 5
+## Versioning recommendation
 
-Author or load `docs/development/PHASE-5-REQUIREMENTS.md` first, then implement. Suggested focus (product-facing features deferred from polish phases):
+Stay on **0.6.x** for the next feature increments. Ship **1.0.0** only after:
 
-1. **Debug / step-through** — step match engine (at least .NET), show current position, captures; backtrack visualization if feasible.
-2. **Compare mode** — side-by-side .NET vs PCRE2 results for the same pattern/subject (diff match counts, first divergence).
-3. **Editor upgrades** — find-in-pattern, word-wrap toggle, error underlines from engine parse offsets, multi-line comfort, match navigation (F3 / Shift+F3).
-4. **Performance** — virtualization for huge match lists and GREP results; match limits UI; cancel in-flight Test when pattern changes mid-run.
-5. **Export** — export matches/groups as CSV/JSON; export library; export GREP results.
-6. **Engine expansion** (optional) — Oniguruma, RE2, or Java-flavor shim behind `IRegexEngine` with capability flags.
-7. **UX polish** — GREP open-in-external-editor, multi-select replace, panel layout persistence, high-DPI refinements.
-8. When green → bump version, update AGENTS.md + this file, CHANGELOG, commit.
+1. At least one of Debug or Compare feels production-ready  
+2. Packaging / install story is documented  
+3. Website (regexcraft.com) has a real landing page + download path  
+4. A short public beta or RC cycle with no P0 layout/engine bugs  
 
-**Out of scope until later unless Phase 5 requirements say otherwise**: cloud library sync, plugin system, advanced visual regex builder.
+Optional intermediate tags: `0.7.0` (Debug), `0.8.0` (engines/export), `1.0.0-rc1`.
 
-## Known Issues / TODOs from Phase 4
+---
+
+## Recommended Post-0.6 Roadmap
+
+### Priority A — Product depth
+
+1. **Debug / step-through**  
+   - Step match engine (at least .NET first): current position, captures, next match  
+   - Backtrack visualization if feasible without a full custom NFA  
+   - UI tab or mode that does not break the right-panel host pattern  
+
+2. **Compare mode**  
+   - Side-by-side .NET vs PCRE2 for the same pattern/subject  
+   - Diff match counts, first divergence offset, option differences  
+
+3. **Export**  
+   - Matches/groups → CSV / JSON  
+   - GREP results export  
+   - Library export/import  
+
+### Priority B — Engines & performance
+
+4. **Engine expansion** (optional)  
+   - Oniguruma, RE2, or Java-flavor shim behind `IRegexEngine` + capability flags  
+   - Token catalog and options row must stay engine-aware  
+
+5. **Performance**  
+   - Virtualization for huge match lists and GREP results  
+   - Match limits UI; cancel in-flight Test when pattern changes mid-run  
+   - Stress large multi-MB subjects with live debounce  
+
+### Priority C — Editor & UX
+
+6. **Editor upgrades**  
+   - Find-in-pattern, word-wrap toggle, error underlines from engine parse offsets  
+   - Match navigation (F3 / Shift+F3)  
+   - Free-spacing `# …` comments in syntax highlighter (careful with `#hex`)  
+
+7. **GREP UX**  
+   - Open hit in external editor  
+   - Multi-select replace  
+   - Optional `.gitignore` respect  
+
+8. **Layout persistence**  
+   - Remember column widths / analysis height  
+
+### Priority D — 1.0 & presence
+
+9. **Packaging**  
+   - Documented `dotnet publish` per OS; optional installers later  
+
+10. **Website (regexcraft.com)**  
+    - Feature list, screenshots, download, docs links  
+    - Keep app docs in-repo as source of truth  
+
+11. **1.0 release**  
+    - CHANGELOG, tag, GitHub Release assets, short announcement  
+
+**Out of scope unless explicitly requested**: cloud library sync, plugin system, full visual regex builder.
+
+---
+
+## Known Issues / Limitations (carry-forward)
 
 - Analysis tree is structural/heuristic — not a full flavor-faithful AST; exotic constructs may show as “Special group”.
 - Go/Rust codegen notes RE2/regex crate limits (no lookbehind/backrefs) but still emits the pattern as-is.
@@ -58,24 +104,24 @@ Author or load `docs/development/PHASE-5-REQUIREMENTS.md` first, then implement.
 
 ## How to Continue in a New Conversation
 
-1. Open latest `main` at v0.5.0.  
+1. Open latest `main` at **v0.6.0**.  
 2. Read this `HANDOFF.md` and `AGENTS.md`.  
-3. Read `docs/development/architecture.md` and `docs/development/PHASE-4-REQUIREMENTS.md` for history.  
-4. Author or load `docs/development/PHASE-5-REQUIREMENTS.md`, then implement.  
-5. Do not re-build Phase 0–4 foundations unless blocked.  
-6. Do not commit `docs/development/current_screenshot.png` unless intentionally updating the baseline.
+3. Pick a roadmap item (recommend **Debug** or **Compare** next).  
+4. If writing a new phase, author `docs/development/PHASE-6-REQUIREMENTS.md` (or feature-specific doc).  
+5. Do not re-build Phase 0–5 foundations unless blocked.  
+6. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating the baseline.
 
 ## Key Files to Review First
 
 | Path | Why |
 |------|-----|
+| `src/RegexCraft.App/Views/MainWindow.axaml` | Right-mode host, splitters, all mode layouts |
 | `src/RegexCraft.App/Themes/Colors.axaml` | Light/dark design tokens including editor + syntax |
 | `src/RegexCraft.App/Highlighting/RegexHighlightingDefinition.cs` | Regex syntax palette |
-| `src/RegexCraft.App/Views/MainWindow.axaml` | Multi-panel layout, token widths, modes |
 | `src/RegexCraft.App/Views/MainWindow.axaml.cs` | Editor theming, GREP preview, selection |
 | `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Live test/replace/split, GREP, codegen, library, settings |
 | `src/RegexCraft.Core/Grep/` | GREP service, globs, models |
 | `src/RegexCraft.Core/Tokens/TokenCatalog.cs` | Token palette |
 | `src/RegexCraft.Core/Codegen/CodeGenerationService.cs` | Language snippets |
-| `Directory.Build.props` | Version 0.5.0 |
+| `Directory.Build.props` | Version 0.6.0 |
 | `docs/user/*.md` | User-facing guides |

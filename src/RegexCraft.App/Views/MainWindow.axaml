@@ -160,6 +160,58 @@
     <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
       <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
     </Style>
+
+    <!-- Right-panel mode host: each mode fills the entire available area -->
+    <Style Selector="Grid.rightMode">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="Margin" Value="12" />
+    </Style>
+    <Style Selector="Border.editorFrame">
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="ClipToBounds" Value="True" />
+      <Setter Property="Background" Value="{DynamicResource EditorBackgroundBrush}" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Border.listFrame">
+      <Setter Property="Background" Value="{DynamicResource BackgroundTertiaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="GridSplitter.columnSplit">
+      <Setter Property="Background" Value="{DynamicResource BorderSubtleBrush}" />
+      <Setter Property="Width" Value="5" />
+      <Setter Property="MinWidth" Value="5" />
+      <Setter Property="ResizeDirection" Value="Columns" />
+    </Style>
+    <Style Selector="GridSplitter.columnSplit:pointerover">
+      <Setter Property="Background" Value="{DynamicResource PrimaryBlueBrush}" />
+    </Style>
+    <Style Selector="TextBlock.sectionLabel">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.mutedHint">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="TextBlock.emptyState">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="TextAlignment" Value="Center" />
+      <Setter Property="Margin" Value="16,24" />
+    </Style>
   </Window.Styles>
 
   <DockPanel>
@@ -306,18 +358,21 @@
             Background="{DynamicResource BackgroundTertiaryBrush}"
             BorderBrush="{DynamicResource BorderSubtleBrush}"
             BorderThickness="0,1,0,0"
-            Padding="14,7">
+            Padding="14,8"
+            MinHeight="34"
+            AutomationProperties.Name="Status bar">
       <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
         <TextBlock Text="{Binding StatusText}"
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    FontSize="12"
                    TextTrimming="CharacterEllipsis"
-                   VerticalAlignment="Center" />
+                   VerticalAlignment="Center"
+                   Margin="0,0,12,0" />
         <TextBlock Grid.Column="1"
                    Text="{Binding StatusEngine}"
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    FontSize="12"
-                   Margin="16,0,0,0"
+                   Margin="8,0,0,0"
                    VerticalAlignment="Center" />
         <TextBlock Grid.Column="2"
                    Text="{Binding StatusMatches}"
@@ -336,19 +391,20 @@
                    Text="{Binding ShortcutHints}"
                    Foreground="{DynamicResource TextMutedBrush}"
                    FontSize="11"
-                   Margin="12,0,0,0"
+                   Margin="16,0,0,0"
                    VerticalAlignment="Center" />
       </Grid>
     </Border>
 
-    <!-- Body -->
-    <Grid ColumnDefinitions="288,*,400" Margin="0">
+    <!-- Body: left | splitter | center | splitter | right -->
+    <Grid ColumnDefinitions="280,5,*,5,400" Margin="0">
 
       <!-- LEFT: Tokens / Library / History -->
       <Border Grid.Column="0"
+              MinWidth="200"
               Background="{DynamicResource BackgroundSecondaryBrush}"
               BorderBrush="{DynamicResource BorderSubtleBrush}"
-              BorderThickness="0,0,1,0">
+              BorderThickness="0">
         <DockPanel>
           <StackPanel DockPanel.Dock="Top"
                       Orientation="Horizontal"
@@ -543,9 +599,15 @@
                         Command="{Binding ClearHistoryCommand}" />
               </Grid>
             </Border>
+            <TextBox DockPanel.Dock="Top"
+                     Text="{Binding HistorySearch}"
+                     PlaceholderText="Search history…"
+                     Margin="12,0,12,6"
+                     FontSize="12"
+                     ToolTip.Tip="Filter by pattern, subject, or replacement text" />
             <TextBlock DockPanel.Dock="Top"
                        IsVisible="{Binding !HistoryItems.Count}"
-                       Text="History is empty. Patterns appear here after you test them."
+                       Text="{Binding HistoryEmptyMessage}"
                        TextWrapping="Wrap"
                        Margin="14,4"
                        FontSize="12"
@@ -584,8 +646,11 @@
         </DockPanel>
       </Border>
 
+      <GridSplitter Grid.Column="1" Classes="columnSplit"
+                    ToolTip.Tip="Drag to resize left sidebar" />
+
       <!-- CENTER: Editor + Analysis -->
-      <Grid Grid.Column="1" RowDefinitions="*,4,220">
+      <Grid Grid.Column="2" RowDefinitions="*,5,200" MinWidth="280">
         <Border Grid.Row="0" Background="{DynamicResource BackgroundSecondaryBrush}">
           <DockPanel>
             <Border DockPanel.Dock="Top"
@@ -595,10 +660,8 @@
                     Background="{DynamicResource BackgroundTertiaryBrush}">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Regex Editor"
-                           FontWeight="SemiBold"
-                           FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           VerticalAlignment="Center" />
+                           Classes="sectionLabel"
+                           AutomationProperties.Name="Regex pattern editor" />
                 <Button Grid.Column="1"
                         Content="Copy pattern"
                         Classes="ghost"
@@ -619,9 +682,11 @@
 
         <GridSplitter Grid.Row="1"
                       Background="{DynamicResource BorderSubtleBrush}"
-                      ResizeDirection="Rows" />
+                      ResizeDirection="Rows"
+                      Height="5" />
 
         <Border Grid.Row="2"
+                MinHeight="100"
                 Background="{DynamicResource BackgroundSecondaryBrush}"
                 BorderBrush="{DynamicResource BorderSubtleBrush}"
                 BorderThickness="0,1,0,0">
@@ -632,15 +697,14 @@
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1">
               <TextBlock Text="Analysis Tree — click a node to select it in the editor"
-                         FontWeight="SemiBold"
-                         FontSize="12"
-                         Foreground="{DynamicResource TextPrimaryBrush}" />
+                         Classes="sectionLabel" />
             </Border>
             <TreeView x:Name="AnalysisTree"
                       ItemsSource="{Binding AnalysisNodes}"
                       SelectedItem="{Binding SelectedAnalysisNode}"
                       Margin="6"
-                      Background="Transparent">
+                      Background="Transparent"
+                      AutomationProperties.Name="Pattern analysis tree">
               <TreeView.ItemTemplate>
                 <TreeDataTemplate ItemsSource="{Binding Children}" DataType="analysis:AnalysisNode">
                   <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
@@ -668,12 +732,16 @@
         </Border>
       </Grid>
 
-      <!-- RIGHT: Test / Replace / Split / Generate -->
-      <Border Grid.Column="2"
+      <GridSplitter Grid.Column="3" Classes="columnSplit"
+                    ToolTip.Tip="Drag to resize right panel" />
+
+      <!-- RIGHT: single host so every mode fills remaining space -->
+      <Border Grid.Column="4"
+              MinWidth="300"
               Background="{DynamicResource BackgroundSecondaryBrush}"
               BorderBrush="{DynamicResource BorderSubtleBrush}"
-              BorderThickness="1,0,0,0">
-        <DockPanel>
+              BorderThickness="0">
+        <DockPanel LastChildFill="True">
           <StackPanel DockPanel.Dock="Top"
                       Orientation="Horizontal"
                       Background="{DynamicResource BackgroundTertiaryBrush}">
@@ -682,31 +750,36 @@
                     Classes.active="{Binding IsTestTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Test"
-                    ToolTip.Tip="Match testing with highlighting" />
+                    ToolTip.Tip="Match testing with highlighting"
+                    AutomationProperties.Name="Test mode tab" />
             <Button Content="Replace"
                     Classes="panelTab"
                     Classes.active="{Binding IsReplaceTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Replace"
-                    ToolTip.Tip="Replace preview with highlighting" />
+                    ToolTip.Tip="Replace preview with highlighting"
+                    AutomationProperties.Name="Replace mode tab" />
             <Button Content="Split"
                     Classes="panelTab"
                     Classes.active="{Binding IsSplitTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Split"
-                    ToolTip.Tip="Split subject on matches" />
+                    ToolTip.Tip="Split subject on matches"
+                    AutomationProperties.Name="Split mode tab" />
             <Button Content="Generate"
                     Classes="panelTab"
                     Classes.active="{Binding IsGenerateTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Generate"
-                    ToolTip.Tip="Generate code snippets" />
+                    ToolTip.Tip="Generate code snippets"
+                    AutomationProperties.Name="Generate mode tab" />
             <Button Content="GREP"
                     Classes="panelTab"
                     Classes.active="{Binding IsGrepTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Grep"
-                    ToolTip.Tip="Search &amp; replace across files" />
+                    ToolTip.Tip="Search &amp; replace across files"
+                    AutomationProperties.Name="GREP mode tab" />
           </StackPanel>
 
           <Border DockPanel.Dock="Top"
@@ -721,484 +794,472 @@
                        FontSize="12" />
           </Border>
 
-          <!-- TEST -->
-          <Grid IsVisible="{Binding IsTestTab}" RowDefinitions="Auto,*,Auto,*" Margin="0">
-            <Border Grid.Row="0" Padding="12,10,12,4">
-              <TextBlock Text="Subject"
-                         FontWeight="SemiBold"
-                         FontSize="12"
-                         Foreground="{DynamicResource TextPrimaryBrush}" />
-            </Border>
-            <Border Grid.Row="1"
-                    Margin="10,0,10,8"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    ClipToBounds="True">
-              <ae:TextEditor x:Name="SubjectEditor"
-                             FontFamily="Menlo, Consolas, monospace"
-                             FontSize="13"
-                             WordWrap="True"
-                             Background="{DynamicResource EditorBackgroundBrush}"
-                             Foreground="{DynamicResource EditorForegroundBrush}"
-                             HorizontalScrollBarVisibility="Disabled"
-                             VerticalScrollBarVisibility="Auto" />
-            </Border>
+          <!-- Mode host: only one mode visible; all stretch to fill this Grid -->
+          <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-            <Border Grid.Row="2" Padding="12,4,12,4">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="Matches &amp; Groups"
-                           FontWeight="SemiBold"
-                           FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           VerticalAlignment="Center" />
+            <!-- TEST -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsTestTab}"
+                  RowDefinitions="Auto,*,Auto,*"
+                  AutomationProperties.Name="Test panel">
+              <TextBlock Grid.Row="0"
+                         Text="Subject"
+                         Classes="sectionLabel"
+                         Margin="0,0,0,6" />
+              <Border Grid.Row="1" Classes="editorFrame" Margin="0,0,0,10">
+                <ae:TextEditor x:Name="SubjectEditor"
+                               FontFamily="Menlo, Consolas, monospace"
+                               FontSize="13"
+                               WordWrap="True"
+                               Background="{DynamicResource EditorBackgroundBrush}"
+                               Foreground="{DynamicResource EditorForegroundBrush}"
+                               HorizontalScrollBarVisibility="Disabled"
+                               VerticalScrollBarVisibility="Auto" />
+              </Border>
+
+              <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                <TextBlock Text="Matches &amp; Groups" Classes="sectionLabel" />
                 <Button Grid.Column="1"
                         Content="Run"
                         Classes="primaryAction"
                         Command="{Binding RunTestCommand}"
                         ToolTip.Tip="Run match immediately (Ctrl+Enter)" />
               </Grid>
-            </Border>
 
-            <Panel Grid.Row="3" Margin="10,0,10,10">
-              <TextBlock Text="{Binding EmptyMatchesMessage}"
-                         IsVisible="{Binding !Matches.Count}"
-                         TextWrapping="Wrap"
-                         FontSize="12"
-                         Foreground="{DynamicResource TextMutedBrush}"
-                         Margin="8,12"
-                         HorizontalAlignment="Center" />
-              <ListBox ItemsSource="{Binding Matches}"
-                       Background="{DynamicResource BackgroundTertiaryBrush}"
-                       BorderBrush="{DynamicResource BorderSubtleBrush}"
-                       BorderThickness="1"
-                       CornerRadius="4">
-                <ListBox.ItemTemplate>
-                  <DataTemplate x:DataType="vm:MatchItemViewModel">
-                    <Expander IsExpanded="{Binding IsExpanded}" Margin="2">
-                      <Expander.Header>
-                        <Grid ColumnDefinitions="*,Auto">
-                          <TextBlock Text="{Binding Summary}"
-                                     FontFamily="Menlo, Consolas, monospace"
-                                     FontSize="12"
-                                     Foreground="{DynamicResource TextPrimaryBrush}"
-                                     TextTrimming="CharacterEllipsis"
-                                     VerticalAlignment="Center" />
-                          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
-                            <Button Content="Copy"
-                                    Classes="ghost"
-                                    Command="{Binding CopyMatchCommand}"
-                                    ToolTip.Tip="Copy match value" />
-                            <Button Content="Go"
-                                    Classes="ghost"
-                                    Command="{Binding SelectMatchCommand}"
-                                    ToolTip.Tip="Select match in subject" />
-                          </StackPanel>
-                        </Grid>
-                      </Expander.Header>
-                      <ItemsControl ItemsSource="{Binding Groups}" Margin="8,4,4,4">
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate x:DataType="vm:GroupItemViewModel">
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,3">
-                              <Border Background="{DynamicResource AccentBlueSoftBrush}"
-                                      CornerRadius="3"
-                                      Padding="6,2"
-                                      Margin="0,0,8,0">
-                                <TextBlock Text="{Binding DisplayName}"
+              <Panel Grid.Row="3">
+                <Border Classes="listFrame"
+                        IsVisible="{Binding !Matches.Count}">
+                  <TextBlock Text="{Binding EmptyMatchesMessage}" Classes="emptyState" />
+                </Border>
+                <ListBox ItemsSource="{Binding Matches}"
+                         IsVisible="{Binding Matches.Count}"
+                         Background="{DynamicResource BackgroundTertiaryBrush}"
+                         BorderBrush="{DynamicResource BorderSubtleBrush}"
+                         BorderThickness="1"
+                         CornerRadius="4"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MatchItemViewModel">
+                      <Expander IsExpanded="{Binding IsExpanded}" Margin="2">
+                        <Expander.Header>
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding Summary}"
+                                       FontFamily="Menlo, Consolas, monospace"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                              <Button Content="Copy"
+                                      Classes="ghost"
+                                      Command="{Binding CopyMatchCommand}"
+                                      ToolTip.Tip="Copy match value" />
+                              <Button Content="Go"
+                                      Classes="ghost"
+                                      Command="{Binding SelectMatchCommand}"
+                                      ToolTip.Tip="Select match in subject" />
+                            </StackPanel>
+                          </Grid>
+                        </Expander.Header>
+                        <ItemsControl ItemsSource="{Binding Groups}" Margin="8,4,4,4">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GroupItemViewModel">
+                              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,3">
+                                <Border Background="{DynamicResource AccentBlueSoftBrush}"
+                                        CornerRadius="3"
+                                        Padding="6,2"
+                                        Margin="0,0,8,0">
+                                  <TextBlock Text="{Binding DisplayName}"
+                                             FontSize="11"
+                                             FontWeight="SemiBold"
+                                             Foreground="{DynamicResource PrimaryBlueBrush}" />
+                                </Border>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding DisplayValue}"
+                                           FontFamily="Menlo, Consolas, monospace"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding RangeText}"
                                            FontSize="11"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource PrimaryBlueBrush}" />
-                              </Border>
-                              <TextBlock Grid.Column="1"
-                                         Text="{Binding DisplayValue}"
-                                         FontFamily="Menlo, Consolas, monospace"
-                                         FontSize="12"
-                                         Foreground="{DynamicResource TextPrimaryBrush}"
-                                         TextTrimming="CharacterEllipsis"
-                                         VerticalAlignment="Center" />
-                              <TextBlock Grid.Column="2"
-                                         Text="{Binding RangeText}"
-                                         FontSize="11"
-                                         Foreground="{DynamicResource TextMutedBrush}"
-                                         Margin="8,0"
-                                         VerticalAlignment="Center" />
-                              <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                <Button Content="Copy"
-                                        Classes="ghost"
-                                        Command="{Binding CopyGroupCommand}" />
-                                <Button Content="Go"
-                                        Classes="ghost"
-                                        Command="{Binding SelectGroupCommand}" />
-                              </StackPanel>
-                            </Grid>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </Expander>
-                  </DataTemplate>
-                </ListBox.ItemTemplate>
-              </ListBox>
-            </Panel>
-          </Grid>
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           Margin="8,0"
+                                           VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                  <Button Content="Copy"
+                                          Classes="ghost"
+                                          Command="{Binding CopyGroupCommand}" />
+                                  <Button Content="Go"
+                                          Classes="ghost"
+                                          Command="{Binding SelectGroupCommand}" />
+                                </StackPanel>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </Expander>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Panel>
+            </Grid>
 
-          <!-- REPLACE -->
-          <Grid IsVisible="{Binding IsReplaceTab}" RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="10">
-            <TextBlock Grid.Row="0"
-                       Text="Replacement pattern"
-                       FontWeight="SemiBold"
-                       FontSize="12"
-                       Foreground="{DynamicResource TextPrimaryBrush}"
-                       Margin="0,4,0,4" />
-            <TextBox Grid.Row="1"
-                     Text="{Binding Replacement}"
-                     FontFamily="Menlo, Consolas, monospace"
-                     PlaceholderText="$1  ${name}  $&amp;  \1 …"
-                     Margin="0,0,0,8"
-                     ToolTip.Tip="Supports $1, ${name}, $&amp;, and engine-specific backreferences" />
-            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-              <TextBlock Text="Preview"
-                         FontWeight="SemiBold"
+            <!-- REPLACE -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsReplaceTab}"
+                  RowDefinitions="Auto,Auto,Auto,*,Auto"
+                  AutomationProperties.Name="Replace panel">
+              <TextBlock Grid.Row="0"
+                         Text="Replacement pattern"
+                         Classes="sectionLabel"
+                         Margin="0,0,0,4" />
+              <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,6">
+                <TextBox Text="{Binding Replacement}"
+                         FontFamily="Menlo, Consolas, monospace"
+                         PlaceholderText="$1  ${name}  $&amp;  \1 …"
+                         MinHeight="34"
+                         ToolTip.Tip="Supports $1, ${name}, $&amp;, and engine-specific backreferences"
+                         AutomationProperties.Name="Replacement pattern" />
+                <TextBlock Classes="mutedHint"
+                           Text="Backreferences: $1, ${name}, $&amp;, \1 — live preview while typing" />
+              </StackPanel>
+              <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                <TextBlock Text="Preview" Classes="sectionLabel" />
+                <Button Grid.Column="1"
+                        Content="Preview Replace"
+                        Classes="primaryAction"
+                        Command="{Binding RunReplaceCommand}"
+                        ToolTip.Tip="Run replace (Ctrl+Enter)" />
+              </Grid>
+              <Border Grid.Row="3" Classes="editorFrame">
+                <ae:TextEditor x:Name="ReplacePreviewEditor"
+                               FontFamily="Menlo, Consolas, monospace"
+                               FontSize="13"
+                               WordWrap="True"
+                               IsReadOnly="True"
+                               Background="{DynamicResource EditorBackgroundBrush}"
+                               Foreground="{DynamicResource EditorForegroundBrush}"
+                               HorizontalScrollBarVisibility="Disabled"
+                               VerticalScrollBarVisibility="Auto" />
+              </Border>
+              <Border Grid.Row="4"
+                      Margin="0,10,0,0"
+                      Padding="0,2,0,0"
+                      BorderBrush="{DynamicResource BorderSubtleBrush}"
+                      BorderThickness="0,1,0,0">
+                <TextBlock Margin="0,8,0,0"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondaryBrush}">
+                  <TextBlock.Text>
+                    <MultiBinding StringFormat="Replacements: {0}">
+                      <Binding Path="ReplaceCount" />
+                    </MultiBinding>
+                  </TextBlock.Text>
+                </TextBlock>
+              </Border>
+            </Grid>
+
+            <!-- SPLIT -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsSplitTab}"
+                  RowDefinitions="Auto,Auto,*"
+                  AutomationProperties.Name="Split panel">
+              <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                <CheckBox Content="Remove empty entries"
+                          IsChecked="{Binding RemoveEmptySplitEntries}"
+                          FontSize="12"
+                          VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Content="Run Split"
+                        Classes="primaryAction"
+                        Command="{Binding RunSplitCommand}"
+                        ToolTip.Tip="Split subject on pattern matches (Ctrl+Enter)" />
+              </Grid>
+              <TextBlock Grid.Row="1"
                          FontSize="12"
-                         Foreground="{DynamicResource TextPrimaryBrush}"
-                         VerticalAlignment="Center" />
-              <Button Grid.Column="1"
-                      Content="Preview Replace"
-                      Classes="primaryAction"
-                      Command="{Binding RunReplaceCommand}"
-                      ToolTip.Tip="Run replace (Ctrl+Enter)" />
-            </Grid>
-            <Border Grid.Row="3"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    ClipToBounds="True"
-                    MinHeight="180">
-              <ae:TextEditor x:Name="ReplacePreviewEditor"
-                             FontFamily="Menlo, Consolas, monospace"
-                             FontSize="13"
-                             WordWrap="True"
-                             IsReadOnly="True"
-                             Background="{DynamicResource EditorBackgroundBrush}"
-                             Foreground="{DynamicResource EditorForegroundBrush}"
-                             HorizontalScrollBarVisibility="Disabled"
-                             VerticalScrollBarVisibility="Auto" />
-            </Border>
-            <TextBlock Grid.Row="4"
-                       Margin="0,10,0,0"
-                       FontSize="12"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextSecondaryBrush}">
-              <TextBlock.Text>
-                <MultiBinding StringFormat="Replacements: {0}">
-                  <Binding Path="ReplaceCount" />
-                </MultiBinding>
-              </TextBlock.Text>
-            </TextBlock>
-          </Grid>
-
-          <!-- SPLIT -->
-          <Grid IsVisible="{Binding IsSplitTab}" RowDefinitions="Auto,Auto,*" Margin="10">
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,4,0,8">
-              <CheckBox Content="Remove empty entries"
-                        IsChecked="{Binding RemoveEmptySplitEntries}"
-                        FontSize="12"
-                        VerticalAlignment="Center" />
-              <Button Grid.Column="1"
-                      Content="Run Split"
-                      Classes="primaryAction"
-                      Command="{Binding RunSplitCommand}"
-                      ToolTip.Tip="Split subject on pattern matches (Ctrl+Enter)" />
-            </Grid>
-            <TextBlock Grid.Row="1"
-                       FontSize="12"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       Margin="0,0,0,8">
-              <TextBlock.Text>
-                <MultiBinding StringFormat="Parts: {0}">
-                  <Binding Path="SplitPartCount" />
-                </MultiBinding>
-              </TextBlock.Text>
-            </TextBlock>
-            <ListBox Grid.Row="2"
-                     ItemsSource="{Binding SplitParts}"
-                     Background="{DynamicResource BackgroundTertiaryBrush}"
-                     BorderBrush="{DynamicResource BorderSubtleBrush}"
-                     BorderThickness="1"
-                     CornerRadius="4">
-              <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:SplitPartViewModel">
-                  <Border Padding="10,8" Margin="2">
-                    <StackPanel Spacing="2">
-                      <TextBlock Text="{Binding Summary}"
-                                 FontFamily="Menlo, Consolas, monospace"
-                                 FontSize="12"
-                                 Foreground="{DynamicResource TextPrimaryBrush}"
-                                 TextWrapping="Wrap" />
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ListBox.ItemTemplate>
-            </ListBox>
-          </Grid>
-
-          <!-- GENERATE -->
-          <Grid IsVisible="{Binding IsGenerateTab}" RowDefinitions="Auto,Auto,Auto,*" Margin="10">
-            <StackPanel Grid.Row="0" Spacing="4" Margin="0,4,0,10">
-              <TextBlock Text="Code Generation"
                          FontWeight="SemiBold"
-                         FontSize="13"
-                         Foreground="{DynamicResource TextPrimaryBrush}" />
-              <TextBlock Text="Idiomatic snippets for the current pattern, subject, options, and engine. Engine-specific notes appear as comments."
-                         FontSize="11"
-                         TextWrapping="Wrap"
-                         Foreground="{DynamicResource TextMutedBrush}" />
-            </StackPanel>
-            <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,8">
-              <StackPanel Margin="0,0,6,0" Spacing="4">
-                <TextBlock Text="Language"
-                           FontSize="11"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                <ComboBox ItemsSource="{Binding CodeLanguages}"
-                          SelectedItem="{Binding SelectedCodeLanguage}"
-                          HorizontalAlignment="Stretch">
-                  <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                      <TextBlock Text="{Binding DisplayName}" />
+                         Foreground="{DynamicResource TextSecondaryBrush}"
+                         Margin="0,0,0,8">
+                <TextBlock.Text>
+                  <MultiBinding StringFormat="Parts: {0}">
+                    <Binding Path="SplitPartCount" />
+                  </MultiBinding>
+                </TextBlock.Text>
+              </TextBlock>
+              <Panel Grid.Row="2">
+                <Border Classes="listFrame" IsVisible="{Binding !SplitParts.Count}">
+                  <TextBlock Classes="emptyState"
+                             Text="No split parts yet. Enter a pattern and subject, then Run Split (or type to update live)." />
+                </Border>
+                <ListBox ItemsSource="{Binding SplitParts}"
+                         IsVisible="{Binding SplitParts.Count}"
+                         Background="{DynamicResource BackgroundTertiaryBrush}"
+                         BorderBrush="{DynamicResource BorderSubtleBrush}"
+                         BorderThickness="1"
+                         CornerRadius="4"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SplitPartViewModel">
+                      <Border Padding="10,8" Margin="2">
+                        <TextBlock Text="{Binding Summary}"
+                                   FontFamily="Menlo, Consolas, monospace"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextWrapping="Wrap" />
+                      </Border>
                     </DataTemplate>
-                  </ComboBox.ItemTemplate>
-                </ComboBox>
-              </StackPanel>
-              <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="4">
-                <TextBlock Text="Operation"
-                           FontSize="11"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                <ComboBox ItemsSource="{Binding CodegenOperations}"
-                          SelectedItem="{Binding SelectedCodegenOperation}"
-                          HorizontalAlignment="Stretch">
-                  <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                      <TextBlock Text="{Binding DisplayName}" />
-                    </DataTemplate>
-                  </ComboBox.ItemTemplate>
-                </ComboBox>
-              </StackPanel>
-            </Grid>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,0,0,8">
-              <Button Content="Copy code"
-                      Classes="primaryAction"
-                      Command="{Binding CopyGeneratedCodeCommand}"
-                      ToolTip.Tip="Copy generated snippet to clipboard" />
-            </StackPanel>
-            <Border Grid.Row="3"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    ClipToBounds="True"
-                    Background="{DynamicResource EditorBackgroundBrush}">
-              <ae:TextEditor x:Name="GenerateCodeEditor"
-                             FontFamily="Menlo, Consolas, monospace"
-                             FontSize="12"
-                             IsReadOnly="True"
-                             WordWrap="False"
-                             ShowLineNumbers="True"
-                             Background="{DynamicResource EditorBackgroundBrush}"
-                             Foreground="{DynamicResource EditorForegroundBrush}"
-                             HorizontalScrollBarVisibility="Auto"
-                             VerticalScrollBarVisibility="Auto" />
-            </Border>
-          </Grid>
-
-          <!-- GREP -->
-          <Grid IsVisible="{Binding IsGrepTab}" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*" Margin="10">
-            <TextBlock Grid.Row="0"
-                       Text="GREP — search &amp; replace across files"
-                       FontWeight="SemiBold"
-                       FontSize="13"
-                       Foreground="{DynamicResource TextPrimaryBrush}"
-                       Margin="0,2,0,10" />
-
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-              <TextBox Text="{Binding GrepRootPath}"
-                       PlaceholderText="Folder path…"
-                       FontSize="12"
-                       FontFamily="Menlo, Consolas, monospace"
-                       ToolTip.Tip="Root folder to scan" />
-              <Button Grid.Column="1"
-                      Content="Browse…"
-                      Classes="primaryAction"
-                      Margin="8,0,0,0"
-                      Command="{Binding BrowseGrepFolderCommand}"
-                      ToolTip.Tip="Pick a folder to search" />
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Panel>
             </Grid>
 
-            <Border Grid.Row="2"
-                    Background="{DynamicResource BackgroundTertiaryBrush}"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="10,8"
-                    Margin="0,0,0,8">
-              <StackPanel Spacing="8">
-                <Grid ColumnDefinitions="Auto,*">
-                  <TextBlock Text="Include"
+            <!-- GENERATE -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsGenerateTab}"
+                  RowDefinitions="Auto,Auto,Auto,*"
+                  AutomationProperties.Name="Generate panel">
+              <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,10">
+                <TextBlock Text="Code Generation" Classes="sectionLabel" FontSize="13" />
+                <TextBlock Classes="mutedHint"
+                           Text="Idiomatic snippets for the current pattern, subject, options, and engine. Engine-specific notes appear as comments." />
+              </StackPanel>
+              <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,8">
+                <StackPanel Margin="0,0,6,0" Spacing="4">
+                  <TextBlock Text="Language"
                              FontSize="11"
                              FontWeight="SemiBold"
-                             Width="58"
-                             VerticalAlignment="Center"
                              Foreground="{DynamicResource TextSecondaryBrush}" />
-                  <TextBox Grid.Column="1"
-                           Text="{Binding GrepIncludeGlobs}"
-                           FontSize="11"
-                           FontFamily="Menlo, Consolas, monospace"
-                           ToolTip.Tip="Include globs, semicolon-separated (e.g. *.cs;*.json)" />
-                </Grid>
-                <Grid ColumnDefinitions="Auto,*">
-                  <TextBlock Text="Exclude"
-                             FontSize="11"
-                             FontWeight="SemiBold"
-                             Width="58"
-                             VerticalAlignment="Center"
-                             Foreground="{DynamicResource TextSecondaryBrush}" />
-                  <TextBox Grid.Column="1"
-                           Text="{Binding GrepExcludeGlobs}"
-                           FontSize="11"
-                           FontFamily="Menlo, Consolas, monospace"
-                           ToolTip.Tip="Exclude globs (e.g. bin/**;obj/**;.git/**)" />
-                </Grid>
-                <StackPanel Orientation="Horizontal" Spacing="16">
-                  <CheckBox Content="Recursive"
-                            IsChecked="{Binding GrepRecursive}"
-                            FontSize="12" />
-                  <CheckBox Content="Dry-run replace"
-                            IsChecked="{Binding GrepDryRun}"
-                            FontSize="12"
-                            ToolTip.Tip="Preview replacements without writing files" />
-                  <CheckBox Content="Backup (.bak)"
-                            IsChecked="{Binding GrepCreateBackup}"
-                            FontSize="12"
-                            ToolTip.Tip="Write .bak beside each modified file when applying" />
+                  <ComboBox ItemsSource="{Binding CodeLanguages}"
+                            SelectedItem="{Binding SelectedCodeLanguage}"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="Code language">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
                 </StackPanel>
+                <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="4">
+                  <TextBlock Text="Operation"
+                             FontSize="11"
+                             FontWeight="SemiBold"
+                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                  <ComboBox ItemsSource="{Binding CodegenOperations}"
+                            SelectedItem="{Binding SelectedCodegenOperation}"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="Code operation">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+              </Grid>
+              <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,0,0,8">
+                <Button Content="Copy code"
+                        Classes="primaryAction"
+                        Command="{Binding CopyGeneratedCodeCommand}"
+                        ToolTip.Tip="Copy generated snippet to clipboard" />
               </StackPanel>
-            </Border>
-
-            <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
-              <StackPanel Orientation="Vertical" Spacing="3" VerticalAlignment="Center">
-                <TextBlock Text="{Binding GrepSummary}"
-                           FontSize="11"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding GrepProgressText}"
-                           FontSize="11"
-                           Foreground="{DynamicResource TextMutedBrush}"
-                           TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding GrepReplaceSummary}"
-                           FontSize="11"
-                           Foreground="{DynamicResource PrimaryBlueBrush}"
-                           TextTrimming="CharacterEllipsis" />
-              </StackPanel>
-              <Button Grid.Column="1"
-                      Content="Search"
-                      Classes="primaryAction"
-                      Command="{Binding RunGrepSearchCommand}"
-                      IsEnabled="{Binding !IsGrepRunning}"
-                      Margin="6,0,0,0"
-                      ToolTip.Tip="Search files with the current pattern (Ctrl+Enter)" />
-              <Button Grid.Column="2"
-                      Content="Replace"
-                      Classes="primaryAction"
-                      Command="{Binding RunGrepReplaceCommand}"
-                      IsEnabled="{Binding !IsGrepRunning}"
-                      Margin="6,0,0,0"
-                      ToolTip.Tip="Replace across files (respects Dry-run)" />
-              <Button Grid.Column="3"
-                      Content="Cancel"
-                      Classes="ghost"
-                      Command="{Binding CancelGrepCommand}"
-                      IsEnabled="{Binding IsGrepRunning}"
-                      Margin="6,0,0,0"
-                      ToolTip.Tip="Cancel the running GREP operation" />
+              <Border Grid.Row="3" Classes="editorFrame">
+                <ae:TextEditor x:Name="GenerateCodeEditor"
+                               FontFamily="Menlo, Consolas, monospace"
+                               FontSize="12"
+                               IsReadOnly="True"
+                               WordWrap="False"
+                               ShowLineNumbers="True"
+                               Background="{DynamicResource EditorBackgroundBrush}"
+                               Foreground="{DynamicResource EditorForegroundBrush}"
+                               HorizontalScrollBarVisibility="Auto"
+                               VerticalScrollBarVisibility="Auto" />
+              </Border>
             </Grid>
 
-            <Panel Grid.Row="4" Margin="0,0,0,8">
-              <Border IsVisible="{Binding !GrepHits.Count}"
+            <!-- GREP -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsGrepTab}"
+                  RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*"
+                  AutomationProperties.Name="GREP panel">
+              <TextBlock Grid.Row="0"
+                         Text="GREP — search &amp; replace across files"
+                         Classes="sectionLabel"
+                         FontSize="13"
+                         Margin="0,0,0,10" />
+
+              <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                <TextBox Text="{Binding GrepRootPath}"
+                         PlaceholderText="Folder path…"
+                         FontSize="12"
+                         FontFamily="Menlo, Consolas, monospace"
+                         ToolTip.Tip="Root folder to scan"
+                         AutomationProperties.Name="GREP root folder" />
+                <Button Grid.Column="1"
+                        Content="Browse…"
+                        Classes="primaryAction"
+                        Margin="8,0,0,0"
+                        Command="{Binding BrowseGrepFolderCommand}"
+                        ToolTip.Tip="Pick a folder to search" />
+              </Grid>
+
+              <Border Grid.Row="2"
                       Background="{DynamicResource BackgroundTertiaryBrush}"
                       BorderBrush="{DynamicResource BorderSubtleBrush}"
                       BorderThickness="1"
-                      CornerRadius="4"
-                      Padding="16,20">
-                <TextBlock Text="{Binding GrepEmptyMessage}"
-                           TextWrapping="Wrap"
-                           FontSize="12"
-                           Foreground="{DynamicResource TextMutedBrush}"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center" />
-              </Border>
-              <ListBox ItemsSource="{Binding GrepHits}"
-                       SelectedItem="{Binding SelectedGrepHit}"
-                       IsVisible="{Binding GrepHits.Count}"
-                       Background="{DynamicResource BackgroundTertiaryBrush}"
-                       BorderBrush="{DynamicResource BorderSubtleBrush}"
-                       BorderThickness="1"
-                       CornerRadius="4">
-                <ListBox.ItemTemplate>
-                  <DataTemplate x:DataType="vm:GrepHitViewModel">
-                    <Border Padding="8,6" Margin="1" CornerRadius="3">
-                      <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Spacing="2">
-                          <TextBlock Text="{Binding Summary}"
-                                     FontWeight="SemiBold"
-                                     FontSize="11"
-                                     Foreground="{DynamicResource PrimaryBlueBrush}"
-                                     TextTrimming="CharacterEllipsis" />
-                          <TextBlock Text="{Binding Detail}"
-                                     FontFamily="Menlo, Consolas, monospace"
-                                     FontSize="11"
-                                     Foreground="{DynamicResource TextPrimaryBrush}"
-                                     TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                        <Button Grid.Column="1"
-                                Content="Test"
-                                Classes="ghost"
-                                VerticalAlignment="Center"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenGrepHitInSubjectCommand}"
-                                CommandParameter="{Binding}"
-                                ToolTip.Tip="Open this line in Test mode" />
-                      </Grid>
-                    </Border>
-                  </DataTemplate>
-                </ListBox.ItemTemplate>
-              </ListBox>
-            </Panel>
-
-            <TextBlock Grid.Row="5"
-                       Text="{Binding GrepPreviewPath}"
-                       FontSize="11"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       TextTrimming="CharacterEllipsis"
-                       Margin="0,0,0,4" />
-            <Border Grid.Row="6"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    ClipToBounds="True"
-                    MinHeight="120"
-                    Background="{DynamicResource EditorBackgroundBrush}">
-              <ae:TextEditor x:Name="GrepPreviewEditor"
+                      CornerRadius="6"
+                      Padding="10,8"
+                      Margin="0,0,0,8">
+                <StackPanel Spacing="8">
+                  <Grid ColumnDefinitions="Auto,*">
+                    <TextBlock Text="Include"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Width="58"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBox Grid.Column="1"
+                             Text="{Binding GrepIncludeGlobs}"
+                             FontSize="11"
                              FontFamily="Menlo, Consolas, monospace"
-                             FontSize="12"
-                             IsReadOnly="True"
-                             WordWrap="False"
-                             ShowLineNumbers="True"
-                             Background="{DynamicResource EditorBackgroundBrush}"
-                             Foreground="{DynamicResource EditorForegroundBrush}"
-                             HorizontalScrollBarVisibility="Auto"
-                             VerticalScrollBarVisibility="Auto" />
-            </Border>
+                             ToolTip.Tip="Include globs, semicolon-separated (e.g. *.cs;*.json)" />
+                  </Grid>
+                  <Grid ColumnDefinitions="Auto,*">
+                    <TextBlock Text="Exclude"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Width="58"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBox Grid.Column="1"
+                             Text="{Binding GrepExcludeGlobs}"
+                             FontSize="11"
+                             FontFamily="Menlo, Consolas, monospace"
+                             ToolTip.Tip="Exclude globs (e.g. bin/**;obj/**;.git/**)" />
+                  </Grid>
+                  <StackPanel Orientation="Horizontal" Spacing="16">
+                    <CheckBox Content="Recursive"
+                              IsChecked="{Binding GrepRecursive}"
+                              FontSize="12" />
+                    <CheckBox Content="Dry-run replace"
+                              IsChecked="{Binding GrepDryRun}"
+                              FontSize="12"
+                              ToolTip.Tip="Preview replacements without writing files" />
+                    <CheckBox Content="Backup (.bak)"
+                              IsChecked="{Binding GrepCreateBackup}"
+                              FontSize="12"
+                              ToolTip.Tip="Write .bak beside each modified file when applying" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
+                <StackPanel Orientation="Vertical" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding GrepSummary}"
+                             FontSize="11"
+                             FontWeight="SemiBold"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding GrepProgressText}"
+                             FontSize="11"
+                             Foreground="{DynamicResource TextMutedBrush}"
+                             TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding GrepReplaceSummary}"
+                             FontSize="11"
+                             Foreground="{DynamicResource PrimaryBlueBrush}"
+                             TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="Search"
+                        Classes="primaryAction"
+                        Command="{Binding RunGrepSearchCommand}"
+                        IsEnabled="{Binding !IsGrepRunning}"
+                        Margin="6,0,0,0"
+                        ToolTip.Tip="Search files with the current pattern (Ctrl+Enter)" />
+                <Button Grid.Column="2"
+                        Content="Replace"
+                        Classes="primaryAction"
+                        Command="{Binding RunGrepReplaceCommand}"
+                        IsEnabled="{Binding !IsGrepRunning}"
+                        Margin="6,0,0,0"
+                        ToolTip.Tip="Replace across files (respects Dry-run)" />
+                <Button Grid.Column="3"
+                        Content="Cancel"
+                        Classes="ghost"
+                        Command="{Binding CancelGrepCommand}"
+                        IsEnabled="{Binding IsGrepRunning}"
+                        Margin="6,0,0,0"
+                        ToolTip.Tip="Cancel the running GREP operation" />
+              </Grid>
+
+              <Panel Grid.Row="4" Margin="0,0,0,8">
+                <Border Classes="listFrame" IsVisible="{Binding !GrepHits.Count}">
+                  <TextBlock Text="{Binding GrepEmptyMessage}" Classes="emptyState" />
+                </Border>
+                <ListBox ItemsSource="{Binding GrepHits}"
+                         SelectedItem="{Binding SelectedGrepHit}"
+                         IsVisible="{Binding GrepHits.Count}"
+                         Background="{DynamicResource BackgroundTertiaryBrush}"
+                         BorderBrush="{DynamicResource BorderSubtleBrush}"
+                         BorderThickness="1"
+                         CornerRadius="4"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:GrepHitViewModel">
+                      <Border Padding="8,6" Margin="1" CornerRadius="3">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding Summary}"
+                                       FontWeight="SemiBold"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource PrimaryBlueBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Detail}"
+                                       FontFamily="Menlo, Consolas, monospace"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                          <Button Grid.Column="1"
+                                  Content="Test"
+                                  Classes="ghost"
+                                  VerticalAlignment="Center"
+                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenGrepHitInSubjectCommand}"
+                                  CommandParameter="{Binding}"
+                                  ToolTip.Tip="Open this line in Test mode" />
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Panel>
+
+              <TextBlock Grid.Row="5"
+                         Text="{Binding GrepPreviewPath}"
+                         FontSize="11"
+                         FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextSecondaryBrush}"
+                         TextTrimming="CharacterEllipsis"
+                         Margin="0,0,0,4" />
+              <Border Grid.Row="6" Classes="editorFrame" MinHeight="100">
+                <ae:TextEditor x:Name="GrepPreviewEditor"
+                               FontFamily="Menlo, Consolas, monospace"
+                               FontSize="12"
+                               IsReadOnly="True"
+                               WordWrap="False"
+                               ShowLineNumbers="True"
+                               Background="{DynamicResource EditorBackgroundBrush}"
+                               Foreground="{DynamicResource EditorForegroundBrush}"
+                               HorizontalScrollBarVisibility="Auto"
+                               VerticalScrollBarVisibility="Auto" />
+              </Border>
+            </Grid>
           </Grid>
         </DockPanel>
       </Border>

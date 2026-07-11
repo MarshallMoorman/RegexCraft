@@ -4,7 +4,7 @@
 
 RegexCraft is a modern, cross-platform regular expression workbench built for **multiple regex flavors**. Test the same pattern under **.NET** and **PCRE2** with consistent results, professional highlighting, replace/split previews, **GREP across files**, code generation, and a live analysis tree.
 
-**Current version**: 0.5.0
+**Current version**: 0.6.0
 
 ## Requirements
 

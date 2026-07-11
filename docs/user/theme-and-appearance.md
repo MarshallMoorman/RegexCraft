@@ -27,4 +27,6 @@ Light mode uses a near-black editor foreground and high-contrast syntax colors s
 
 - Prefer **Light** or **Dark** explicitly when taking screenshots so system appearance does not change mid-capture.  
 - Token category panels on the left are full-width and equal width for a clean palette layout.  
+- Right-hand modes (Test / Replace / Split / Generate / GREP) share the same panel host so previews and lists fill the available height in both themes.  
+- Drag the column splitters to balance sidebar, editor, and mode panel width.  
 - If something looks washed out after a theme change, toggle the theme once more — editors reapply brushes on every theme switch.  
