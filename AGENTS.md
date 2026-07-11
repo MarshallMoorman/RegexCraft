@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 1 complete (v0.2.0)  
+**Last updated**: 2026-07-11 — Phase 2 complete (v0.3.0)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -17,38 +17,42 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Packages**: Central management in `Directory.Packages.props`  
 - **Commits**: One clean commit per completed phase on `main`  
 - **Planning docs**: Phase requirements live under `docs/development/`; root keeps AGENTS/HANDOFF/README only  
+- **Persistence**: Library/History JSON under OS ApplicationData `RegexCraft/`  
 
 ## Architecture Quick Reference
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, flavors, tokens, analysis, highlight builder, token insertion |
+| `RegexCraft.Core` | `IRegexEngine`, models, flavors, tokens, analysis, highlight builders, token insertion, codegen, library/history |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, `EngineFactory` |
 | `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
-| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, VMs) |
+| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, VMs) |
 
-### UI map (Phase 1)
+### UI map (Phase 2)
 
-- Left: Token palette (search + categories) + Library/History placeholders  
-- Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
-- Right: Test (subject + highlights + groups) / Replace preview  
-- Toolbar: Flavor, Match, Replace, Options, Theme  
-- Status: flavor/engine, match count, timing  
+- Left: Tokens / Library / History tabs  
+- Center: Pattern editor (AvaloniaEdit) + rich Analysis Tree (click → select range)  
+- Right: Test / Replace / Split / Generate  
+- Toolbar: Flavor, Match/Replace/Split/Generate modes, Options, Theme  
+- Status: flavor/engine, counts, timing, shortcut hints  
+- Shortcuts: Ctrl+Enter run; Ctrl+1–4 modes  
 
-### Key Phase 1 types
+### Key Phase 2 types
 
-- `TokenCatalog` / `TokenInsertion`  
-- `RegexAnalysisService` → `AnalysisNode` tree  
-- `MatchHighlightBuilder` → `HighlightSpan`  
-- `RegexHighlightingDefinition` + `MatchHighlightTransformer`  
-- `MainWindowViewModel` (debounce live test)  
+- `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines`  
+- `RegexAnalysisService` → rich `AnalysisNode` tree (offsets, descriptions)  
+- `MatchHighlightBuilder` / `ReplaceHighlightBuilder`  
+- `ICodeGenerationService` / `CodeGenerationService`  
+- `ILibraryStore` / `JsonLibraryStore`, `IHistoryStore` / `JsonHistoryStore`  
+- `IRegexEngine.Split` + `SplitResult`  
+- `MainWindowViewModel` (live Test/Replace/Split, library, history, codegen)  
 
 ## Current Engines
 
-| Id | Display | Full Testing | Notes |
-|----|---------|--------------|-------|
-| `dotnet` | .NET | Yes | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | PCRE.NET |
+| Id | Display | Full Testing | Replace | Split | Notes |
+|----|---------|--------------|---------|-------|-------|
+| `dotnet` | .NET | Yes | Yes | Yes | `System.Text.RegularExpressions` |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | PCRE.NET; manual backref expansion for `$1` / `${name}` |
 
 ## How to Run
 
@@ -80,13 +84,17 @@ dotnet test --filter Category=Engines
 dotnet test --filter Category=Analysis
 dotnet test --filter Category=Highlighting
 dotnet test --filter Category=Tokens
+dotnet test --filter Category=Codegen
+dotnet test --filter Category=Library
+dotnet test --filter Category=ViewModels
 ```
 
-Logs: `logs/` (gitignored).
+Logs: `logs/` (gitignored).  
+Library/History: `%AppData%/RegexCraft` (Windows) or `~/Library/Application Support/RegexCraft` (macOS) / `~/.config/RegexCraft` (Linux).
 
 ## Key Paths
 
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
-- Tokens/Analysis/Highlight: `src/RegexCraft.Core/`  
+- Tokens/Analysis/Highlight/Codegen/Library: `src/RegexCraft.Core/`  

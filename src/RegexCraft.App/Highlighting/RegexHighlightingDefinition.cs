@@ -6,6 +6,7 @@ namespace RegexCraft.App.Highlighting;
 
 /// <summary>
 /// Programmatic blue-themed regex syntax highlighting for AvaloniaEdit.
+/// Groups, named groups, escapes, quantifiers, classes, and anchors are clearly distinct.
 /// </summary>
 public sealed class RegexHighlightingDefinition : IHighlightingDefinition
 {
@@ -40,14 +41,16 @@ public sealed class RegexHighlightingDefinition : IHighlightingDefinition
 
     private static HighlightingRuleSet BuildRuleSet(bool dark)
     {
-        // Professional blues / cool accents (aligned with theme family).
-        Color group = dark ? Color.Parse("#5BB0F5") : Color.Parse("#0078D4");
-        Color charClass = dark ? Color.Parse("#4FC3F7") : Color.Parse("#00A4EF");
-        Color quant = dark ? Color.Parse("#7EB6FF") : Color.Parse("#106EBE");
-        Color escape = dark ? Color.Parse("#9CDCFE") : Color.Parse("#0451A5");
-        Color anchor = dark ? Color.Parse("#CE9178") : Color.Parse("#C72E0F");
-        Color comment = dark ? Color.Parse("#6A9955") : Color.Parse("#008000");
-        Color alt = dark ? Color.Parse("#DCDCAA") : Color.Parse("#795E26");
+        // Higher-contrast professional palette for both themes.
+        Color group = dark ? Color.Parse("#6CB6FF") : Color.Parse("#0550AE");
+        Color named = dark ? Color.Parse("#79C0FF") : Color.Parse("#0969DA");
+        Color charClass = dark ? Color.Parse("#56D4DD") : Color.Parse("#0550AE");
+        Color quant = dark ? Color.Parse("#FFA657") : Color.Parse("#CF222E");
+        Color escape = dark ? Color.Parse("#A5D6FF") : Color.Parse("#0A3069");
+        Color anchor = dark ? Color.Parse("#FF7B72") : Color.Parse("#A40E26");
+        Color comment = dark ? Color.Parse("#8B949E") : Color.Parse("#6E7781");
+        Color alt = dark ? Color.Parse("#E3B341") : Color.Parse("#9A6700");
+        Color look = dark ? Color.Parse("#D2A8FF") : Color.Parse("#8250DF");
 
         HighlightingColor C(string name, Color fg, bool bold = false) => new()
         {
@@ -57,12 +60,14 @@ public sealed class RegexHighlightingDefinition : IHighlightingDefinition
         };
 
         var groupColor = C("Group", group, bold: true);
+        var namedColor = C("NamedGroup", named, bold: true);
         var classColor = C("CharacterClass", charClass);
         var quantColor = C("Quantifier", quant, bold: true);
-        var escapeColor = C("Escape", escape);
+        var escapeColor = C("Escape", escape, bold: true);
         var anchorColor = C("Anchor", anchor, bold: true);
         var altColor = C("Alternation", alt, bold: true);
         var commentColor = C("Comment", comment);
+        var lookColor = C("Lookaround", look, bold: true);
 
         var rules = new HighlightingRuleSet { Name = "Main" };
 
@@ -86,51 +91,71 @@ public sealed class RegexHighlightingDefinition : IHighlightingDefinition
                         Regex = new Regex(@"\^", RegexOptions.Compiled),
                         Color = quantColor,
                     },
+                    new HighlightingRule
+                    {
+                        Regex = new Regex(@"-", RegexOptions.Compiled),
+                        Color = quantColor,
+                    },
                 },
             },
         });
 
-        // Groups ( ... ) — span coloring for parentheses via rules below; content uses main rules recursively
+        // Comments (?#...)
+        rules.Rules.Add(new HighlightingRule
+        {
+            Regex = new Regex(@"\(\?#[^)]*\)", RegexOptions.Compiled),
+            Color = commentColor,
+        });
+
+        // Named groups (?<name> or (?'name'
+        rules.Rules.Add(new HighlightingRule
+        {
+            Regex = new Regex(@"\(\?<[^>]+>|\(\?'[^']+'", RegexOptions.Compiled),
+            Color = namedColor,
+        });
+
+        // Lookarounds and non-capturing / atomic
+        rules.Rules.Add(new HighlightingRule
+        {
+            Regex = new Regex(@"\(\?(?::|=|!|<=|<!|>)", RegexOptions.Compiled),
+            Color = lookColor,
+        });
+
+        // Parentheses
         rules.Rules.Add(new HighlightingRule
         {
             Regex = new Regex(@"[()]", RegexOptions.Compiled),
             Color = groupColor,
         });
 
+        // Escapes and classes
         rules.Rules.Add(new HighlightingRule
         {
-            Regex = new Regex(@"\(\?[:=!<][^)]*\)|\(\?<[^>]+>", RegexOptions.Compiled),
-            Color = groupColor,
-        });
-
-        rules.Rules.Add(new HighlightingRule
-        {
-            Regex = new Regex(@"\\[dDwWsSbBAZzG]|\\p\{[^}]*\}|\\P\{[^}]*\}|\\k<[^>]+>|\\.", RegexOptions.Compiled),
+            Regex = new Regex(
+                @"\\[dDwWsSbBAZzG]|\\p\{[^}]*\}|\\P\{[^}]*\}|\\k<[^>]+>|\\[1-9]\d*|\\.",
+                RegexOptions.Compiled),
             Color = escapeColor,
         });
 
+        // Quantifiers
         rules.Rules.Add(new HighlightingRule
         {
-            Regex = new Regex(@"[*+?]|\{\d+(?:,\d*)?\}", RegexOptions.Compiled),
+            Regex = new Regex(@"[*+?](?:[?+])?|\{\d+(?:,\d*)?\}(?:[?+])?", RegexOptions.Compiled),
             Color = quantColor,
         });
 
+        // Anchors
         rules.Rules.Add(new HighlightingRule
         {
-            Regex = new Regex(@"[\^$]|\\A|\\z|\\Z|\\G", RegexOptions.Compiled),
+            Regex = new Regex(@"[\^$]", RegexOptions.Compiled),
             Color = anchorColor,
         });
 
+        // Alternation
         rules.Rules.Add(new HighlightingRule
         {
             Regex = new Regex(@"\|", RegexOptions.Compiled),
             Color = altColor,
-        });
-
-        rules.Rules.Add(new HighlightingRule
-        {
-            Regex = new Regex(@"\(\?#[^)]*\)", RegexOptions.Compiled),
-            Color = commentColor,
         });
 
         return rules;

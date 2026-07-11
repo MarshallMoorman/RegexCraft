@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -25,6 +26,7 @@ public sealed class DotNetRegexEngine : IRegexEngine
     public string DisplayName => ".NET";
     public bool SupportsFullTesting => true;
     public bool SupportsReplace => true;
+    public bool SupportsSplit => true;
 
     public MatchCollectionResult Match(string pattern, string subject, RegexOptionsEx options)
     {
@@ -82,20 +84,44 @@ public sealed class DotNetRegexEngine : IRegexEngine
         try
         {
             var regex = CreateRegex(pattern, options);
+            var spans = new List<ReplacementSpan>();
+            var sb = new StringBuilder();
+            var last = 0;
             var count = 0;
-            var result = regex.Replace(subject, m =>
-            {
-                count++;
-                return m.Result(replacement);
-            });
 
+            foreach (Match m in regex.Matches(subject))
+            {
+                if (!m.Success)
+                    continue;
+
+                // Unmatched text before this match
+                if (m.Index > last)
+                    sb.Append(subject, last, m.Index - last);
+
+                var substituted = m.Result(replacement);
+                var start = sb.Length;
+                sb.Append(substituted);
+                spans.Add(new ReplacementSpan
+                {
+                    Index = start,
+                    Length = substituted.Length,
+                    MatchIndex = count,
+                });
+                count++;
+                last = m.Index + m.Length;
+            }
+
+            if (last < subject.Length)
+                sb.Append(subject, last, subject.Length - last);
+
+            var result = sb.ToString();
             sw.Stop();
             _logger.LogDebug(
                 "DotNet Replace: {Count} replacement(s) in {ElapsedMs}ms",
                 count,
                 sw.ElapsedMilliseconds);
 
-            return ReplaceResult.FromResult(Id, result, count, sw.Elapsed);
+            return ReplaceResult.FromResult(Id, result, count, sw.Elapsed, spans);
         }
         catch (RegexParseException ex)
         {
@@ -117,10 +143,63 @@ public sealed class DotNetRegexEngine : IRegexEngine
         }
     }
 
+    public SplitResult Split(string pattern, string subject, RegexOptionsEx options, bool removeEmptyEntries = false)
+    {
+        pattern ??= string.Empty;
+        subject ??= string.Empty;
+
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            var regex = CreateRegex(pattern, options);
+            var delimiters = new List<SplitDelimiterRange>();
+            foreach (Match m in regex.Matches(subject))
+            {
+                if (!m.Success) continue;
+                delimiters.Add(new SplitDelimiterRange
+                {
+                    Index = m.Index,
+                    Length = m.Length,
+                    Value = m.Value,
+                });
+            }
+
+            var parts = regex.Split(subject).AsEnumerable();
+            if (removeEmptyEntries)
+                parts = parts.Where(p => p.Length > 0);
+
+            var list = parts.ToList();
+            sw.Stop();
+            _logger.LogDebug(
+                "DotNet Split: {PartCount} part(s) in {ElapsedMs}ms",
+                list.Count,
+                sw.ElapsedMilliseconds);
+
+            return SplitResult.FromParts(Id, list, delimiters, sw.Elapsed);
+        }
+        catch (RegexParseException ex)
+        {
+            sw.Stop();
+            _logger.LogWarning(ex, "DotNet Split: invalid pattern");
+            return SplitResult.Failed(Id, ex.Message, sw.Elapsed);
+        }
+        catch (ArgumentException ex)
+        {
+            sw.Stop();
+            _logger.LogWarning(ex, "DotNet Split: argument error");
+            return SplitResult.Failed(Id, ex.Message, sw.Elapsed);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            _logger.LogError(ex, "DotNet Split: unexpected error");
+            return SplitResult.Failed(Id, ex.Message, sw.Elapsed);
+        }
+    }
+
     private static Regex CreateRegex(string pattern, RegexOptionsEx options)
     {
         var netOptions = MapOptions(options);
-        // NonBacktracking is not used; keep classic engine for full feature parity.
         return new Regex(pattern, netOptions, TimeSpan.FromSeconds(5));
     }
 

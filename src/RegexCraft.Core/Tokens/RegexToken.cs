@@ -18,6 +18,22 @@ public sealed class RegexToken
     /// </summary>
     public int? CaretOffsetInInsert { get; init; }
 
+    /// <summary>
+    /// Optional comma-separated engine ids that fully support this token.
+    /// Null means supported by all current engines.
+    /// </summary>
+    public string? SupportedEngines { get; init; }
+
     /// <summary>Search haystack: label + insert + description + category.</summary>
     public string SearchText => $"{Label} {InsertText} {Description} {Category} {Example}";
+
+    public bool IsSupportedBy(string? engineId)
+    {
+        if (string.IsNullOrWhiteSpace(SupportedEngines) || string.IsNullOrWhiteSpace(engineId))
+            return true;
+
+        return SupportedEngines
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(e => string.Equals(e, engineId, StringComparison.OrdinalIgnoreCase));
+    }
 }

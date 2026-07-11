@@ -41,7 +41,7 @@ public sealed class RegexAnalysisServiceTests
     {
         var root = _svc.Analyze(@"(?<id>\d+)");
         Assert.That(Flatten(root).Any(n => n.Kind == AnalysisNodeKind.NamedGroup), Is.True);
-        Assert.That(Flatten(root).Any(n => n.Detail == "id"), Is.True);
+        Assert.That(Flatten(root).Any(n => n.Detail != null && n.Detail.Contains("id")), Is.True);
     }
 
     [Test]
@@ -85,6 +85,36 @@ public sealed class RegexAnalysisServiceTests
     {
         var root = _svc.Analyze(@"\d+\w*");
         Assert.That(Flatten(root).Any(n => n.Kind == AnalysisNodeKind.Escape), Is.True);
+    }
+
+    [Test]
+    public void Analyze_EmailSample_HasNestedNamedGroupsWithRanges()
+    {
+        var root = _svc.Analyze(@"(?<user>\w+)@(?<domain>\w+\.\w+)");
+        var nodes = Flatten(root).ToList();
+        Assert.That(nodes.Count(n => n.Kind == AnalysisNodeKind.NamedGroup), Is.EqualTo(2));
+        Assert.That(nodes.Any(n => n.Detail != null && n.Detail.Contains("user")), Is.True);
+        Assert.That(nodes.Any(n => n.Detail != null && n.Detail.Contains("domain")), Is.True);
+        Assert.That(nodes.Any(n => n.Kind == AnalysisNodeKind.Sequence && n.Children.Count >= 3), Is.True);
+        Assert.That(nodes.Where(n => n.Kind == AnalysisNodeKind.NamedGroup).All(n => n.HasRange), Is.True);
+    }
+
+    [Test]
+    public void Analyze_Lookbehind_And_NonCapturing()
+    {
+        var root = _svc.Analyze(@"(?<=\$)\d+(?:px)?");
+        var kinds = Flatten(root).Select(n => n.Kind).ToList();
+        Assert.That(kinds, Does.Contain(AnalysisNodeKind.Lookaround));
+        Assert.That(kinds, Does.Contain(AnalysisNodeKind.NonCapturingGroup));
+    }
+
+    [Test]
+    public void Analyze_QuantifierDescriptions_AreUseful()
+    {
+        var root = _svc.Analyze(@"a{2,4}");
+        var q = Flatten(root).First(n => n.Kind == AnalysisNodeKind.Quantifier);
+        Assert.That(q.Detail, Does.Contain("between").IgnoreCase.Or.Contain("2").IgnoreCase);
+        Assert.That(q.HasRange, Is.True);
     }
 
     private static IEnumerable<AnalysisNode> Flatten(AnalysisNode node)

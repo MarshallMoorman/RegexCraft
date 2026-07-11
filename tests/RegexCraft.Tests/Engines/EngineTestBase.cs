@@ -246,5 +246,76 @@ public abstract class EngineTestBase
         Assert.That(engine.DisplayName, Is.Not.Null.And.Not.Empty);
         Assert.That(engine.SupportsFullTesting, Is.True);
         Assert.That(engine.SupportsReplace, Is.True);
+        Assert.That(engine.SupportsSplit, Is.True);
+    }
+
+    [Test]
+    [Category("Engines")]
+    public void Replace_ProvidesReplacementSpans()
+    {
+        var engine = CreateEngine();
+        var result = engine.Replace(@"\d+", "a1b2", "#", RegexOptionsEx.None);
+
+        Assert.That(result.Success, Is.True, result.ErrorMessage);
+        Assert.That(result.ReplacementSpans, Has.Count.EqualTo(2));
+        Assert.That(result.ReplacementSpans[0].Length, Is.EqualTo(1));
+        // Spans should point into the result string
+        foreach (var span in result.ReplacementSpans)
+        {
+            Assert.That(span.Index, Is.GreaterThanOrEqualTo(0));
+            Assert.That(span.Index + span.Length, Is.LessThanOrEqualTo(result.Result.Length));
+            Assert.That(result.Result.Substring(span.Index, span.Length), Is.EqualTo("#"));
+        }
+    }
+
+    [Test]
+    [Category("Engines")]
+    public void Replace_NamedGroupReference_Works()
+    {
+        var engine = CreateEngine();
+        var result = engine.Replace(
+            @"(?<user>\w+)@(?<domain>\w+)",
+            "a@b c@d",
+            "[${user}]",
+            RegexOptionsEx.None);
+
+        Assert.That(result.Success, Is.True, result.ErrorMessage);
+        Assert.That(result.Result, Is.EqualTo("[a] [c]"));
+        Assert.That(result.ReplacementCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    [Category("Engines")]
+    public void Split_Simple_Works()
+    {
+        var engine = CreateEngine();
+        var result = engine.Split(@",\s*", "one, two, three", RegexOptionsEx.None);
+
+        Assert.That(result.Success, Is.True, result.ErrorMessage);
+        Assert.That(result.Parts, Is.EqualTo(new[] { "one", "two", "three" }));
+        Assert.That(result.Delimiters, Has.Count.EqualTo(2));
+        Assert.That(result.EngineId, Is.EqualTo(engine.Id));
+    }
+
+    [Test]
+    [Category("Engines")]
+    public void Split_RemoveEmptyEntries()
+    {
+        var engine = CreateEngine();
+        var result = engine.Split(@",", "a,,b", RegexOptionsEx.None, removeEmptyEntries: true);
+
+        Assert.That(result.Success, Is.True, result.ErrorMessage);
+        Assert.That(result.Parts, Is.EqualTo(new[] { "a", "b" }));
+    }
+
+    [Test]
+    [Category("Engines")]
+    public void Split_InvalidPattern_ReturnsError()
+    {
+        var engine = CreateEngine();
+        var result = engine.Split("(", "abc", RegexOptionsEx.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorMessage, Is.Not.Null.And.Not.Empty);
     }
 }

@@ -1,0 +1,545 @@
+using System.Text;
+using RegexCraft.Core.Models;
+
+namespace RegexCraft.Core.Codegen;
+
+/// <summary>
+/// Generates idiomatic regex snippets for major languages.
+/// Snippets respect engine semantics where the target language maps cleanly
+/// (.NET → C#, PCRE-like → JS/Python/PHP/Java/Go/Rust notes).
+/// </summary>
+public sealed class CodeGenerationService : ICodeGenerationService
+{
+    public IReadOnlyList<CodeLanguage> SupportedLanguages { get; } =
+    [
+        CodeLanguage.CSharp,
+        CodeLanguage.JavaScript,
+        CodeLanguage.Python,
+        CodeLanguage.Php,
+        CodeLanguage.Java,
+        CodeLanguage.Go,
+        CodeLanguage.Rust,
+    ];
+
+    public string Generate(
+        CodeLanguage language,
+        CodegenOperation operation,
+        string pattern,
+        string subject,
+        string? replacement,
+        RegexOptionsEx options,
+        string engineId)
+    {
+        pattern ??= string.Empty;
+        subject ??= string.Empty;
+        replacement ??= string.Empty;
+        engineId ??= "dotnet";
+
+        return language switch
+        {
+            CodeLanguage.CSharp => GenerateCSharp(operation, pattern, subject, replacement, options),
+            CodeLanguage.JavaScript => GenerateJavaScript(operation, pattern, subject, replacement, options),
+            CodeLanguage.Python => GeneratePython(operation, pattern, subject, replacement, options),
+            CodeLanguage.Php => GeneratePhp(operation, pattern, subject, replacement, options),
+            CodeLanguage.Java => GenerateJava(operation, pattern, subject, replacement, options),
+            CodeLanguage.Go => GenerateGo(operation, pattern, subject, replacement, options),
+            CodeLanguage.Rust => GenerateRust(operation, pattern, subject, replacement, options),
+            _ => $"// Unsupported language: {language}",
+        };
+    }
+
+    private static string GenerateCSharp(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("using System.Text.RegularExpressions;");
+        sb.AppendLine();
+        var opt = CSharpOptions(options);
+        sb.AppendLine($"var pattern = {CsString(pattern)};");
+        sb.AppendLine($"var subject = {CsString(subject)};");
+        if (opt != "RegexOptions.None")
+            sb.AppendLine($"var options = {opt};");
+        else
+            sb.AppendLine("var options = RegexOptions.None;");
+        sb.AppendLine("var regex = new Regex(pattern, options);");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("bool found = regex.IsMatch(subject);");
+                sb.AppendLine("Console.WriteLine(found);");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("Match match = regex.Match(subject);");
+                sb.AppendLine("if (match.Success)");
+                sb.AppendLine("{");
+                sb.AppendLine("    Console.WriteLine(match.Value);");
+                sb.AppendLine("    // Groups: match.Groups[1].Value, match.Groups[\"name\"].Value");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Matches:
+                sb.AppendLine("foreach (Match match in regex.Matches(subject))");
+                sb.AppendLine("{");
+                sb.AppendLine("    Console.WriteLine($\"{match.Index}: {match.Value}\");");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"var replacement = {CsString(replacement)};");
+                sb.AppendLine("string result = regex.Replace(subject, replacement);");
+                sb.AppendLine("Console.WriteLine(result);");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("string[] parts = regex.Split(subject);");
+                sb.AppendLine("foreach (var part in parts)");
+                sb.AppendLine("    Console.WriteLine(part);");
+                break;
+        }
+
+        return sb.ToString().TrimEnd() + Environment.NewLine;
+    }
+
+    private static string CSharpOptions(RegexOptionsEx o)
+    {
+        var parts = new List<string>();
+        if (o.HasFlag(RegexOptionsEx.IgnoreCase)) parts.Add("RegexOptions.IgnoreCase");
+        if (o.HasFlag(RegexOptionsEx.Multiline)) parts.Add("RegexOptions.Multiline");
+        if (o.HasFlag(RegexOptionsEx.Singleline)) parts.Add("RegexOptions.Singleline");
+        if (o.HasFlag(RegexOptionsEx.ExplicitCapture)) parts.Add("RegexOptions.ExplicitCapture");
+        if (o.HasFlag(RegexOptionsEx.IgnorePatternWhitespace)) parts.Add("RegexOptions.IgnorePatternWhitespace");
+        return parts.Count == 0 ? "RegexOptions.None" : string.Join(" | ", parts);
+    }
+
+    private static string GenerateJavaScript(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var flags = JsFlags(options);
+        var sb = new StringBuilder();
+        sb.AppendLine($"const pattern = {JsString(pattern)};");
+        sb.AppendLine($"const subject = {JsString(subject)};");
+        sb.AppendLine($"const regex = new RegExp(pattern, {JsString(flags)});");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("const found = regex.test(subject);");
+                sb.AppendLine("console.log(found);");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("const match = subject.match(regex);");
+                sb.AppendLine("if (match) {");
+                sb.AppendLine("  console.log(match[0]);");
+                sb.AppendLine("  // Groups: match[1], match.groups?.name");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Matches:
+                // Ensure global for matchAll
+                var gFlags = flags.Contains('g') ? flags : flags + "g";
+                sb.AppendLine($"const globalRegex = new RegExp(pattern, {JsString(gFlags)});");
+                sb.AppendLine("for (const match of subject.matchAll(globalRegex)) {");
+                sb.AppendLine("  console.log(match.index, match[0]);");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"const replacement = {JsString(replacement)};");
+                sb.AppendLine("const result = subject.replace(regex, replacement);");
+                sb.AppendLine("console.log(result);");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("const parts = subject.split(regex);");
+                sb.AppendLine("console.log(parts);");
+                break;
+        }
+
+        return sb.ToString().TrimEnd() + Environment.NewLine;
+    }
+
+    private static string JsFlags(RegexOptionsEx o)
+    {
+        var f = new StringBuilder();
+        // Prefer global for replace-all style snippets when Matches/Replace
+        if (o.HasFlag(RegexOptionsEx.IgnoreCase)) f.Append('i');
+        if (o.HasFlag(RegexOptionsEx.Multiline)) f.Append('m');
+        if (o.HasFlag(RegexOptionsEx.Singleline)) f.Append('s');
+        // Always add g for replace/matches friendliness is handled per-op; base may include g
+        if (f.Length == 0)
+            return "g"; // default global for practical snippets
+        if (!f.ToString().Contains('g'))
+            f.Append('g');
+        return f.ToString();
+    }
+
+    private static string GeneratePython(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("import re");
+        sb.AppendLine();
+        sb.AppendLine($"pattern = {PyString(pattern)}");
+        sb.AppendLine($"subject = {PyString(subject)}");
+        var flags = PyFlags(options);
+        if (flags != "0")
+            sb.AppendLine($"flags = {flags}");
+        else
+            sb.AppendLine("flags = 0");
+        sb.AppendLine("regex = re.compile(pattern, flags)");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("found = regex.search(subject) is not None");
+                sb.AppendLine("print(found)");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("match = regex.search(subject)");
+                sb.AppendLine("if match:");
+                sb.AppendLine("    print(match.group(0))");
+                sb.AppendLine("    # Groups: match.group(1), match.group('name')");
+                break;
+            case CodegenOperation.Matches:
+                sb.AppendLine("for match in regex.finditer(subject):");
+                sb.AppendLine("    print(match.start(), match.group(0))");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"replacement = {PyString(replacement)}");
+                sb.AppendLine("result = regex.sub(replacement, subject)");
+                sb.AppendLine("print(result)");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("parts = regex.split(subject)");
+                sb.AppendLine("print(parts)");
+                break;
+        }
+
+        return sb.ToString().TrimEnd() + Environment.NewLine;
+    }
+
+    private static string PyFlags(RegexOptionsEx o)
+    {
+        var parts = new List<string>();
+        if (o.HasFlag(RegexOptionsEx.IgnoreCase)) parts.Add("re.IGNORECASE");
+        if (o.HasFlag(RegexOptionsEx.Multiline)) parts.Add("re.MULTILINE");
+        if (o.HasFlag(RegexOptionsEx.Singleline)) parts.Add("re.DOTALL");
+        if (o.HasFlag(RegexOptionsEx.IgnorePatternWhitespace)) parts.Add("re.VERBOSE");
+        return parts.Count == 0 ? "0" : string.Join(" | ", parts);
+    }
+
+    private static string GeneratePhp(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var delimPattern = PhpRegexLiteral(pattern, options);
+        var sb = new StringBuilder();
+        sb.AppendLine($"$pattern = {PhpString(delimPattern)};");
+        sb.AppendLine($"$subject = {PhpString(subject)};");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("$found = preg_match($pattern, $subject) === 1;");
+                sb.AppendLine("var_export($found);");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("if (preg_match($pattern, $subject, $matches)) {");
+                sb.AppendLine("    echo $matches[0], PHP_EOL;");
+                sb.AppendLine("    // Groups: $matches[1], $matches['name']");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Matches:
+                sb.AppendLine("if (preg_match_all($pattern, $subject, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {");
+                sb.AppendLine("    foreach ($matches as $match) {");
+                sb.AppendLine("        echo $match[0][1], ': ', $match[0][0], PHP_EOL;");
+                sb.AppendLine("    }");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"$replacement = {PhpString(replacement)};");
+                sb.AppendLine("$result = preg_replace($pattern, $replacement, $subject);");
+                sb.AppendLine("echo $result, PHP_EOL;");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("$parts = preg_split($pattern, $subject);");
+                sb.AppendLine("print_r($parts);");
+                break;
+        }
+
+        return sb.ToString().TrimEnd() + Environment.NewLine;
+    }
+
+    private static string PhpRegexLiteral(string pattern, RegexOptionsEx options)
+    {
+        var flags = new StringBuilder();
+        if (options.HasFlag(RegexOptionsEx.IgnoreCase)) flags.Append('i');
+        if (options.HasFlag(RegexOptionsEx.Multiline)) flags.Append('m');
+        if (options.HasFlag(RegexOptionsEx.Singleline)) flags.Append('s');
+        if (options.HasFlag(RegexOptionsEx.IgnorePatternWhitespace)) flags.Append('x');
+        // Use ~ delimiter to reduce escaping of /
+        var body = pattern.Replace("~", "\\~", StringComparison.Ordinal);
+        return $"~{body}~{flags}";
+    }
+
+    private static string GenerateJava(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("import java.util.regex.Matcher;");
+        sb.AppendLine("import java.util.regex.Pattern;");
+        sb.AppendLine();
+        sb.AppendLine($"String pattern = {JavaString(pattern)};");
+        sb.AppendLine($"String subject = {JavaString(subject)};");
+        var flags = JavaFlags(options);
+        if (flags != "0")
+            sb.AppendLine($"Pattern regex = Pattern.compile(pattern, {flags});");
+        else
+            sb.AppendLine("Pattern regex = Pattern.compile(pattern);");
+        sb.AppendLine("Matcher matcher = regex.matcher(subject);");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("boolean found = matcher.find();");
+                sb.AppendLine("System.out.println(found);");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("if (matcher.find()) {");
+                sb.AppendLine("    System.out.println(matcher.group());");
+                sb.AppendLine("    // Groups: matcher.group(1), matcher.group(\"name\")");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Matches:
+                sb.AppendLine("while (matcher.find()) {");
+                sb.AppendLine("    System.out.println(matcher.start() + \": \" + matcher.group());");
+                sb.AppendLine("}");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"String replacement = {JavaString(replacement)};");
+                sb.AppendLine("String result = matcher.replaceAll(replacement);");
+                sb.AppendLine("System.out.println(result);");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("String[] parts = regex.split(subject);");
+                sb.AppendLine("for (String part : parts) {");
+                sb.AppendLine("    System.out.println(part);");
+                sb.AppendLine("}");
+                break;
+        }
+
+        return sb.ToString().TrimEnd() + Environment.NewLine;
+    }
+
+    private static string JavaFlags(RegexOptionsEx o)
+    {
+        var parts = new List<string>();
+        if (o.HasFlag(RegexOptionsEx.IgnoreCase)) parts.Add("Pattern.CASE_INSENSITIVE");
+        if (o.HasFlag(RegexOptionsEx.Multiline)) parts.Add("Pattern.MULTILINE");
+        if (o.HasFlag(RegexOptionsEx.Singleline)) parts.Add("Pattern.DOTALL");
+        if (o.HasFlag(RegexOptionsEx.IgnorePatternWhitespace)) parts.Add("Pattern.COMMENTS");
+        return parts.Count == 0 ? "0" : string.Join(" | ", parts);
+    }
+
+    private static string GenerateGo(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("package main");
+        sb.AppendLine();
+        sb.AppendLine("import (");
+        sb.AppendLine("\t\"fmt\"");
+        sb.AppendLine("\t\"regexp\"");
+        sb.AppendLine(")");
+        sb.AppendLine();
+        sb.AppendLine("func main() {");
+        // Go RE2 doesn't support lookaround; still emit pattern as-is with note.
+        var goPattern = GoInlineFlags(pattern, options);
+        sb.AppendLine($"\tpattern := {GoString(goPattern)}");
+        sb.AppendLine($"\tsubject := {GoString(subject)}");
+        sb.AppendLine("\tregex := regexp.MustCompile(pattern)");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("\tfound := regex.MatchString(subject)");
+                sb.AppendLine("\tfmt.Println(found)");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("\tmatch := regex.FindStringSubmatch(subject)");
+                sb.AppendLine("\tif match != nil {");
+                sb.AppendLine("\t\tfmt.Println(match[0])");
+                sb.AppendLine("\t\t// Groups: match[1], …");
+                sb.AppendLine("\t}");
+                break;
+            case CodegenOperation.Matches:
+                sb.AppendLine("\tfor _, match := range regex.FindAllString(subject, -1) {");
+                sb.AppendLine("\t\tfmt.Println(match)");
+                sb.AppendLine("\t}");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"\treplacement := {GoString(replacement)}");
+                sb.AppendLine("\tresult := regex.ReplaceAllString(subject, replacement)");
+                sb.AppendLine("\tfmt.Println(result)");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("\tparts := regex.Split(subject, -1)");
+                sb.AppendLine("\tfor _, part := range parts {");
+                sb.AppendLine("\t\tfmt.Println(part)");
+                sb.AppendLine("\t}");
+                break;
+        }
+
+        sb.AppendLine("}");
+        sb.AppendLine();
+        sb.AppendLine("// Note: Go's regexp package uses RE2 syntax (no lookbehind/backreferences).");
+        return sb.ToString();
+    }
+
+    private static string GoInlineFlags(string pattern, RegexOptionsEx o)
+    {
+        var flags = new StringBuilder();
+        if (o.HasFlag(RegexOptionsEx.IgnoreCase)) flags.Append('i');
+        if (o.HasFlag(RegexOptionsEx.Multiline)) flags.Append('m');
+        if (o.HasFlag(RegexOptionsEx.Singleline)) flags.Append('s');
+        if (flags.Length == 0)
+            return pattern;
+        return $"(?{flags}){pattern}";
+    }
+
+    private static string GenerateRust(
+        CodegenOperation op, string pattern, string subject, string replacement, RegexOptionsEx options)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("// Cargo.toml: regex = \"1\"");
+        sb.AppendLine("use regex::Regex;");
+        sb.AppendLine();
+        sb.AppendLine("fn main() {");
+        var rustPattern = RustInlineFlags(pattern, options);
+        sb.AppendLine($"    let pattern = {RustString(rustPattern)};");
+        sb.AppendLine($"    let subject = {RustString(subject)};");
+        sb.AppendLine("    let regex = Regex::new(pattern).expect(\"invalid pattern\");");
+        sb.AppendLine();
+
+        switch (op)
+        {
+            case CodegenOperation.IsMatch:
+                sb.AppendLine("    let found = regex.is_match(subject);");
+                sb.AppendLine("    println!(\"{found}\");");
+                break;
+            case CodegenOperation.Match:
+                sb.AppendLine("    if let Some(m) = regex.find(subject) {");
+                sb.AppendLine("        println!(\"{}\", m.as_str());");
+                sb.AppendLine("    }");
+                break;
+            case CodegenOperation.Matches:
+                sb.AppendLine("    for m in regex.find_iter(subject) {");
+                sb.AppendLine("        println!(\"{}: {}\", m.start(), m.as_str());");
+                sb.AppendLine("    }");
+                break;
+            case CodegenOperation.Replace:
+                sb.AppendLine($"    let replacement = {RustString(replacement)};");
+                sb.AppendLine("    let result = regex.replace_all(subject, replacement);");
+                sb.AppendLine("    println!(\"{result}\");");
+                break;
+            case CodegenOperation.Split:
+                sb.AppendLine("    for part in regex.split(subject) {");
+                sb.AppendLine("        println!(\"{part}\");");
+                sb.AppendLine("    }");
+                break;
+        }
+
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+
+    private static string RustInlineFlags(string pattern, RegexOptionsEx o)
+    {
+        var flags = new StringBuilder();
+        if (o.HasFlag(RegexOptionsEx.IgnoreCase)) flags.Append('i');
+        if (o.HasFlag(RegexOptionsEx.Multiline)) flags.Append('m');
+        if (o.HasFlag(RegexOptionsEx.Singleline)) flags.Append('s');
+        if (o.HasFlag(RegexOptionsEx.IgnorePatternWhitespace)) flags.Append('x');
+        if (flags.Length == 0)
+            return pattern;
+        return $"(?{flags}){pattern}";
+    }
+
+    // ── string literals ──────────────────────────────────────────────
+
+    private static string CsString(string s) =>
+        "@\"" + s.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+
+    private static string JsString(string s)
+    {
+        var escaped = s
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+
+    private static string PyString(string s)
+    {
+        // Prefer triple-quoted raw when possible
+        if (!s.Contains("'''", StringComparison.Ordinal) && (s.Contains('\\') || s.Contains('\n')))
+            return "r'''" + s + "'''";
+        var escaped = s
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+
+    private static string PhpString(string s)
+    {
+        var escaped = s
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("$", "\\$", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+
+    private static string JavaString(string s)
+    {
+        var escaped = s
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+
+    private static string GoString(string s)
+    {
+        var escaped = s
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+
+    private static string RustString(string s)
+    {
+        // raw string if no " inside
+        if (!s.Contains('"') && !s.Contains('\r'))
+            return "r#\"" + s + "\"#";
+        var escaped = s
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\t", "\\t", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
+    }
+}

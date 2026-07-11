@@ -1,6 +1,8 @@
 using RegexCraft.App.ViewModels;
 using RegexCraft.Core.Analysis;
+using RegexCraft.Core.Codegen;
 using RegexCraft.Core.Tokens;
+using RegexCraft.Core.Library;
 using RegexCraft.Engines;
 using RegexCraft.Core.Flavors;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,6 +13,29 @@ namespace RegexCraft.Tests.ViewModels;
 [Category("ViewModels")]
 public sealed class MainWindowViewModelTests
 {
+    private string _tempDir = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _tempDir = Path.Combine(Path.GetTempPath(), "regexcraft-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_tempDir);
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        try
+        {
+            if (Directory.Exists(_tempDir))
+                Directory.Delete(_tempDir, recursive: true);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
     private MainWindowViewModel CreateVm()
     {
         var engines = EngineFactory.CreateDefaultEngines();
@@ -19,6 +44,9 @@ public sealed class MainWindowViewModelTests
             flavors,
             new TokenCatalog(),
             new RegexAnalysisService(),
+            new CodeGenerationService(),
+            new JsonLibraryStore(Path.Combine(_tempDir, "library.json")),
+            new JsonHistoryStore(Path.Combine(_tempDir, "history.json")),
             NullLogger<MainWindowViewModel>.Instance);
     }
 
@@ -30,10 +58,10 @@ public sealed class MainWindowViewModelTests
         Assert.That(vm.SelectedFlavor, Is.Not.Null);
         Assert.That(vm.TokenCategories, Is.Not.Empty);
         Assert.That(vm.AnalysisNodes, Is.Not.Empty);
-        // Sample pattern should produce matches
         Assert.That(vm.Matches, Is.Not.Empty);
         Assert.That(vm.CurrentHighlights, Is.Not.Empty);
         Assert.That(vm.HasError, Is.False);
+        Assert.That(vm.CodeLanguages.Count, Is.GreaterThanOrEqualTo(6));
     }
 
     [Test]
@@ -58,7 +86,6 @@ public sealed class MainWindowViewModelTests
         var vm = CreateVm();
         var pcre = vm.Flavors.First(f => f.Id == "pcre2");
         vm.SelectedFlavor = pcre;
-        // Force immediate test (debounce is async; call command)
         vm.RunTestCommand.Execute(null);
         Assert.That(vm.StatusEngine, Does.Contain("PCRE2").Or.Contain("pcre2").IgnoreCase);
         Assert.That(vm.HasError, Is.False);
@@ -87,6 +114,31 @@ public sealed class MainWindowViewModelTests
         vm.RunReplaceCommand.Execute(null);
         Assert.That(vm.ReplacePreview, Is.EqualTo("a#b#"));
         Assert.That(vm.ReplaceCount, Is.EqualTo(2));
+        Assert.That(vm.ReplaceHighlights, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Replace_NamedBackreference_Works()
+    {
+        var vm = CreateVm();
+        vm.Pattern = @"(?<word>\w+)";
+        vm.Subject = "hello world";
+        vm.Replacement = "[${word}]";
+        vm.RunReplaceCommand.Execute(null);
+        Assert.That(vm.ReplacePreview, Is.EqualTo("[hello] [world]"));
+        Assert.That(vm.ReplaceCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Split_Works()
+    {
+        var vm = CreateVm();
+        vm.Pattern = @",\s*";
+        vm.Subject = "a, b, c";
+        vm.SelectRightTabCommand.Execute("Split");
+        vm.RunSplitCommand.Execute(null);
+        Assert.That(vm.SplitPartCount, Is.EqualTo(3));
+        Assert.That(vm.SplitParts.Select(p => p.Value), Is.EqualTo(new[] { "a", "b", "c" }));
     }
 
     [Test]
@@ -101,12 +153,21 @@ public sealed class MainWindowViewModelTests
     }
 
     [Test]
-    public void SelectRightTab_Replace_SetsFlags()
+    public void SelectRightTab_SetsFlags()
     {
         var vm = CreateVm();
         vm.SelectRightTabCommand.Execute("Replace");
         Assert.That(vm.IsReplaceTab, Is.True);
         Assert.That(vm.IsTestTab, Is.False);
+        Assert.That(vm.IsReplaceMode, Is.True);
+
+        vm.SelectRightTabCommand.Execute("Split");
+        Assert.That(vm.IsSplitTab, Is.True);
+
+        vm.SelectRightTabCommand.Execute("Generate");
+        Assert.That(vm.IsGenerateTab, Is.True);
+        Assert.That(vm.GeneratedCode, Is.Not.Empty);
+
         vm.SelectRightTabCommand.Execute("Test");
         Assert.That(vm.IsTestTab, Is.True);
     }
@@ -122,6 +183,81 @@ public sealed class MainWindowViewModelTests
             Assert.That(vm.HasError, Is.False, flavor.Id);
             Assert.That(vm.CurrentHighlights, Is.Not.Empty, flavor.Id);
             Assert.That(vm.Matches.All(m => m.Groups.Count > 0), Is.True, flavor.Id);
+        }
+    }
+
+    [Test]
+    public void Library_SaveAndLoad()
+    {
+        var vm = CreateVm();
+        vm.Pattern = @"\d+";
+        vm.Subject = "x1y";
+        vm.LibraryName = "Digits";
+        vm.LibraryDescription = "Find digits";
+        vm.SaveToLibraryCommand.Execute(null);
+
+        Assert.That(vm.LibraryItems, Has.Count.EqualTo(1));
+        Assert.That(vm.LibraryItems[0].Name, Is.EqualTo("Digits"));
+
+        vm.Pattern = "changed";
+        vm.LoadLibraryItemCommand.Execute(vm.LibraryItems[0]);
+        Assert.That(vm.Pattern, Is.EqualTo(@"\d+"));
+        Assert.That(vm.Subject, Is.EqualTo("x1y"));
+    }
+
+    [Test]
+    public void Library_Delete()
+    {
+        var vm = CreateVm();
+        vm.Pattern = "abc";
+        vm.LibraryName = "Temp";
+        vm.SaveToLibraryCommand.Execute(null);
+        Assert.That(vm.LibraryItems, Has.Count.EqualTo(1));
+        vm.DeleteLibraryItemCommand.Execute(vm.LibraryItems[0]);
+        Assert.That(vm.LibraryItems, Is.Empty);
+    }
+
+    [Test]
+    public void History_RecordsAfterTest()
+    {
+        var vm = CreateVm();
+        vm.Pattern = @"hello\d+";
+        vm.Subject = "hello1";
+        vm.RunTestCommand.Execute(null);
+        Assert.That(vm.HistoryItems.Any(h => h.Entry.Pattern == @"hello\d+"), Is.True);
+    }
+
+    [Test]
+    public void GenerateCode_ProducesOutputForLanguages()
+    {
+        var vm = CreateVm();
+        vm.SelectRightTabCommand.Execute("Generate");
+        foreach (var lang in vm.CodeLanguages.ToList())
+        {
+            vm.SelectedCodeLanguage = lang;
+            Assert.That(vm.GeneratedCode, Is.Not.Empty, lang.Id);
+            Assert.That(vm.GeneratedCode, Does.Not.Contain("Unsupported"), lang.Id);
+        }
+    }
+
+    [Test]
+    public void Analysis_HasNestedChildrenForSample()
+    {
+        var vm = CreateVm();
+        // Sample email pattern should produce named groups as nested nodes
+        var flat = Flatten(vm.AnalysisNodes);
+        Assert.That(flat.Any(n => n.Kind == AnalysisNodeKind.NamedGroup), Is.True);
+        Assert.That(flat.Any(n => n.HasRange), Is.True);
+        Assert.That(flat.Count(n => n.Children.Count > 0 || n.Kind != AnalysisNodeKind.Root), Is.GreaterThan(1));
+    }
+
+    private static IEnumerable<AnalysisNode> Flatten(IEnumerable<AnalysisNode> nodes)
+    {
+        foreach (var n in nodes)
+        {
+            yield return n;
+            foreach (var c in Flatten(n.Children))
+                yield return c;
         }
     }
 }

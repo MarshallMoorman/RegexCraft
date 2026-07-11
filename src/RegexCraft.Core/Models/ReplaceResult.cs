@@ -12,6 +12,12 @@ public sealed class ReplaceResult
     public TimeSpan Duration { get; init; }
     public string EngineId { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Ranges in the replacement result string that were produced by substitutions.
+    /// Used for highlighting changed parts in the Replace preview.
+    /// </summary>
+    public IReadOnlyList<ReplacementSpan> ReplacementSpans { get; init; } = Array.Empty<ReplacementSpan>();
+
     public static ReplaceResult Failed(string engineId, string errorMessage, TimeSpan duration = default) =>
         new()
         {
@@ -21,13 +27,15 @@ public sealed class ReplaceResult
             ReplacementCount = 0,
             Duration = duration,
             EngineId = engineId,
+            ReplacementSpans = Array.Empty<ReplacementSpan>(),
         };
 
     public static ReplaceResult FromResult(
         string engineId,
         string result,
         int replacementCount,
-        TimeSpan duration) =>
+        TimeSpan duration,
+        IReadOnlyList<ReplacementSpan>? replacementSpans = null) =>
         new()
         {
             Success = true,
@@ -35,5 +43,14 @@ public sealed class ReplaceResult
             ReplacementCount = replacementCount,
             Duration = duration,
             EngineId = engineId,
+            ReplacementSpans = replacementSpans ?? Array.Empty<ReplacementSpan>(),
         };
+}
+
+/// <summary>A span in the replace result that came from a substitution.</summary>
+public sealed class ReplacementSpan
+{
+    public int Index { get; init; }
+    public int Length { get; init; }
+    public int MatchIndex { get; init; }
 }

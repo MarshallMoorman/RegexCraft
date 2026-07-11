@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Threading;
 using AvaloniaEdit;
@@ -13,28 +15,78 @@ namespace RegexCraft.App.Views;
 public partial class MainWindow : Window
 {
     private readonly MatchHighlightTransformer _subjectHighlighter = new();
+    private readonly MatchHighlightTransformer _replaceHighlighter = new();
     private MainWindowViewModel? _vm;
     private bool _syncingPattern;
     private bool _syncingSubject;
+    private bool _syncingReplace;
 
     public MainWindow()
     {
         InitializeComponent();
+        Title = "RegexCraft";
         Opened += OnOpened;
         DataContextChanged += OnDataContextChanged;
+        KeyDown += OnKeyDown;
     }
 
     private void OnOpened(object? sender, EventArgs e)
     {
+        Title = "RegexCraft";
         ConfigurePatternEditor();
         ConfigureSubjectEditor();
+        ConfigureReplaceEditor();
         ApplyThemeBrushes();
         ActualThemeVariantChanged += (_, _) =>
         {
             ApplyThemeBrushes();
             ApplyRegexHighlighting();
             RefreshSubjectHighlights();
+            RefreshReplaceHighlights();
         };
+
+        // Expand analysis tree items by default when the tree loads
+        ExpandAnalysisTree();
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (_vm is null) return;
+
+        var ctrl = e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
+
+        if (ctrl && e.Key == Key.Enter)
+        {
+            if (_vm.IsReplaceTab)
+                _vm.RunReplaceCommand.Execute(null);
+            else if (_vm.IsSplitTab)
+                _vm.RunSplitCommand.Execute(null);
+            else
+                _vm.RunTestCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        if (ctrl && e.Key == Key.D1)
+        {
+            _vm.SelectRightTabCommand.Execute("Test");
+            e.Handled = true;
+        }
+        else if (ctrl && e.Key == Key.D2)
+        {
+            _vm.SelectRightTabCommand.Execute("Replace");
+            e.Handled = true;
+        }
+        else if (ctrl && e.Key == Key.D3)
+        {
+            _vm.SelectRightTabCommand.Execute("Split");
+            e.Handled = true;
+        }
+        else if (ctrl && e.Key == Key.D4)
+        {
+            _vm.SelectRightTabCommand.Execute("Generate");
+            e.Handled = true;
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -43,6 +95,9 @@ public partial class MainWindow : Window
         {
             _vm.InsertTokenRequested -= OnInsertTokenRequested;
             _vm.HighlightsChanged -= OnHighlightsChanged;
+            _vm.SelectPatternRangeRequested -= OnSelectPatternRange;
+            _vm.SelectSubjectRangeRequested -= OnSelectSubjectRange;
+            _vm.CopyTextRequested -= OnCopyText;
             _vm.PropertyChanged -= OnVmPropertyChanged;
         }
 
@@ -50,11 +105,14 @@ public partial class MainWindow : Window
         if (_vm is null)
             return;
 
+        Title = "RegexCraft";
         _vm.InsertTokenRequested += OnInsertTokenRequested;
         _vm.HighlightsChanged += OnHighlightsChanged;
+        _vm.SelectPatternRangeRequested += OnSelectPatternRange;
+        _vm.SelectSubjectRangeRequested += OnSelectSubjectRange;
+        _vm.CopyTextRequested += OnCopyText;
         _vm.PropertyChanged += OnVmPropertyChanged;
 
-        // Initial text
         if (PatternEditor.Document is not null && PatternEditor.Document.Text != _vm.Pattern)
         {
             _syncingPattern = true;
@@ -69,7 +127,18 @@ public partial class MainWindow : Window
             _syncingSubject = false;
         }
 
+        if (ReplacePreviewEditor is not null
+            && ReplacePreviewEditor.Document is not null
+            && ReplacePreviewEditor.Document.Text != _vm.ReplacePreview)
+        {
+            _syncingReplace = true;
+            ReplacePreviewEditor.Document.Text = _vm.ReplacePreview ?? string.Empty;
+            _syncingReplace = false;
+        }
+
         RefreshSubjectHighlights();
+        RefreshReplaceHighlights();
+        ExpandAnalysisTree();
     }
 
     private void ConfigurePatternEditor()
@@ -136,6 +205,18 @@ public partial class MainWindow : Window
         };
     }
 
+    private void ConfigureReplaceEditor()
+    {
+        if (ReplacePreviewEditor is null)
+            return;
+
+        ReplacePreviewEditor.Document ??= new TextDocument();
+        ReplacePreviewEditor.Options.EnableHyperlinks = false;
+        ReplacePreviewEditor.Options.EnableEmailHyperlinks = false;
+        ReplacePreviewEditor.IsReadOnly = true;
+        ReplacePreviewEditor.TextArea.TextView.LineTransformers.Add(_replaceHighlighter);
+    }
+
     private void ApplyRegexHighlighting()
     {
         var dark = ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
@@ -144,25 +225,35 @@ public partial class MainWindow : Window
 
     private void ApplyThemeBrushes()
     {
-        _subjectHighlighter.SetBrushes(
-            TryBrush("MatchHighlightBrush") ?? new SolidColorBrush(Color.Parse("#FFF3B0")),
-            TryBrush("GroupHighlight0Brush") ?? new SolidColorBrush(Color.Parse("#A5D6FF")),
-            TryBrush("GroupHighlight1Brush") ?? new SolidColorBrush(Color.Parse("#B4F0C8")),
-            TryBrush("GroupHighlight2Brush") ?? new SolidColorBrush(Color.Parse("#FFC9B8")),
-            TryBrush("GroupHighlight3Brush") ?? new SolidColorBrush(Color.Parse("#E0C3FC")));
+        var match = TryBrush("MatchHighlightBrush") ?? new SolidColorBrush(Color.Parse("#FFF3B0"));
+        var g0 = TryBrush("GroupHighlight0Brush") ?? new SolidColorBrush(Color.Parse("#A5D6FF"));
+        var g1 = TryBrush("GroupHighlight1Brush") ?? new SolidColorBrush(Color.Parse("#B4F0C8"));
+        var g2 = TryBrush("GroupHighlight2Brush") ?? new SolidColorBrush(Color.Parse("#FFC9B8"));
+        var g3 = TryBrush("GroupHighlight3Brush") ?? new SolidColorBrush(Color.Parse("#E0C3FC"));
 
-        // Editor surfaces from theme
+        _subjectHighlighter.SetBrushes(match, g0, g1, g2, g3);
+        _replaceHighlighter.SetBrushes(match, g0, g1, g2, g3);
+
         var bg = TryBrush("BackgroundSecondaryBrush");
         var fg = TryBrush("TextPrimaryBrush");
         if (bg is not null)
         {
             PatternEditor.Background = bg;
             SubjectEditor.Background = bg;
+            if (ReplacePreviewEditor is not null)
+                ReplacePreviewEditor.Background = bg;
+            if (GenerateCodeEditor is not null)
+                GenerateCodeEditor.Background = bg;
         }
+
         if (fg is not null)
         {
             PatternEditor.Foreground = fg;
             SubjectEditor.Foreground = fg;
+            if (ReplacePreviewEditor is not null)
+                ReplacePreviewEditor.Foreground = fg;
+            if (GenerateCodeEditor is not null)
+                GenerateCodeEditor.Foreground = fg;
         }
     }
 
@@ -176,7 +267,6 @@ public partial class MainWindow : Window
 
     private void OnInsertTokenRequested(string insertText, int? caretInInsert)
     {
-        // Prefer real editor caret over VM snapshot
         EditorBinding.InsertText(PatternEditor, insertText, caretInInsert);
         if (_vm is not null)
         {
@@ -186,11 +276,53 @@ public partial class MainWindow : Window
             _vm.PatternSelectionLength = 0;
             _syncingPattern = false;
         }
+
+        PatternEditor.Focus();
+        PatternEditor.TextArea.Focus();
     }
 
     private void OnHighlightsChanged()
     {
-        Dispatcher.UIThread.Post(RefreshSubjectHighlights);
+        Dispatcher.UIThread.Post(() =>
+        {
+            RefreshSubjectHighlights();
+            RefreshReplaceHighlights();
+        });
+    }
+
+    private void OnSelectPatternRange(int start, int length)
+    {
+        if (PatternEditor.Document is null) return;
+        var len = PatternEditor.Document.TextLength;
+        start = Math.Clamp(start, 0, len);
+        length = Math.Clamp(length, 0, len - start);
+        PatternEditor.Select(start, length);
+        PatternEditor.TextArea.Caret.Offset = start + length;
+        PatternEditor.TextArea.Focus();
+    }
+
+    private void OnSelectSubjectRange(int start, int length)
+    {
+        if (SubjectEditor.Document is null) return;
+        var len = SubjectEditor.Document.TextLength;
+        start = Math.Clamp(start, 0, len);
+        length = Math.Clamp(length, 0, len - start);
+        SubjectEditor.Select(start, length);
+        SubjectEditor.TextArea.Focus();
+    }
+
+    private async void OnCopyText(string text)
+    {
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is not null)
+                await clipboard.SetTextAsync(text);
+        }
+        catch
+        {
+            // Clipboard may be unavailable in headless/tests
+        }
     }
 
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -208,6 +340,8 @@ public partial class MainWindow : Window
                 PatternEditor.CaretOffset = Math.Clamp(caret, 0, PatternEditor.Document.TextLength);
                 _syncingPattern = false;
             }
+
+            ExpandAnalysisTree();
         }
 
         if (e.PropertyName == nameof(MainWindowViewModel.Subject) && !_syncingSubject)
@@ -219,6 +353,30 @@ public partial class MainWindow : Window
                 _syncingSubject = false;
             }
         }
+
+        if (e.PropertyName == nameof(MainWindowViewModel.ReplacePreview) && !_syncingReplace)
+        {
+            if (ReplacePreviewEditor?.Document is not null
+                && ReplacePreviewEditor.Document.Text != _vm.ReplacePreview)
+            {
+                _syncingReplace = true;
+                ReplacePreviewEditor.Document.Text = _vm.ReplacePreview ?? string.Empty;
+                _syncingReplace = false;
+                RefreshReplaceHighlights();
+            }
+        }
+
+        if (e.PropertyName == nameof(MainWindowViewModel.GeneratedCode)
+            && GenerateCodeEditor?.Document is not null)
+        {
+            GenerateCodeEditor.Document.Text = _vm.GeneratedCode ?? string.Empty;
+        }
+
+        if (e.PropertyName is nameof(MainWindowViewModel.AnalysisNodes)
+            or nameof(MainWindowViewModel.AnalysisRoot))
+        {
+            ExpandAnalysisTree();
+        }
     }
 
     private void RefreshSubjectHighlights()
@@ -227,5 +385,34 @@ public partial class MainWindow : Window
             return;
         _subjectHighlighter.SetSpans(_vm.CurrentHighlights);
         SubjectEditor.TextArea.TextView.Redraw();
+    }
+
+    private void RefreshReplaceHighlights()
+    {
+        if (_vm is null || ReplacePreviewEditor is null)
+            return;
+        _replaceHighlighter.SetSpans(_vm.ReplaceHighlights);
+        ReplacePreviewEditor.TextArea.TextView.Redraw();
+    }
+
+    private void ExpandAnalysisTree()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (AnalysisTree is null) return;
+            ExpandTreeViewItems(AnalysisTree);
+        }, DispatcherPriority.Background);
+    }
+
+    private static void ExpandTreeViewItems(ItemsControl itemsControl)
+    {
+        foreach (var item in itemsControl.GetRealizedContainers())
+        {
+            if (item is TreeViewItem tvi)
+            {
+                tvi.IsExpanded = true;
+                ExpandTreeViewItems(tvi);
+            }
+        }
     }
 }

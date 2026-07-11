@@ -2,9 +2,9 @@
 
 ## What is RegexCraft?
 
-RegexCraft is a modern, cross-platform regular expression tool built for **multiple regex flavors**. Test the same pattern under **.NET** and **PCRE2** with consistent results, professional highlighting, and a live analysis tree.
+RegexCraft is a modern, cross-platform regular expression tool built for **multiple regex flavors**. Test the same pattern under **.NET** and **PCRE2** with consistent results, professional highlighting, replace/split previews, code generation, and a live analysis tree.
 
-**Current version**: 0.2.0 (Phase 1)
+**Current version**: 0.3.0 (Phase 2)
 
 ## Requirements
 
@@ -21,18 +21,31 @@ dotnet run --project src/RegexCraft.App
 
 ## First five minutes
 
-1. Launch the app — a sample email pattern and subject are pre-filled.
+1. Launch the app — the window title is **RegexCraft**, with a sample email pattern pre-filled.
 2. Watch matches highlight in the **Subject** editor and expand groups on the right.
-3. Switch the flavor from **.NET** to **PCRE2** and confirm results still update.
-4. Search the **Tokens** list for `named` and click to insert a named group.
-5. Edit the pattern and watch the **Analysis Tree** update live.
-6. Open **Replace**, set a replacement like `[$1]`, and preview the output.
-7. Cycle **Theme** (System → Light → Dark) to verify the blue theme.
+3. Expand the **Analysis Tree** — named groups and sequence parts should appear nested; click a node to select it in the editor.
+4. Switch the flavor from **.NET** to **PCRE2** and confirm results still update.
+5. Search **Tokens** for `named` and click to insert a named group.
+6. Open **Replace**, set a replacement like `[$1]` or `[${user}]`, and preview highlighted substitutions.
+7. Try **Split** with a pattern like `,\s*` on a comma-separated subject.
+8. Open **Generate**, pick a language, and **Copy code**.
+9. Save the pattern under **Library**, or restore it later from **History**.
+10. Cycle **Theme** (System → Light → Dark) to verify the blue theme.
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Enter (⌘+Enter on macOS) | Run current mode (Test / Replace / Split) |
+| Ctrl+1 … Ctrl+4 | Switch Test / Replace / Split / Generate |
 
 ## Learn more
 
-- [Testing regular expressions](testing-regexes.md) — Test panel, highlighting, groups, engines  
-- [Architecture](../development/architecture.md) — engines, flavors, UI structure  
+- [Testing regular expressions](testing-regexes.md)  
+- [Replacing](replacing.md)  
+- [Generating code](generating-code.md)  
+- [Library and History](library-and-history.md)  
+- [Architecture](../development/architecture.md)  
 
 ## Logs
 

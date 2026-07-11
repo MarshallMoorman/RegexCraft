@@ -11,20 +11,87 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="RegexCraft"
-        Width="1280" Height="820"
-        MinWidth="960" MinHeight="640"
+        Width="1320" Height="860"
+        MinWidth="1000" MinHeight="680"
         Background="{DynamicResource BackgroundPrimaryBrush}">
 
   <Design.DataContext>
     <vm:MainWindowViewModel />
   </Design.DataContext>
 
+  <Window.Styles>
+    <!-- Mode / tab buttons -->
+    <Style Selector="Button.modeTab">
+      <Setter Property="Padding" Value="14,7" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.modeTab:pointerover">
+      <Setter Property="Background" Value="{DynamicResource PrimaryBlueHoverBrush}" />
+    </Style>
+    <Style Selector="Button.modeTab.active">
+      <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryBlueBrush}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="Button.panelTab">
+      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.panelTab:pointerover">
+      <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryBlueBrush}" />
+    </Style>
+    <Style Selector="Button.panelTab.active">
+      <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryBlueBrush}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="Button.ghost">
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryBlueBrush}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.ghost:pointerover">
+      <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
+    </Style>
+
+    <Style Selector="Button.primaryAction">
+      <Setter Property="Padding" Value="12,6" />
+      <Setter Property="Background" Value="{DynamicResource PrimaryBlueBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextOnPrimaryBrush}" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.primaryAction:pointerover">
+      <Setter Property="Background" Value="{DynamicResource PrimaryBlueHoverBrush}" />
+    </Style>
+
+    <!-- Analysis tree starts expanded for usefulness -->
+    <Style Selector="TreeViewItem">
+      <Setter Property="IsExpanded" Value="True" />
+    </Style>
+  </Window.Styles>
+
   <DockPanel>
 
     <!-- Toolbar -->
     <Border DockPanel.Dock="Top"
             Background="{DynamicResource PrimaryBlueBrush}"
-            Padding="12,8">
+            Padding="14,10">
       <Grid ColumnDefinitions="Auto,*,Auto">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
           <TextBlock Text="RegexCraft"
@@ -45,17 +112,18 @@
 
         <StackPanel Grid.Column="1"
                     Orientation="Horizontal"
-                    Spacing="8"
+                    Spacing="6"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
           <TextBlock Text="Flavor"
                      Foreground="{DynamicResource TextOnPrimaryBrush}"
                      Opacity="0.9"
                      VerticalAlignment="Center"
-                     FontSize="12" />
+                     FontSize="12"
+                     Margin="0,0,2,0" />
           <ComboBox ItemsSource="{Binding Flavors}"
                     SelectedItem="{Binding SelectedFlavor}"
-                    MinWidth="120"
+                    MinWidth="110"
                     ToolTip.Tip="Select regex flavor / engine (.NET or PCRE2)">
             <ComboBox.ItemTemplate>
               <DataTemplate>
@@ -64,27 +132,38 @@
             </ComboBox.ItemTemplate>
           </ComboBox>
 
-          <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="4,0" />
+          <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="6,0" />
 
           <Button Content="Match"
-                  Command="{Binding RunTestCommand}"
-                  Padding="12,6"
-                  ToolTip.Tip="Run match test now (also updates live while typing)" />
+                  Classes="modeTab"
+                  Classes.active="{Binding IsMatchMode}"
+                  Command="{Binding SelectRightTabCommand}"
+                  CommandParameter="Test"
+                  ToolTip.Tip="Match mode (Ctrl+1). Live updates while typing. Ctrl+Enter to run." />
           <Button Content="Replace"
+                  Classes="modeTab"
+                  Classes.active="{Binding IsReplaceMode}"
                   Command="{Binding SelectRightTabCommand}"
                   CommandParameter="Replace"
-                  Padding="12,6"
-                  ToolTip.Tip="Open Replace panel" />
+                  ToolTip.Tip="Replace mode (Ctrl+2) with live preview" />
           <Button Content="Split"
-                  Padding="12,6"
-                  IsEnabled="False"
-                  ToolTip.Tip="Split — planned for a later phase" />
+                  Classes="modeTab"
+                  Classes.active="{Binding IsSplitMode}"
+                  Command="{Binding SelectRightTabCommand}"
+                  CommandParameter="Split"
+                  ToolTip.Tip="Split mode (Ctrl+3)" />
+          <Button Content="Generate"
+                  Classes="modeTab"
+                  Classes.active="{Binding IsGenerateMode}"
+                  Command="{Binding SelectRightTabCommand}"
+                  CommandParameter="Generate"
+                  ToolTip.Tip="Code generation (Ctrl+4)" />
 
-          <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="4,0" />
+          <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="6,0" />
 
           <Button Content="Options"
+                  Classes="modeTab"
                   Command="{Binding ToggleOptionsCommand}"
-                  Padding="12,6"
                   ToolTip.Tip="Show or hide regex options" />
         </StackPanel>
 
@@ -109,18 +188,32 @@
             Background="{DynamicResource BackgroundSecondaryBrush}"
             BorderBrush="{DynamicResource BorderSubtleBrush}"
             BorderThickness="0,0,0,1"
-            Padding="16,8">
-      <StackPanel Orientation="Horizontal" Spacing="16">
-        <TextBlock Text="Options"
-                   FontWeight="SemiBold"
-                   Foreground="{DynamicResource TextPrimaryBrush}"
-                   VerticalAlignment="Center" />
-        <CheckBox Content="Ignore case" IsChecked="{Binding IgnoreCase}" ToolTip.Tip="Case-insensitive matching" />
-        <CheckBox Content="Multiline" IsChecked="{Binding Multiline}" ToolTip.Tip="^ and $ match line boundaries" />
-        <CheckBox Content="Singleline" IsChecked="{Binding Singleline}" ToolTip.Tip="Dot matches newline" />
-        <CheckBox Content="Explicit capture" IsChecked="{Binding ExplicitCapture}" ToolTip.Tip="Only named groups capture" />
-        <CheckBox Content="Ignore pattern whitespace" IsChecked="{Binding IgnorePatternWhitespace}" ToolTip.Tip="Ignore unescaped whitespace in the pattern" />
-      </StackPanel>
+            Padding="14,8">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+          <TextBlock Text="Options"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextPrimaryBrush}"
+                     VerticalAlignment="Center"
+                     FontSize="12" />
+          <CheckBox Content="Ignore case" IsChecked="{Binding IgnoreCase}" FontSize="12"
+                    ToolTip.Tip="Case-insensitive matching" />
+          <CheckBox Content="Multiline" IsChecked="{Binding Multiline}" FontSize="12"
+                    ToolTip.Tip="^ and $ match line boundaries" />
+          <CheckBox Content="Singleline" IsChecked="{Binding Singleline}" FontSize="12"
+                    ToolTip.Tip="Dot matches newline" />
+          <CheckBox Content="Explicit capture" IsChecked="{Binding ExplicitCapture}" FontSize="12"
+                    ToolTip.Tip="Only named groups capture" />
+          <CheckBox Content="Ignore pattern whitespace" IsChecked="{Binding IgnorePatternWhitespace}" FontSize="12"
+                    ToolTip.Tip="Ignore unescaped whitespace in the pattern" />
+        </StackPanel>
+        <TextBlock Grid.Column="2"
+                   Text="{Binding OptionsContextLabel}"
+                   FontSize="11"
+                   Foreground="{DynamicResource TextMutedBrush}"
+                   VerticalAlignment="Center"
+                   Margin="16,0,0,0" />
+      </Grid>
     </Border>
 
     <!-- Status bar -->
@@ -128,114 +221,258 @@
             Background="{DynamicResource BackgroundTertiaryBrush}"
             BorderBrush="{DynamicResource BorderSubtleBrush}"
             BorderThickness="0,1,0,0"
-            Padding="12,6">
-      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+            Padding="14,7">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
         <TextBlock Text="{Binding StatusText}"
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    FontSize="12"
-                   TextTrimming="CharacterEllipsis" />
+                   TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center" />
         <TextBlock Grid.Column="1"
                    Text="{Binding StatusEngine}"
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    FontSize="12"
-                   Margin="16,0,0,0" />
+                   Margin="16,0,0,0"
+                   VerticalAlignment="Center" />
         <TextBlock Grid.Column="2"
                    Text="{Binding StatusMatches}"
                    Foreground="{DynamicResource TextPrimaryBrush}"
                    FontWeight="SemiBold"
                    FontSize="12"
-                   Margin="16,0,0,0" />
+                   Margin="16,0,0,0"
+                   VerticalAlignment="Center" />
         <TextBlock Grid.Column="3"
                    Text="{Binding StatusTime}"
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    FontSize="12"
-                   Margin="16,0,0,0" />
+                   Margin="16,0,0,0"
+                   VerticalAlignment="Center" />
+        <TextBlock Grid.Column="4"
+                   Text="  ·  Ctrl+Enter run · Ctrl+1–4 modes"
+                   Foreground="{DynamicResource TextMutedBrush}"
+                   FontSize="11"
+                   Margin="12,0,0,0"
+                   VerticalAlignment="Center" />
       </Grid>
     </Border>
 
     <!-- Body -->
-    <Grid ColumnDefinitions="260,*,380">
+    <Grid ColumnDefinitions="280,*,400" Margin="0">
 
-      <!-- LEFT: Tokens -->
+      <!-- LEFT: Tokens / Library / History -->
       <Border Grid.Column="0"
               Background="{DynamicResource BackgroundSecondaryBrush}"
               BorderBrush="{DynamicResource BorderSubtleBrush}"
               BorderThickness="0,0,1,0">
         <DockPanel>
-          <TextBlock DockPanel.Dock="Top"
-                     Text="Tokens"
-                     FontWeight="SemiBold"
-                     FontSize="13"
-                     Margin="12,12,12,6"
-                     Foreground="{DynamicResource TextPrimaryBrush}" />
-          <TextBox DockPanel.Dock="Top"
-                   Text="{Binding TokenSearch}"
-                   PlaceholderText="Search tokens…"
-                   Margin="12,0,12,8"
-                   ToolTip.Tip="Filter by label, insert text, or category" />
+          <StackPanel DockPanel.Dock="Top"
+                      Orientation="Horizontal"
+                      Background="{DynamicResource BackgroundTertiaryBrush}"
+                      Margin="0,0,0,0">
+            <Button Content="Tokens"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsTokensTab}"
+                    Command="{Binding SelectLeftTabCommand}"
+                    CommandParameter="Tokens" />
+            <Button Content="Library"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsLibraryTab}"
+                    Command="{Binding SelectLeftTabCommand}"
+                    CommandParameter="Library" />
+            <Button Content="History"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsHistoryTab}"
+                    Command="{Binding SelectLeftTabCommand}"
+                    CommandParameter="History" />
+          </StackPanel>
 
-          <Border DockPanel.Dock="Bottom"
-                  BorderBrush="{DynamicResource BorderSubtleBrush}"
-                  BorderThickness="0,1,0,0"
-                  Padding="12,10">
-            <StackPanel Spacing="4">
-              <TextBlock Text="Library" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-              <TextBlock Text="Saved patterns — Phase 2+" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
-              <TextBlock Text="History" FontWeight="SemiBold" FontSize="12" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondaryBrush}" />
-              <TextBlock Text="Recent patterns — Phase 2+" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
-            </StackPanel>
-          </Border>
+          <!-- TOKENS -->
+          <DockPanel IsVisible="{Binding IsTokensTab}">
+            <TextBox DockPanel.Dock="Top"
+                     Text="{Binding TokenSearch}"
+                     PlaceholderText="Search tokens…"
+                     Margin="12,10,12,8"
+                     ToolTip.Tip="Filter by label, insert text, or category" />
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+              <ItemsControl ItemsSource="{Binding TokenCategories}" Margin="6,0,6,10">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TokenCategoryViewModel">
+                    <Expander IsExpanded="True" Margin="2,2">
+                      <Expander.Header>
+                        <TextBlock Text="{Binding Name}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource PrimaryBlueBrush}" />
+                      </Expander.Header>
+                      <ItemsControl ItemsSource="{Binding Tokens}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:TokenItemViewModel">
+                            <Button HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="8,5"
+                                    Margin="0,1"
+                                    CornerRadius="4"
+                                    Opacity="{Binding Opacity}"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InsertTokenCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip.Tip="{Binding Tooltip}">
+                              <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{Binding Label}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontSize="12"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding InsertText}"
+                                           FontFamily="Menlo, Consolas, monospace"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="8,0,0,0" />
+                              </Grid>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Expander>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
 
-          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding TokenCategories}" Margin="4,0,4,8">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:TokenCategoryViewModel">
-                  <Expander IsExpanded="True" Margin="2,2">
-                    <Expander.Header>
+          <!-- LIBRARY -->
+          <DockPanel IsVisible="{Binding IsLibraryTab}" Margin="0">
+            <Border DockPanel.Dock="Top" Padding="12,10" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Save current pattern"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <TextBox Text="{Binding LibraryName}"
+                         PlaceholderText="Name"
+                         FontSize="12" />
+                <TextBox Text="{Binding LibraryDescription}"
+                         PlaceholderText="Description (optional)"
+                         FontSize="12" />
+                <Button Content="Save to Library"
+                        Classes="primaryAction"
+                        Command="{Binding SaveToLibraryCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <TextBox DockPanel.Dock="Top"
+                     Text="{Binding LibrarySearch}"
+                     PlaceholderText="Search library…"
+                     Margin="12,8,12,6"
+                     FontSize="12" />
+            <TextBlock DockPanel.Dock="Top"
+                       IsVisible="{Binding !LibraryItems.Count}"
+                       Text="No saved patterns yet. Save your first pattern above."
+                       TextWrapping="Wrap"
+                       Margin="14,8"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextMutedBrush}" />
+            <ListBox ItemsSource="{Binding LibraryItems}"
+                     Margin="8,0,8,8"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:LibraryItemViewModel">
+                  <Border Padding="8,8" Margin="0,2" CornerRadius="4"
+                          Background="{DynamicResource BackgroundTertiaryBrush}">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
                       <TextBlock Text="{Binding Name}"
                                  FontWeight="SemiBold"
                                  FontSize="12"
-                                 Foreground="{DynamicResource PrimaryBlueBrush}" />
-                    </Expander.Header>
-                    <ItemsControl ItemsSource="{Binding Tokens}">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:TokenItemViewModel">
-                          <Button HorizontalAlignment="Stretch"
-                                  HorizontalContentAlignment="Left"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  Padding="8,5"
-                                  Margin="0,1"
-                                  CornerRadius="4"
-                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).InsertTokenCommand}"
-                                  CommandParameter="{Binding}"
-                                  ToolTip.Tip="{Binding Tooltip}">
-                            <Grid ColumnDefinitions="*,Auto">
-                              <TextBlock Text="{Binding Label}"
-                                         Foreground="{DynamicResource TextPrimaryBrush}"
-                                         FontSize="12"
-                                         TextTrimming="CharacterEllipsis" />
-                              <TextBlock Grid.Column="1"
-                                         Text="{Binding InsertText}"
-                                         FontFamily="Menlo, Consolas, monospace"
-                                         FontSize="11"
-                                         Foreground="{DynamicResource TextSecondaryBrush}"
-                                         Margin="8,0,0,0" />
-                            </Grid>
-                          </Button>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </Expander>
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Row="1"
+                                 Text="{Binding Subtitle}"
+                                 FontSize="11"
+                                 FontFamily="Menlo, Consolas, monospace"
+                                 Foreground="{DynamicResource TextSecondaryBrush}"
+                                 TextTrimming="CharacterEllipsis"
+                                 Margin="0,2,0,0" />
+                      <StackPanel Grid.Column="1" Grid.RowSpan="2"
+                                  Orientation="Horizontal" Spacing="2"
+                                  VerticalAlignment="Center">
+                        <Button Content="Load"
+                                Classes="ghost"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadLibraryItemCommand}"
+                                CommandParameter="{Binding}" />
+                        <Button Content="✕"
+                                Classes="ghost"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteLibraryItemCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Delete" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
                 </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </DockPanel>
+
+          <!-- HISTORY -->
+          <DockPanel IsVisible="{Binding IsHistoryTab}">
+            <Border DockPanel.Dock="Top" Padding="12,8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Recent patterns"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Content="Clear"
+                        Classes="ghost"
+                        Command="{Binding ClearHistoryCommand}" />
+              </Grid>
+            </Border>
+            <TextBlock DockPanel.Dock="Top"
+                       IsVisible="{Binding !HistoryItems.Count}"
+                       Text="History is empty. Patterns appear here after you test them."
+                       TextWrapping="Wrap"
+                       Margin="14,4"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextMutedBrush}" />
+            <ListBox ItemsSource="{Binding HistoryItems}"
+                     Margin="8,0,8,8"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:HistoryItemViewModel">
+                  <Button HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Left"
+                          Background="{DynamicResource BackgroundTertiaryBrush}"
+                          BorderThickness="0"
+                          Padding="10,8"
+                          Margin="0,2"
+                          CornerRadius="4"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
+                          CommandParameter="{Binding}"
+                          ToolTip.Tip="Click to restore">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Label}"
+                                 FontFamily="Menlo, Consolas, monospace"
+                                 FontSize="12"
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                 TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding When}"
+                                 FontSize="10"
+                                 Foreground="{DynamicResource TextMutedBrush}" />
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </DockPanel>
         </DockPanel>
       </Border>
 
       <!-- CENTER: Editor + Analysis -->
-      <Grid Grid.Column="1" RowDefinitions="*,4,200">
+      <Grid Grid.Column="1" RowDefinitions="*,4,220">
         <Border Grid.Row="0" Background="{DynamicResource BackgroundSecondaryBrush}">
           <DockPanel>
             <Border DockPanel.Dock="Top"
@@ -243,10 +480,18 @@
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1"
                     Background="{DynamicResource BackgroundTertiaryBrush}">
-              <TextBlock Text="Regex Editor"
-                         FontWeight="SemiBold"
-                         FontSize="12"
-                         Foreground="{DynamicResource TextPrimaryBrush}" />
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Regex Editor"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1"
+                        Content="Copy pattern"
+                        Classes="ghost"
+                        Command="{Binding CopyPatternCommand}"
+                        ToolTip.Tip="Copy the full pattern to the clipboard" />
+              </Grid>
             </Border>
             <ae:TextEditor x:Name="PatternEditor"
                            FontFamily="Menlo, Consolas, monospace"
@@ -267,22 +512,23 @@
                 BorderThickness="0,1,0,0">
           <DockPanel>
             <Border DockPanel.Dock="Top"
-                    Padding="12,6"
+                    Padding="12,7"
                     Background="{DynamicResource BackgroundTertiaryBrush}"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1">
-              <TextBlock Text="Analysis Tree (live)"
+              <TextBlock Text="Analysis Tree — click a node to select it in the editor"
                          FontWeight="SemiBold"
                          FontSize="12"
                          Foreground="{DynamicResource TextPrimaryBrush}" />
             </Border>
             <TreeView x:Name="AnalysisTree"
                       ItemsSource="{Binding AnalysisNodes}"
-                      Margin="4"
+                      SelectedItem="{Binding SelectedAnalysisNode}"
+                      Margin="6"
                       Background="Transparent">
               <TreeView.ItemTemplate>
                 <TreeDataTemplate ItemsSource="{Binding Children}" DataType="analysis:AnalysisNode">
-                  <StackPanel Orientation="Horizontal" Spacing="6">
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
                     <TextBlock Text="{Binding Title}"
                                FontWeight="SemiBold"
                                FontSize="12"
@@ -290,13 +536,15 @@
                     <TextBlock Text="{Binding Detail}"
                                FontSize="11"
                                Foreground="{DynamicResource TextSecondaryBrush}"
-                               TextTrimming="CharacterEllipsis" />
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="280" />
                     <TextBlock Text="{Binding PatternFragment}"
                                FontFamily="Menlo, Consolas, monospace"
                                FontSize="11"
                                Foreground="{DynamicResource PrimaryBlueBrush}"
-                               Opacity="0.9"
-                               TextTrimming="CharacterEllipsis" />
+                               Opacity="0.95"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="220" />
                   </StackPanel>
                 </TreeDataTemplate>
               </TreeView.ItemTemplate>
@@ -305,7 +553,7 @@
         </Border>
       </Grid>
 
-      <!-- RIGHT: Test / Replace -->
+      <!-- RIGHT: Test / Replace / Split / Generate -->
       <Border Grid.Column="2"
               Background="{DynamicResource BackgroundSecondaryBrush}"
               BorderBrush="{DynamicResource BorderSubtleBrush}"
@@ -315,16 +563,29 @@
                       Orientation="Horizontal"
                       Background="{DynamicResource BackgroundTertiaryBrush}">
             <Button Content="Test"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsTestTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Test"
-                    Padding="16,8"
                     ToolTip.Tip="Match testing with highlighting" />
             <Button Content="Replace"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsReplaceTab}"
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Replace"
-                    Padding="16,8"
-                    ToolTip.Tip="Replace preview" />
-            <Button Content="Split" IsEnabled="False" Padding="16,8" ToolTip.Tip="Coming later" />
+                    ToolTip.Tip="Replace preview with highlighting" />
+            <Button Content="Split"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsSplitTab}"
+                    Command="{Binding SelectRightTabCommand}"
+                    CommandParameter="Split"
+                    ToolTip.Tip="Split subject on matches" />
+            <Button Content="Generate"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsGenerateTab}"
+                    Command="{Binding SelectRightTabCommand}"
+                    CommandParameter="Generate"
+                    ToolTip.Tip="Generate code snippets" />
           </StackPanel>
 
           <Border DockPanel.Dock="Top"
@@ -341,14 +602,14 @@
 
           <!-- TEST -->
           <Grid IsVisible="{Binding IsTestTab}" RowDefinitions="Auto,*,Auto,*" Margin="0">
-            <Border Grid.Row="0" Padding="10,8,10,4">
+            <Border Grid.Row="0" Padding="12,10,12,4">
               <TextBlock Text="Subject"
                          FontWeight="SemiBold"
                          FontSize="12"
                          Foreground="{DynamicResource TextPrimaryBrush}" />
             </Border>
             <Border Grid.Row="1"
-                    Margin="8,0,8,8"
+                    Margin="10,0,10,8"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
@@ -361,7 +622,7 @@
                              VerticalScrollBarVisibility="Auto" />
             </Border>
 
-            <Border Grid.Row="2" Padding="10,4">
+            <Border Grid.Row="2" Padding="12,4,12,4">
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="Matches &amp; Groups"
                            FontWeight="SemiBold"
@@ -370,66 +631,97 @@
                            VerticalAlignment="Center" />
                 <Button Grid.Column="1"
                         Content="Run"
+                        Classes="primaryAction"
                         Command="{Binding RunTestCommand}"
-                        Padding="12,4"
-                        ToolTip.Tip="Run match immediately" />
+                        ToolTip.Tip="Run match immediately (Ctrl+Enter)" />
               </Grid>
             </Border>
 
-            <ListBox Grid.Row="3"
-                     ItemsSource="{Binding Matches}"
-                     Margin="8,0,8,8"
-                     Background="{DynamicResource BackgroundTertiaryBrush}"
-                     BorderBrush="{DynamicResource BorderSubtleBrush}"
-                     BorderThickness="1">
-              <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:MatchItemViewModel">
-                  <Expander IsExpanded="{Binding IsExpanded}" Margin="2">
-                    <Expander.Header>
-                      <TextBlock Text="{Binding Summary}"
-                                 FontFamily="Menlo, Consolas, monospace"
-                                 FontSize="12"
-                                 Foreground="{DynamicResource TextPrimaryBrush}"
-                                 TextTrimming="CharacterEllipsis" />
-                    </Expander.Header>
-                    <ItemsControl ItemsSource="{Binding Groups}" Margin="12,4,4,4">
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:GroupItemViewModel">
-                          <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
-                            <Border Background="{DynamicResource AccentBlueSoftBrush}"
-                                    CornerRadius="3"
-                                    Padding="6,2"
-                                    Margin="0,0,8,0">
-                              <TextBlock Text="{Binding DisplayName}"
+            <Panel Grid.Row="3" Margin="10,0,10,10">
+              <TextBlock Text="{Binding EmptyMatchesMessage}"
+                         IsVisible="{Binding !Matches.Count}"
+                         TextWrapping="Wrap"
+                         FontSize="12"
+                         Foreground="{DynamicResource TextMutedBrush}"
+                         Margin="8,12"
+                         HorizontalAlignment="Center" />
+              <ListBox ItemsSource="{Binding Matches}"
+                       Background="{DynamicResource BackgroundTertiaryBrush}"
+                       BorderBrush="{DynamicResource BorderSubtleBrush}"
+                       BorderThickness="1"
+                       CornerRadius="4">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:MatchItemViewModel">
+                    <Expander IsExpanded="{Binding IsExpanded}" Margin="2">
+                      <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="{Binding Summary}"
+                                     FontFamily="Menlo, Consolas, monospace"
+                                     FontSize="12"
+                                     Foreground="{DynamicResource TextPrimaryBrush}"
+                                     TextTrimming="CharacterEllipsis"
+                                     VerticalAlignment="Center" />
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <Button Content="Copy"
+                                    Classes="ghost"
+                                    Command="{Binding CopyMatchCommand}"
+                                    ToolTip.Tip="Copy match value" />
+                            <Button Content="Go"
+                                    Classes="ghost"
+                                    Command="{Binding SelectMatchCommand}"
+                                    ToolTip.Tip="Select match in subject" />
+                          </StackPanel>
+                        </Grid>
+                      </Expander.Header>
+                      <ItemsControl ItemsSource="{Binding Groups}" Margin="8,4,4,4">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:GroupItemViewModel">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,3">
+                              <Border Background="{DynamicResource AccentBlueSoftBrush}"
+                                      CornerRadius="3"
+                                      Padding="6,2"
+                                      Margin="0,0,8,0">
+                                <TextBlock Text="{Binding DisplayName}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryBlueBrush}" />
+                              </Border>
+                              <TextBlock Grid.Column="1"
+                                         Text="{Binding DisplayValue}"
+                                         FontFamily="Menlo, Consolas, monospace"
+                                         FontSize="12"
+                                         Foreground="{DynamicResource TextPrimaryBrush}"
+                                         TextTrimming="CharacterEllipsis"
+                                         VerticalAlignment="Center" />
+                              <TextBlock Grid.Column="2"
+                                         Text="{Binding RangeText}"
                                          FontSize="11"
-                                         FontWeight="SemiBold"
-                                         Foreground="{DynamicResource PrimaryBlueBrush}" />
-                            </Border>
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding DisplayValue}"
-                                       FontFamily="Menlo, Consolas, monospace"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="2"
-                                       Text="{Binding RangeText}"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource TextMutedBrush}"
-                                       Margin="8,0,0,0" />
-                          </Grid>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </Expander>
-                </DataTemplate>
-              </ListBox.ItemTemplate>
-            </ListBox>
+                                         Foreground="{DynamicResource TextMutedBrush}"
+                                         Margin="8,0"
+                                         VerticalAlignment="Center" />
+                              <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                <Button Content="Copy"
+                                        Classes="ghost"
+                                        Command="{Binding CopyGroupCommand}" />
+                                <Button Content="Go"
+                                        Classes="ghost"
+                                        Command="{Binding SelectGroupCommand}" />
+                              </StackPanel>
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Expander>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Panel>
           </Grid>
 
           <!-- REPLACE -->
-          <Grid IsVisible="{Binding IsReplaceTab}" RowDefinitions="Auto,Auto,Auto,*,Auto,*" Margin="8">
+          <Grid IsVisible="{Binding IsReplaceTab}" RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="10">
             <TextBlock Grid.Row="0"
-                       Text="Replacement"
+                       Text="Replacement pattern"
                        FontWeight="SemiBold"
                        FontSize="12"
                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -437,33 +729,39 @@
             <TextBox Grid.Row="1"
                      Text="{Binding Replacement}"
                      FontFamily="Menlo, Consolas, monospace"
-                     PlaceholderText="$1 or ${name}…"
-                     Margin="0,0,0,8" />
-            <Button Grid.Row="2"
-                    Content="Preview Replace"
-                    Command="{Binding RunReplaceCommand}"
-                    HorizontalAlignment="Right"
-                    Padding="12,6"
-                    Margin="0,0,0,8"
-                    ToolTip.Tip="Run replace with the current engine" />
-            <TextBlock Grid.Row="3"
-                       Text="Preview"
-                       FontWeight="SemiBold"
+                     PlaceholderText="$1  ${name}  $&amp;  \1 …"
+                     Margin="0,0,0,8"
+                     ToolTip.Tip="Supports $1, ${name}, $&amp;, and engine-specific backreferences" />
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+              <TextBlock Text="Preview"
+                         FontWeight="SemiBold"
+                         FontSize="12"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         VerticalAlignment="Center" />
+              <Button Grid.Column="1"
+                      Content="Preview Replace"
+                      Classes="primaryAction"
+                      Command="{Binding RunReplaceCommand}"
+                      ToolTip.Tip="Run replace (Ctrl+Enter)" />
+            </Grid>
+            <Border Grid.Row="3"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    ClipToBounds="True"
+                    MinHeight="180">
+              <ae:TextEditor x:Name="ReplacePreviewEditor"
+                             FontFamily="Menlo, Consolas, monospace"
+                             FontSize="13"
+                             WordWrap="True"
+                             IsReadOnly="True"
+                             HorizontalScrollBarVisibility="Disabled"
+                             VerticalScrollBarVisibility="Auto" />
+            </Border>
+            <TextBlock Grid.Row="4"
+                       Margin="0,10,0,0"
                        FontSize="12"
-                       Foreground="{DynamicResource TextPrimaryBrush}"
-                       VerticalAlignment="Top"
-                       Margin="0,0,0,4" />
-            <TextBox Grid.Row="4"
-                     Text="{Binding ReplacePreview}"
-                     IsReadOnly="True"
-                     AcceptsReturn="True"
-                     TextWrapping="Wrap"
-                     FontFamily="Menlo, Consolas, monospace"
-                     MinHeight="160"
-                     Background="{DynamicResource BackgroundTertiaryBrush}" />
-            <TextBlock Grid.Row="5"
-                       Margin="0,8,0,0"
-                       FontSize="11"
+                       FontWeight="SemiBold"
                        Foreground="{DynamicResource TextSecondaryBrush}">
               <TextBlock.Text>
                 <MultiBinding StringFormat="Replacements: {0}">
@@ -471,6 +769,109 @@
                 </MultiBinding>
               </TextBlock.Text>
             </TextBlock>
+          </Grid>
+
+          <!-- SPLIT -->
+          <Grid IsVisible="{Binding IsSplitTab}" RowDefinitions="Auto,Auto,*" Margin="10">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,4,0,8">
+              <CheckBox Content="Remove empty entries"
+                        IsChecked="{Binding RemoveEmptySplitEntries}"
+                        FontSize="12"
+                        VerticalAlignment="Center" />
+              <Button Grid.Column="1"
+                      Content="Run Split"
+                      Classes="primaryAction"
+                      Command="{Binding RunSplitCommand}"
+                      ToolTip.Tip="Split subject on pattern matches (Ctrl+Enter)" />
+            </Grid>
+            <TextBlock Grid.Row="1"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="0,0,0,8">
+              <TextBlock.Text>
+                <MultiBinding StringFormat="Parts: {0}">
+                  <Binding Path="SplitPartCount" />
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+            <ListBox Grid.Row="2"
+                     ItemsSource="{Binding SplitParts}"
+                     Background="{DynamicResource BackgroundTertiaryBrush}"
+                     BorderBrush="{DynamicResource BorderSubtleBrush}"
+                     BorderThickness="1"
+                     CornerRadius="4">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:SplitPartViewModel">
+                  <Border Padding="10,8" Margin="2">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Summary}"
+                                 FontFamily="Menlo, Consolas, monospace"
+                                 FontSize="12"
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
+
+          <!-- GENERATE -->
+          <Grid IsVisible="{Binding IsGenerateTab}" RowDefinitions="Auto,Auto,Auto,*" Margin="10">
+            <TextBlock Grid.Row="0"
+                       Text="Code Generation"
+                       FontWeight="SemiBold"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       Margin="0,4,0,10" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,8">
+              <StackPanel Margin="0,0,6,0" Spacing="4">
+                <TextBlock Text="Language" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <ComboBox ItemsSource="{Binding CodeLanguages}"
+                          SelectedItem="{Binding SelectedCodeLanguage}"
+                          HorizontalAlignment="Stretch">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="4">
+                <TextBlock Text="Operation" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <ComboBox ItemsSource="{Binding CodegenOperations}"
+                          SelectedItem="{Binding SelectedCodegenOperation}"
+                          HorizontalAlignment="Stretch">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+            <Button Grid.Row="2"
+                    Content="Copy code"
+                    Classes="primaryAction"
+                    Command="{Binding CopyGeneratedCodeCommand}"
+                    HorizontalAlignment="Right"
+                    Margin="0,0,0,8"
+                    ToolTip.Tip="Copy generated snippet to clipboard" />
+            <Border Grid.Row="3"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    ClipToBounds="True">
+              <ae:TextEditor x:Name="GenerateCodeEditor"
+                             FontFamily="Menlo, Consolas, monospace"
+                             FontSize="12"
+                             IsReadOnly="True"
+                             WordWrap="False"
+                             ShowLineNumbers="True"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto" />
+            </Border>
           </Grid>
         </DockPanel>
       </Border>
