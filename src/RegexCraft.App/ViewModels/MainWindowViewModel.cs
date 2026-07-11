@@ -12,9 +12,11 @@ using RegexCraft.Core.Codegen;
 using RegexCraft.Core.Editing;
 using RegexCraft.Core.Engines;
 using RegexCraft.Core.Flavors;
+using RegexCraft.Core.Grep;
 using RegexCraft.Core.Highlighting;
 using RegexCraft.Core.Library;
 using RegexCraft.Core.Models;
+using RegexCraft.Core.Settings;
 using RegexCraft.Core.Tokens;
 
 namespace RegexCraft.App.ViewModels;
@@ -27,12 +29,17 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ICodeGenerationService _codeGeneration;
     private readonly ILibraryStore _libraryStore;
     private readonly IHistoryStore _historyStore;
+    private readonly IGrepService _grepService;
+    private readonly ISettingsStore _settingsStore;
     private readonly ILogger<MainWindowViewModel> _logger;
     private CancellationTokenSource? _debounceCts;
+    private CancellationTokenSource? _grepCts;
     private const int DebounceMs = 200;
     private string? _lastHistoryPattern;
     private string? _lastHistorySubject;
     private string? _lastHistoryFlavor;
+    private AppSettings _settings;
+    private bool _suppressSettingsSave;
 
     public MainWindowViewModel(
         IFlavorService flavorService,
@@ -41,6 +48,8 @@ public partial class MainWindowViewModel : ViewModelBase
         ICodeGenerationService codeGeneration,
         ILibraryStore libraryStore,
         IHistoryStore historyStore,
+        IGrepService grepService,
+        ISettingsStore settingsStore,
         ILogger<MainWindowViewModel> logger)
     {
         _flavorService = flavorService;
@@ -49,10 +58,14 @@ public partial class MainWindowViewModel : ViewModelBase
         _codeGeneration = codeGeneration;
         _libraryStore = libraryStore;
         _historyStore = historyStore;
+        _grepService = grepService;
+        _settingsStore = settingsStore;
         _logger = logger;
+        _settings = _settingsStore.Load();
 
         Flavors = new ObservableCollection<FlavorDefinition>(_flavorService.GetFlavors());
-        SelectedFlavor = Flavors.FirstOrDefault();
+        SelectedFlavor = Flavors.FirstOrDefault(f => f.Id == _settings.FlavorId)
+            ?? Flavors.FirstOrDefault();
 
         foreach (var lang in _codeGeneration.SupportedLanguages)
             CodeLanguages.Add(new CodeLanguageItem(lang.Id(), lang.DisplayName()));
@@ -66,19 +79,39 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedCodegenOperation = CodegenOperations.FirstOrDefault(o => o.Id == "Matches")
             ?? CodegenOperations.FirstOrDefault();
 
+        _suppressSettingsSave = true;
         Pattern = @"(?<user>\w+)@(?<domain>\w+\.\w+)";
         Subject = "Contact us at support@regexcraft.com or hello@example.org today.\nAlso try: admin@regexcraft.com";
         Replacement = "[$1]";
+        IgnoreCase = _settings.IgnoreCase;
+        Multiline = _settings.Multiline;
+        Singleline = _settings.Singleline;
+        ExplicitCapture = _settings.ExplicitCapture;
+        IgnorePatternWhitespace = _settings.IgnorePatternWhitespace;
+        OptionsExpanded = _settings.OptionsExpanded;
+        GrepRootPath = _settings.LastGrepRoot ?? string.Empty;
+        GrepIncludeGlobs = string.IsNullOrWhiteSpace(_settings.GrepIncludeGlobs)
+            ? "*.cs;*.json;*.md;*.txt;*.xml;*.yml;*.yaml;*.html;*.js;*.ts;*.py"
+            : _settings.GrepIncludeGlobs;
+        GrepExcludeGlobs = string.IsNullOrWhiteSpace(_settings.GrepExcludeGlobs)
+            ? "bin/**;obj/**;.git/**;node_modules/**;*.dll;*.exe;*.pdb"
+            : _settings.GrepExcludeGlobs;
+        GrepRecursive = _settings.GrepRecursive;
+        GrepCreateBackup = _settings.GrepCreateBackup;
+        ApplyThemeFromSettings(_settings.Theme);
+        _suppressSettingsSave = false;
 
         VersionText = $"v{GetAppVersion()}";
+        WindowTitle = "RegexCraft";
         RebuildTokenList();
         RefreshLibrary();
         RefreshHistory();
         RefreshAnalysis();
         RunTestCore(live: false);
         RefreshGeneratedCode();
+        UpdateOptionsEnabledState();
 
-        _logger.LogInformation("MainWindowViewModel initialized (Phase 2)");
+        _logger.LogInformation("MainWindowViewModel initialized (Phase 3 / GREP)");
     }
 
     /// <summary>Design-time / test convenience constructor.</summary>
@@ -90,24 +123,21 @@ public partial class MainWindowViewModel : ViewModelBase
             new CodeGenerationService(),
             new JsonLibraryStore(Path.Combine(Path.GetTempPath(), "regexcraft-design-library.json")),
             new JsonHistoryStore(Path.Combine(Path.GetTempPath(), "regexcraft-design-history.json")),
+            new GrepService(),
+            new JsonSettingsStore(Path.Combine(Path.GetTempPath(), "regexcraft-design-settings.json")),
             NullLogger<MainWindowViewModel>.Instance)
     {
     }
 
-    /// <summary>Raised when a token should be inserted into the pattern editor.</summary>
     public event Action<string, int?>? InsertTokenRequested;
-
-    /// <summary>Raised when match / replace / split highlights should be applied.</summary>
     public event Action? HighlightsChanged;
-
-    /// <summary>Raised to select a range in the pattern editor (analysis tree click).</summary>
     public event Action<int, int>? SelectPatternRangeRequested;
-
-    /// <summary>Raised to select a range in the subject editor (match/group click).</summary>
     public event Action<int, int>? SelectSubjectRangeRequested;
-
-    /// <summary>Raised when text should be copied to the clipboard (view handles platform clipboard).</summary>
     public event Action<string>? CopyTextRequested;
+    /// <summary>Raised when GREP preview text/highlights change (view updates preview editor).</summary>
+    public event Action? GrepPreviewChanged;
+    /// <summary>Raised to request a folder picker; view sets GrepRootPath.</summary>
+    public event Func<Task<string?>>? PickFolderRequested;
 
     public ObservableCollection<FlavorDefinition> Flavors { get; }
     public ObservableCollection<TokenCategoryViewModel> TokenCategories { get; } = new();
@@ -118,11 +148,17 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<SplitPartViewModel> SplitParts { get; } = new();
     public ObservableCollection<CodeLanguageItem> CodeLanguages { get; } = new();
     public ObservableCollection<CodegenOperationItem> CodegenOperations { get; } = new();
+    public ObservableCollection<GrepHitViewModel> GrepHits { get; } = new();
     public string VersionText { get; }
 
     public IReadOnlyList<HighlightSpan> CurrentHighlights { get; private set; } = Array.Empty<HighlightSpan>();
     public IReadOnlyList<HighlightSpan> ReplaceHighlights { get; private set; } = Array.Empty<HighlightSpan>();
+    public IReadOnlyList<HighlightSpan> GrepPreviewHighlights { get; private set; } = Array.Empty<HighlightSpan>();
 
+    /// <summary>Window geometry from settings (applied by the view on open).</summary>
+    public AppSettings LoadedSettings => _settings;
+
+    [ObservableProperty] private string _windowTitle = "RegexCraft";
     [ObservableProperty] private FlavorDefinition? _selectedFlavor;
     [ObservableProperty] private string _pattern = string.Empty;
     [ObservableProperty] private string _subject = string.Empty;
@@ -139,6 +175,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _singleline;
     [ObservableProperty] private bool _explicitCapture;
     [ObservableProperty] private bool _ignorePatternWhitespace;
+    [ObservableProperty] private bool _explicitCaptureEnabled = true;
     [ObservableProperty] private string _themeLabel = "System";
     [ObservableProperty] private string _tokenSearch = string.Empty;
     [ObservableProperty] private string _rightPanelTab = "Test";
@@ -146,6 +183,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isReplaceTab;
     [ObservableProperty] private bool _isSplitTab;
     [ObservableProperty] private bool _isGenerateTab;
+    [ObservableProperty] private bool _isGrepTab;
     [ObservableProperty] private AnalysisNode? _analysisRoot;
     [ObservableProperty] private AnalysisNode? _selectedAnalysisNode;
     [ObservableProperty] private int _patternCaretOffset;
@@ -160,6 +198,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _librarySearch = string.Empty;
     [ObservableProperty] private string _libraryName = string.Empty;
     [ObservableProperty] private string _libraryDescription = string.Empty;
+    [ObservableProperty] private string _libraryCategory = string.Empty;
+    [ObservableProperty] private string _libraryTags = string.Empty;
+    [ObservableProperty] private bool _libraryFavorite;
     [ObservableProperty] private string _emptyMatchesMessage = "No matches yet — enter a pattern and subject.";
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private string _leftSidebarTab = "Tokens";
@@ -171,7 +212,26 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isReplaceMode;
     [ObservableProperty] private bool _isSplitMode;
     [ObservableProperty] private bool _isGenerateMode;
+    [ObservableProperty] private bool _isGrepMode;
     [ObservableProperty] private string _optionsContextLabel = "Options apply to the current engine";
+    [ObservableProperty] private string _shortcutHints = "Ctrl+Enter run · Ctrl+1–5 modes";
+
+    // GREP
+    [ObservableProperty] private string _grepRootPath = string.Empty;
+    [ObservableProperty] private string _grepIncludeGlobs = "*.cs;*.json;*.md;*.txt";
+    [ObservableProperty] private string _grepExcludeGlobs = "bin/**;obj/**;.git/**;node_modules/**";
+    [ObservableProperty] private bool _grepRecursive = true;
+    [ObservableProperty] private bool _grepDryRun = true;
+    [ObservableProperty] private bool _grepCreateBackup = true;
+    [ObservableProperty] private bool _isGrepRunning;
+    [ObservableProperty] private double _grepProgressValue;
+    [ObservableProperty] private string _grepProgressText = string.Empty;
+    [ObservableProperty] private string _grepSummary = "Select a folder and click Search.";
+    [ObservableProperty] private string _grepEmptyMessage = "No GREP results yet. Choose a folder, then Search.";
+    [ObservableProperty] private GrepHitViewModel? _selectedGrepHit;
+    [ObservableProperty] private string _grepPreviewText = string.Empty;
+    [ObservableProperty] private string _grepPreviewPath = string.Empty;
+    [ObservableProperty] private string _grepReplaceSummary = string.Empty;
 
     partial void OnPatternChanged(string value)
     {
@@ -195,43 +255,56 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ScheduleLiveUpdate();
         RefreshGeneratedCode();
+        PersistSettings();
     }
 
     partial void OnMultilineChanged(bool value)
     {
         ScheduleLiveUpdate();
         RefreshGeneratedCode();
+        PersistSettings();
     }
 
     partial void OnSinglelineChanged(bool value)
     {
         ScheduleLiveUpdate();
         RefreshGeneratedCode();
+        PersistSettings();
     }
 
     partial void OnExplicitCaptureChanged(bool value)
     {
         ScheduleLiveUpdate();
         RefreshGeneratedCode();
+        PersistSettings();
     }
 
     partial void OnIgnorePatternWhitespaceChanged(bool value)
     {
         ScheduleLiveUpdate();
         RefreshGeneratedCode();
+        PersistSettings();
     }
 
     partial void OnRemoveEmptySplitEntriesChanged(bool value) => ScheduleLiveUpdate();
+    partial void OnOptionsExpandedChanged(bool value) => PersistSettings();
 
     partial void OnSelectedFlavorChanged(FlavorDefinition? value)
     {
         if (value is null) return;
         _logger.LogInformation("Flavor selected: {FlavorId}", value.Id);
         StatusEngine = $"Flavor: {value.DisplayName} | Engine: {value.EngineId}";
-        OptionsContextLabel = $"Options apply to {value.DisplayName} ({value.EngineId})";
+        OptionsContextLabel = value.EngineId switch
+        {
+            "pcre2" => "Options apply to PCRE2 (PCRE.NET) — Explicit capture maps approximately",
+            _ => "Options apply to .NET (System.Text.RegularExpressions)",
+        };
+        UpdateOptionsEnabledState();
         RebuildTokenList();
         ScheduleLiveUpdate();
         RefreshGeneratedCode();
+        PersistSettings();
+        UpdateWindowTitle();
     }
 
     partial void OnTokenSearchChanged(string value) => RebuildTokenList();
@@ -244,6 +317,26 @@ public partial class MainWindowViewModel : ViewModelBase
         if (value is null || !value.HasRange) return;
         SelectPatternRangeRequested?.Invoke(value.StartIndex, value.Length);
     }
+
+    partial void OnSelectedGrepHitChanged(GrepHitViewModel? value)
+    {
+        if (value is null)
+        {
+            GrepPreviewText = string.Empty;
+            GrepPreviewPath = string.Empty;
+            GrepPreviewHighlights = Array.Empty<HighlightSpan>();
+            GrepPreviewChanged?.Invoke();
+            return;
+        }
+
+        _ = LoadGrepPreviewAsync(value);
+    }
+
+    partial void OnGrepRootPathChanged(string value) => PersistSettings();
+    partial void OnGrepIncludeGlobsChanged(string value) => PersistSettings();
+    partial void OnGrepExcludeGlobsChanged(string value) => PersistSettings();
+    partial void OnGrepRecursiveChanged(bool value) => PersistSettings();
+    partial void OnGrepCreateBackupChanged(bool value) => PersistSettings();
 
     [RelayCommand]
     private void RunTest() => RunTestCore(live: false);
@@ -289,18 +382,23 @@ public partial class MainWindowViewModel : ViewModelBase
         IsReplaceTab = tab == "Replace";
         IsSplitTab = tab == "Split";
         IsGenerateTab = tab == "Generate";
+        IsGrepTab = tab == "Grep";
 
         IsMatchMode = IsTestTab;
         IsReplaceMode = IsReplaceTab;
         IsSplitMode = IsSplitTab;
         IsGenerateMode = IsGenerateTab;
+        IsGrepMode = IsGrepTab;
         ModeLabel = tab switch
         {
             "Replace" => "Replace",
             "Split" => "Split",
             "Generate" => "Generate",
+            "Grep" => "GREP",
             _ => "Match",
         };
+
+        UpdateWindowTitle();
 
         if (IsReplaceTab)
             RunReplaceCore(live: false);
@@ -310,6 +408,10 @@ public partial class MainWindowViewModel : ViewModelBase
             RefreshGeneratedCode();
         else if (IsTestTab)
             RunTestCore(live: false);
+        else if (IsGrepTab)
+            StatusText = string.IsNullOrWhiteSpace(GrepRootPath)
+                ? "GREP — pick a folder to search"
+                : $"GREP ready — {GrepRootPath}";
     }
 
     [RelayCommand]
@@ -352,6 +454,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _logger.LogInformation("Theme set to {Theme}", ThemeLabel);
+        PersistSettings();
     }
 
     [RelayCommand]
@@ -421,11 +524,17 @@ public partial class MainWindowViewModel : ViewModelBase
             Singleline = Singleline,
             ExplicitCapture = ExplicitCapture,
             IgnorePatternWhitespace = IgnorePatternWhitespace,
+            Category = LibraryCategory?.Trim() ?? string.Empty,
+            Tags = LibraryTags?.Trim() ?? string.Empty,
+            IsFavorite = LibraryFavorite,
         };
 
         _libraryStore.Save(entry);
         LibraryName = string.Empty;
         LibraryDescription = string.Empty;
+        LibraryCategory = string.Empty;
+        LibraryTags = string.Empty;
+        LibraryFavorite = false;
         RefreshLibrary();
         StatusText = $"Saved to library: {entry.Name}";
         _logger.LogInformation("Library save: {Name}", entry.Name);
@@ -469,6 +578,17 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ToggleLibraryFavorite(LibraryItemViewModel? item)
+    {
+        if (item is null) return;
+        var e = item.Entry;
+        e.IsFavorite = !e.IsFavorite;
+        _libraryStore.Save(e);
+        RefreshLibrary();
+        StatusText = e.IsFavorite ? $"Favorited: {e.Name}" : $"Unfavorited: {e.Name}";
+    }
+
+    [RelayCommand]
     private void LoadHistoryItem(HistoryItemViewModel? item)
     {
         if (item is null) return;
@@ -498,6 +618,298 @@ public partial class MainWindowViewModel : ViewModelBase
         StatusText = "History cleared";
     }
 
+    [RelayCommand]
+    private async Task BrowseGrepFolderAsync()
+    {
+        if (PickFolderRequested is null)
+        {
+            StatusText = "Folder picker unavailable";
+            return;
+        }
+
+        var path = await PickFolderRequested();
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            GrepRootPath = path;
+            StatusText = $"GREP folder: {path}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RunGrepSearchAsync()
+    {
+        var engine = ResolveEngine();
+        if (engine is null)
+        {
+            HasError = true;
+            ErrorText = "No engine available for the selected flavor.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(GrepRootPath) || !Directory.Exists(GrepRootPath))
+        {
+            HasError = true;
+            ErrorText = "Select an existing folder to search.";
+            GrepSummary = "Folder required";
+            return;
+        }
+
+        _grepCts?.Cancel();
+        _grepCts = new CancellationTokenSource();
+        var token = _grepCts.Token;
+
+        IsGrepRunning = true;
+        GrepHits.Clear();
+        SelectedGrepHit = null;
+        GrepPreviewText = string.Empty;
+        GrepProgressValue = 0;
+        GrepProgressText = "Starting…";
+        GrepSummary = "Searching…";
+        GrepEmptyMessage = "Searching…";
+        HasError = false;
+        ErrorText = string.Empty;
+        StatusText = "GREP search running…";
+
+        var request = new GrepSearchRequest
+        {
+            RootPath = GrepRootPath,
+            Pattern = Pattern,
+            Options = BuildOptions(),
+            Recursive = GrepRecursive,
+            IncludeGlobs = GrepIncludeGlobs,
+            ExcludeGlobs = GrepExcludeGlobs,
+        };
+
+        var progress = new Progress<GrepProgress>(p =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                GrepProgressValue = p.FilesScanned;
+                GrepProgressText = p.CurrentFile is null
+                    ? p.Phase
+                    : $"{p.Phase}: {Path.GetFileName(p.CurrentFile)} ({p.FilesScanned} files, {p.MatchCount} hits)";
+                GrepSummary = $"{p.MatchCount} hit(s) in {p.FilesMatched} file(s) · scanned {p.FilesScanned}";
+            });
+        });
+
+        try
+        {
+            var result = await _grepService.SearchAsync(engine, request, progress, token)
+                .ConfigureAwait(true);
+
+            GrepHits.Clear();
+            foreach (var hit in result.Matches)
+                GrepHits.Add(new GrepHitViewModel(hit));
+
+            if (!result.Success)
+            {
+                HasError = true;
+                ErrorText = result.ErrorMessage ?? "GREP failed";
+                GrepSummary = "Search failed";
+                GrepEmptyMessage = result.ErrorMessage ?? "Search failed.";
+                StatusText = "GREP search failed";
+            }
+            else
+            {
+                HasError = false;
+                var cancelNote = result.Cancelled ? " (cancelled)" : string.Empty;
+                GrepSummary =
+                    $"{result.Matches.Count} hit(s) in {result.FilesMatched} file(s) · scanned {result.FilesScanned} · {result.Duration.TotalMilliseconds:F0} ms{cancelNote}";
+                GrepEmptyMessage = result.Matches.Count == 0
+                    ? "No matches in the selected folder with the current include/exclude filters."
+                    : string.Empty;
+                StatusMatches = $"Hits: {result.Matches.Count}";
+                StatusTime = $"Time: {result.Duration.TotalMilliseconds:F2} ms";
+                StatusText = result.Cancelled
+                    ? $"GREP cancelled — {result.Matches.Count} hit(s) so far"
+                    : $"GREP OK — {result.Matches.Count} hit(s) via {engine.DisplayName}";
+                GrepProgressText = result.Cancelled ? "Cancelled" : "Done";
+            }
+        }
+        catch (Exception ex)
+        {
+            HasError = true;
+            ErrorText = ex.Message;
+            StatusText = "GREP search error";
+            _logger.LogError(ex, "GREP search UI error");
+        }
+        finally
+        {
+            IsGrepRunning = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelGrep()
+    {
+        _grepCts?.Cancel();
+        StatusText = "Cancelling GREP…";
+        GrepProgressText = "Cancelling…";
+    }
+
+    [RelayCommand]
+    private async Task RunGrepReplaceAsync()
+    {
+        var engine = ResolveEngine();
+        if (engine is null)
+        {
+            HasError = true;
+            ErrorText = "No engine available.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(GrepRootPath) || !Directory.Exists(GrepRootPath))
+        {
+            HasError = true;
+            ErrorText = "Select an existing folder for replace.";
+            return;
+        }
+
+        if (!GrepDryRun)
+        {
+            // Confirmation is handled by the view when possible; here we still require dry-run first ideally
+            _logger.LogWarning("GREP replace writing files under {Root} (backup={Backup})",
+                GrepRootPath, GrepCreateBackup);
+        }
+
+        _grepCts?.Cancel();
+        _grepCts = new CancellationTokenSource();
+        var token = _grepCts.Token;
+
+        IsGrepRunning = true;
+        GrepProgressText = GrepDryRun ? "Dry-run replace…" : "Replacing files…";
+        GrepReplaceSummary = string.Empty;
+        StatusText = GrepDryRun ? "GREP dry-run replace…" : "GREP replace writing files…";
+
+        var request = new GrepReplaceRequest
+        {
+            RootPath = GrepRootPath,
+            Pattern = Pattern,
+            Replacement = Replacement,
+            Options = BuildOptions(),
+            Recursive = GrepRecursive,
+            IncludeGlobs = GrepIncludeGlobs,
+            ExcludeGlobs = GrepExcludeGlobs,
+            DryRun = GrepDryRun,
+            CreateBackup = GrepCreateBackup,
+        };
+
+        var progress = new Progress<GrepProgress>(p =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                GrepProgressValue = p.FilesScanned;
+                GrepProgressText = p.CurrentFile is null
+                    ? p.Phase
+                    : $"{p.Phase}: {Path.GetFileName(p.CurrentFile)}";
+            });
+        });
+
+        try
+        {
+            var result = await _grepService.ReplaceAsync(engine, request, progress, token)
+                .ConfigureAwait(true);
+
+            if (!result.Success)
+            {
+                HasError = true;
+                ErrorText = result.ErrorMessage ?? "Replace failed";
+                GrepReplaceSummary = "Replace failed";
+                StatusText = "GREP replace failed";
+            }
+            else
+            {
+                HasError = false;
+                var mode = result.DryRun ? "Dry-run" : "Applied";
+                var cancel = result.Cancelled ? " (cancelled)" : string.Empty;
+                GrepReplaceSummary =
+                    $"{mode}: {result.TotalReplacements} replacement(s) in {result.FilesModified} file(s) · scanned {result.FilesScanned} · {result.Duration.TotalMilliseconds:F0} ms{cancel}";
+                StatusMatches = $"Replacements: {result.TotalReplacements}";
+                StatusTime = $"Time: {result.Duration.TotalMilliseconds:F2} ms";
+                StatusText = GrepReplaceSummary;
+                GrepProgressText = result.Cancelled ? "Cancelled" : "Done";
+
+                // Refresh search results after a real write
+                if (!result.DryRun && !result.Cancelled)
+                    await RunGrepSearchAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            HasError = true;
+            ErrorText = ex.Message;
+            StatusText = "GREP replace error";
+            _logger.LogError(ex, "GREP replace UI error");
+        }
+        finally
+        {
+            IsGrepRunning = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenGrepHitInSubject(GrepHitViewModel? hit)
+    {
+        if (hit is null) return;
+        // Load the match line into subject for interactive testing
+        Subject = hit.LineText;
+        SelectRightTab("Test");
+        StatusText = $"Opened line from {hit.FileName}:{hit.LineNumber} in Test";
+    }
+
+    public void PersistWindowBounds(double width, double height, int x, int y)
+    {
+        _settings.WindowWidth = width;
+        _settings.WindowHeight = height;
+        _settings.WindowX = x;
+        _settings.WindowY = y;
+        PersistSettings();
+    }
+
+    private async Task LoadGrepPreviewAsync(GrepHitViewModel hit)
+    {
+        try
+        {
+            GrepPreviewPath = $"{hit.Hit.FilePath}:{hit.LineNumber}";
+            if (!File.Exists(hit.Hit.FilePath))
+            {
+                GrepPreviewText = "(file missing)";
+                GrepPreviewHighlights = Array.Empty<HighlightSpan>();
+                GrepPreviewChanged?.Invoke();
+                return;
+            }
+
+            var text = await File.ReadAllTextAsync(hit.Hit.FilePath).ConfigureAwait(true);
+            // Cap preview size for UI responsiveness
+            const int maxPreview = 200_000;
+            if (text.Length > maxPreview)
+                text = text[..maxPreview] + "\n… [preview truncated]";
+
+            GrepPreviewText = text;
+
+            var engine = ResolveEngine();
+            if (engine is not null)
+            {
+                var matchResult = engine.Match(Pattern, text, BuildOptions());
+                GrepPreviewHighlights = matchResult.Success
+                    ? MatchHighlightBuilder.Build(matchResult, includeGroups: true)
+                    : Array.Empty<HighlightSpan>();
+            }
+            else
+            {
+                GrepPreviewHighlights = Array.Empty<HighlightSpan>();
+            }
+
+            GrepPreviewChanged?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            GrepPreviewText = $"// Failed to load preview: {ex.Message}";
+            GrepPreviewHighlights = Array.Empty<HighlightSpan>();
+            GrepPreviewChanged?.Invoke();
+        }
+    }
+
     private void ScheduleLiveUpdate()
     {
         _debounceCts?.Cancel();
@@ -514,6 +926,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     if (token.IsCancellationRequested) return;
                     RefreshAnalysis();
+                    if (IsGrepTab)
+                        return; // don't spam live match while grepping UI
                     RunTestCore(live: true);
                     if (IsReplaceTab)
                         RunReplaceCore(live: true);
@@ -548,7 +962,6 @@ public partial class MainWindowViewModel : ViewModelBase
         if (AnalysisRoot is null)
             return;
 
-        // Always show full tree under root for richer navigation
         if (AnalysisRoot.Children.Count > 0)
         {
             foreach (var child in AnalysisRoot.Children)
@@ -800,7 +1213,6 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!meaningful) return;
         if (string.IsNullOrWhiteSpace(Pattern)) return;
 
-        // Avoid flooding history on every keystroke of live mode — only when pattern stabilizes differently
         var flavorId = SelectedFlavor?.Id ?? "dotnet";
         if (live
             && Pattern == _lastHistoryPattern
@@ -808,7 +1220,6 @@ public partial class MainWindowViewModel : ViewModelBase
             && flavorId == _lastHistoryFlavor)
             return;
 
-        // For live, only record after a successful full run when pattern changed
         if (live && Pattern == _lastHistoryPattern && flavorId == _lastHistoryFlavor)
             return;
 
@@ -844,9 +1255,73 @@ public partial class MainWindowViewModel : ViewModelBase
         return o;
     }
 
+    private void UpdateOptionsEnabledState()
+    {
+        // Both engines support the common option set; keep Explicit capture always enabled with clearer context.
+        ExplicitCaptureEnabled = true;
+    }
+
+    private void UpdateWindowTitle()
+    {
+        WindowTitle = ModeLabel switch
+        {
+            "GREP" => "RegexCraft — GREP",
+            "Replace" => "RegexCraft — Replace",
+            "Split" => "RegexCraft — Split",
+            "Generate" => "RegexCraft — Generate",
+            _ => "RegexCraft",
+        };
+    }
+
+    private void ApplyThemeFromSettings(string? theme)
+    {
+        ThemeLabel = theme switch
+        {
+            "Light" => "Light",
+            "Dark" => "Dark",
+            _ => "System",
+        };
+
+        var app = Application.Current;
+        if (app is null) return;
+
+        app.RequestedThemeVariant = ThemeLabel switch
+        {
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default,
+        };
+    }
+
+    private void PersistSettings()
+    {
+        if (_suppressSettingsSave) return;
+        try
+        {
+            _settings.Theme = ThemeLabel;
+            _settings.FlavorId = SelectedFlavor?.Id ?? "dotnet";
+            _settings.LastGrepRoot = GrepRootPath ?? string.Empty;
+            _settings.GrepIncludeGlobs = GrepIncludeGlobs ?? string.Empty;
+            _settings.GrepExcludeGlobs = GrepExcludeGlobs ?? string.Empty;
+            _settings.GrepRecursive = GrepRecursive;
+            _settings.GrepCreateBackup = GrepCreateBackup;
+            _settings.OptionsExpanded = OptionsExpanded;
+            _settings.IgnoreCase = IgnoreCase;
+            _settings.Multiline = Multiline;
+            _settings.Singleline = Singleline;
+            _settings.ExplicitCapture = ExplicitCapture;
+            _settings.IgnorePatternWhitespace = IgnorePatternWhitespace;
+            _settingsStore.Save(_settings);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Settings persist failed");
+        }
+    }
+
     private static string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.3.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "0.4.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 2 complete (v0.3.0)  
+**Last updated**: 2026-07-11 — Phase 3 complete (v0.4.0)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -17,42 +17,50 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Packages**: Central management in `Directory.Packages.props`  
 - **Commits**: One clean commit per completed phase on `main`  
 - **Planning docs**: Phase requirements live under `docs/development/`; root keeps AGENTS/HANDOFF/README only  
-- **Persistence**: Library/History JSON under OS ApplicationData `RegexCraft/`  
+- **Persistence**: Library/History/Settings JSON under OS ApplicationData `RegexCraft/`  
+- **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)
 
 ## Architecture Quick Reference
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, flavors, tokens, analysis, highlight builders, token insertion, codegen, library/history |
+| `RegexCraft.Core` | `IRegexEngine`, models, flavors, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP** |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, `EngineFactory` |
 | `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
-| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, VMs) |
+| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, GREP, VMs) |
 
-### UI map (Phase 2)
+### UI map (Phase 3)
 
 - Left: Tokens / Library / History tabs  
 - Center: Pattern editor (AvaloniaEdit) + rich Analysis Tree (click → select range)  
-- Right: Test / Replace / Split / Generate  
-- Toolbar: Flavor, Match/Replace/Split/Generate modes, Options, Theme  
+- Right: Test / Replace / Split / Generate / **GREP**  
+- Toolbar: Flavor, Match/Replace/Split/Generate/**GREP** modes, Options, Theme  
 - Status: flavor/engine, counts, timing, shortcut hints  
-- Shortcuts: Ctrl+Enter run; Ctrl+1–4 modes  
+- Shortcuts: Ctrl+Enter run; Ctrl+1–5 modes  
 
-### Key Phase 2 types
+### Key Phase 3 types
+
+- `IGrepService` / `GrepService` / `FileGlobMatcher` / GREP models  
+- `ISettingsStore` / `JsonSettingsStore` / `AppSettings`  
+- Library: `Category`, `Tags`, `IsFavorite`  
+- `MainWindowViewModel` (GREP async search/replace, settings, favorites)  
+- `Application.Name` + `WindowTitle` binding for correct window title  
+
+### Still relevant from Phase 2
 
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines`  
-- `RegexAnalysisService` → rich `AnalysisNode` tree (offsets, descriptions)  
+- `RegexAnalysisService` → rich `AnalysisNode` tree  
 - `MatchHighlightBuilder` / `ReplaceHighlightBuilder`  
 - `ICodeGenerationService` / `CodeGenerationService`  
 - `ILibraryStore` / `JsonLibraryStore`, `IHistoryStore` / `JsonHistoryStore`  
 - `IRegexEngine.Split` + `SplitResult`  
-- `MainWindowViewModel` (live Test/Replace/Split, library, history, codegen)  
 
 ## Current Engines
 
-| Id | Display | Full Testing | Replace | Split | Notes |
-|----|---------|--------------|---------|-------|-------|
-| `dotnet` | .NET | Yes | Yes | Yes | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | Yes | Yes | PCRE.NET; manual backref expansion for `$1` / `${name}` |
+| Id | Display | Full Testing | Replace | Split | GREP | Notes |
+|----|---------|--------------|---------|-------|------|-------|
+| `dotnet` | .NET | Yes | Yes | Yes | Yes | `System.Text.RegularExpressions` |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | PCRE.NET; manual backref expansion for `$1` / `${name}` |
 
 ## How to Run
 
@@ -86,15 +94,17 @@ dotnet test --filter Category=Highlighting
 dotnet test --filter Category=Tokens
 dotnet test --filter Category=Codegen
 dotnet test --filter Category=Library
+dotnet test --filter Category=Grep
 dotnet test --filter Category=ViewModels
 ```
 
 Logs: `logs/` (gitignored).  
-Library/History: `%AppData%/RegexCraft` (Windows) or `~/Library/Application Support/RegexCraft` (macOS) / `~/.config/RegexCraft` (Linux).
+Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Application Support/RegexCraft` (macOS) / `~/.config/RegexCraft` (Linux).
 
 ## Key Paths
 
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
-- Tokens/Analysis/Highlight/Codegen/Library: `src/RegexCraft.Core/`  
+- GREP: `src/RegexCraft.Core/Grep/`  
+- Tokens/Analysis/Highlight/Codegen/Library/Settings: `src/RegexCraft.Core/`  

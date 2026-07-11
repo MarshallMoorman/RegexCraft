@@ -10,7 +10,7 @@
         x:Class="RegexCraft.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="RegexCraft"
+        Title="{Binding WindowTitle}"
         Width="1320" Height="860"
         MinWidth="1000" MinHeight="680"
         Background="{DynamicResource BackgroundPrimaryBrush}">
@@ -158,6 +158,12 @@
                   Command="{Binding SelectRightTabCommand}"
                   CommandParameter="Generate"
                   ToolTip.Tip="Code generation (Ctrl+4)" />
+          <Button Content="GREP"
+                  Classes="modeTab"
+                  Classes.active="{Binding IsGrepMode}"
+                  Command="{Binding SelectRightTabCommand}"
+                  CommandParameter="Grep"
+                  ToolTip.Tip="Search &amp; replace across files/folders (Ctrl+5)" />
 
           <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="6,0" />
 
@@ -197,15 +203,16 @@
                      VerticalAlignment="Center"
                      FontSize="12" />
           <CheckBox Content="Ignore case" IsChecked="{Binding IgnoreCase}" FontSize="12"
-                    ToolTip.Tip="Case-insensitive matching" />
+                    ToolTip.Tip="Case-insensitive matching (both engines)" />
           <CheckBox Content="Multiline" IsChecked="{Binding Multiline}" FontSize="12"
-                    ToolTip.Tip="^ and $ match line boundaries" />
+                    ToolTip.Tip="^ and $ match line start/end (both engines)" />
           <CheckBox Content="Singleline" IsChecked="{Binding Singleline}" FontSize="12"
-                    ToolTip.Tip="Dot matches newline" />
-          <CheckBox Content="Explicit capture" IsChecked="{Binding ExplicitCapture}" FontSize="12"
-                    ToolTip.Tip="Only named groups capture" />
+                    ToolTip.Tip="Dot (.) matches newline — .NET Singleline / PCRE DOTALL" />
+          <CheckBox Content="Explicit capture" IsChecked="{Binding ExplicitCapture}"
+                    IsEnabled="{Binding ExplicitCaptureEnabled}" FontSize="12"
+                    ToolTip.Tip=".NET: only named groups capture. PCRE2: approximated via engine options." />
           <CheckBox Content="Ignore pattern whitespace" IsChecked="{Binding IgnorePatternWhitespace}" FontSize="12"
-                    ToolTip.Tip="Ignore unescaped whitespace in the pattern" />
+                    ToolTip.Tip="Ignore unescaped whitespace and enable # comments (.NET / PCRE extended)" />
         </StackPanel>
         <TextBlock Grid.Column="2"
                    Text="{Binding OptionsContextLabel}"
@@ -248,7 +255,7 @@
                    Margin="16,0,0,0"
                    VerticalAlignment="Center" />
         <TextBlock Grid.Column="4"
-                   Text="  ·  Ctrl+Enter run · Ctrl+1–4 modes"
+                   Text="{Binding ShortcutHints}"
                    Foreground="{DynamicResource TextMutedBrush}"
                    FontSize="11"
                    Margin="12,0,0,0"
@@ -355,6 +362,15 @@
                 <TextBox Text="{Binding LibraryDescription}"
                          PlaceholderText="Description (optional)"
                          FontSize="12" />
+                <TextBox Text="{Binding LibraryCategory}"
+                         PlaceholderText="Category (optional)"
+                         FontSize="12" />
+                <TextBox Text="{Binding LibraryTags}"
+                         PlaceholderText="Tags (comma-separated)"
+                         FontSize="12" />
+                <CheckBox Content="Favorite"
+                          IsChecked="{Binding LibraryFavorite}"
+                          FontSize="12" />
                 <Button Content="Save to Library"
                         Classes="primaryAction"
                         Command="{Binding SaveToLibraryCommand}"
@@ -398,6 +414,11 @@
                       <StackPanel Grid.Column="1" Grid.RowSpan="2"
                                   Orientation="Horizontal" Spacing="2"
                                   VerticalAlignment="Center">
+                        <Button Content="{Binding FavoriteLabel}"
+                                Classes="ghost"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ToggleLibraryFavoriteCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Toggle favorite" />
                         <Button Content="Load"
                                 Classes="ghost"
                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadLibraryItemCommand}"
@@ -586,6 +607,12 @@
                     Command="{Binding SelectRightTabCommand}"
                     CommandParameter="Generate"
                     ToolTip.Tip="Generate code snippets" />
+            <Button Content="GREP"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsGrepTab}"
+                    Command="{Binding SelectRightTabCommand}"
+                    CommandParameter="Grep"
+                    ToolTip.Tip="Search &amp; replace across files" />
           </StackPanel>
 
           <Border DockPanel.Dock="Top"
@@ -851,19 +878,184 @@
                 </ComboBox>
               </StackPanel>
             </Grid>
-            <Button Grid.Row="2"
-                    Content="Copy code"
-                    Classes="primaryAction"
-                    Command="{Binding CopyGeneratedCodeCommand}"
-                    HorizontalAlignment="Right"
-                    Margin="0,0,0,8"
-                    ToolTip.Tip="Copy generated snippet to clipboard" />
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,0,0,8">
+              <Button Content="Copy code"
+                      Classes="primaryAction"
+                      Command="{Binding CopyGeneratedCodeCommand}"
+                      ToolTip.Tip="Copy generated snippet to clipboard" />
+            </StackPanel>
             <Border Grid.Row="3"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
                     ClipToBounds="True">
               <ae:TextEditor x:Name="GenerateCodeEditor"
+                             FontFamily="Menlo, Consolas, monospace"
+                             FontSize="12"
+                             IsReadOnly="True"
+                             WordWrap="False"
+                             ShowLineNumbers="True"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto" />
+            </Border>
+          </Grid>
+
+          <!-- GREP -->
+          <Grid IsVisible="{Binding IsGrepTab}" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,*" Margin="10">
+            <TextBlock Grid.Row="0"
+                       Text="GREP — search &amp; replace across files"
+                       FontWeight="SemiBold"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       Margin="0,2,0,8" />
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+              <TextBox Text="{Binding GrepRootPath}"
+                       PlaceholderText="Folder path…"
+                       FontSize="12"
+                       FontFamily="Menlo, Consolas, monospace" />
+              <Button Grid.Column="1"
+                      Content="Browse…"
+                      Classes="primaryAction"
+                      Margin="8,0,0,0"
+                      Command="{Binding BrowseGrepFolderCommand}"
+                      ToolTip.Tip="Pick a folder to search" />
+            </Grid>
+
+            <StackPanel Grid.Row="2" Spacing="6" Margin="0,0,0,6">
+              <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Text="Include"
+                           FontSize="11"
+                           Width="56"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBox Grid.Column="1"
+                         Text="{Binding GrepIncludeGlobs}"
+                         FontSize="11"
+                         FontFamily="Menlo, Consolas, monospace"
+                         ToolTip.Tip="Include globs, semicolon-separated (e.g. *.cs;*.json)" />
+              </Grid>
+              <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Text="Exclude"
+                           FontSize="11"
+                           Width="56"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBox Grid.Column="1"
+                         Text="{Binding GrepExcludeGlobs}"
+                         FontSize="11"
+                         FontFamily="Menlo, Consolas, monospace"
+                         ToolTip.Tip="Exclude globs (e.g. bin/**;obj/**;.git/**)" />
+              </Grid>
+              <StackPanel Orientation="Horizontal" Spacing="14">
+                <CheckBox Content="Recursive"
+                          IsChecked="{Binding GrepRecursive}"
+                          FontSize="12" />
+                <CheckBox Content="Dry-run replace"
+                          IsChecked="{Binding GrepDryRun}"
+                          FontSize="12"
+                          ToolTip.Tip="Preview replacements without writing files" />
+                <CheckBox Content="Backup (.bak)"
+                          IsChecked="{Binding GrepCreateBackup}"
+                          FontSize="12"
+                          ToolTip.Tip="Write .bak beside each modified file when applying" />
+              </StackPanel>
+            </StackPanel>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
+              <StackPanel Orientation="Vertical" Spacing="2">
+                <TextBlock Text="{Binding GrepSummary}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding GrepProgressText}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding GrepReplaceSummary}"
+                           FontSize="11"
+                           Foreground="{DynamicResource PrimaryBlueBrush}"
+                           TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <Button Grid.Column="1"
+                      Content="Search"
+                      Classes="primaryAction"
+                      Command="{Binding RunGrepSearchCommand}"
+                      IsEnabled="{Binding !IsGrepRunning}"
+                      Margin="6,0,0,0"
+                      ToolTip.Tip="Search files with the current pattern (Ctrl+Enter)" />
+              <Button Grid.Column="2"
+                      Content="Replace"
+                      Classes="primaryAction"
+                      Command="{Binding RunGrepReplaceCommand}"
+                      IsEnabled="{Binding !IsGrepRunning}"
+                      Margin="6,0,0,0"
+                      ToolTip.Tip="Replace across files (respects Dry-run)" />
+              <Button Grid.Column="3"
+                      Content="Cancel"
+                      Classes="ghost"
+                      Command="{Binding CancelGrepCommand}"
+                      IsEnabled="{Binding IsGrepRunning}"
+                      Margin="6,0,0,0" />
+            </Grid>
+
+            <Panel Grid.Row="4" Margin="0,0,0,8">
+              <TextBlock Text="{Binding GrepEmptyMessage}"
+                         IsVisible="{Binding !GrepHits.Count}"
+                         TextWrapping="Wrap"
+                         FontSize="12"
+                         Foreground="{DynamicResource TextMutedBrush}"
+                         Margin="8,12"
+                         HorizontalAlignment="Center" />
+              <ListBox ItemsSource="{Binding GrepHits}"
+                       SelectedItem="{Binding SelectedGrepHit}"
+                       Background="{DynamicResource BackgroundTertiaryBrush}"
+                       BorderBrush="{DynamicResource BorderSubtleBrush}"
+                       BorderThickness="1"
+                       CornerRadius="4">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:GrepHitViewModel">
+                    <Border Padding="8,6" Margin="1">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="2">
+                          <TextBlock Text="{Binding Summary}"
+                                     FontWeight="SemiBold"
+                                     FontSize="11"
+                                     Foreground="{DynamicResource PrimaryBlueBrush}"
+                                     TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding Detail}"
+                                     FontFamily="Menlo, Consolas, monospace"
+                                     FontSize="11"
+                                     Foreground="{DynamicResource TextPrimaryBrush}"
+                                     TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="Test"
+                                Classes="ghost"
+                                VerticalAlignment="Center"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenGrepHitInSubjectCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Open this line in Test mode" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Panel>
+
+            <TextBlock Grid.Row="5"
+                       Text="{Binding GrepPreviewPath}"
+                       FontSize="11"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,0,0,4" />
+            <Border Grid.Row="6"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    ClipToBounds="True"
+                    MinHeight="120">
+              <ae:TextEditor x:Name="GrepPreviewEditor"
                              FontFamily="Menlo, Consolas, monospace"
                              FontSize="12"
                              IsReadOnly="True"

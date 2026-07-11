@@ -10,7 +10,9 @@ using RegexCraft.App.Views;
 using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Codegen;
 using RegexCraft.Core.Flavors;
+using RegexCraft.Core.Grep;
 using RegexCraft.Core.Library;
+using RegexCraft.Core.Settings;
 using RegexCraft.Core.Tokens;
 using RegexCraft.Engines;
 
@@ -24,6 +26,8 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        // macOS menu bar / system chrome uses Application.Name; default is "Avalonia Application".
+        Name = "RegexCraft";
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -32,7 +36,7 @@ public partial class App : Application
         _logger = _loggerFactory.CreateLogger<App>();
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        var versionText = version is null ? "0.3.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        var versionText = version is null ? "0.4.0" : $"{version.Major}.{version.Minor}.{version.Build}";
 
         _logger.LogInformation("RegexCraft {Version} starting", versionText);
         _logger.LogDebug("Configuration loaded. Serilog section present: {HasSerilog}",
@@ -45,6 +49,8 @@ public partial class App : Application
         var codeGeneration = new CodeGenerationService();
         var libraryStore = new JsonLibraryStore(logger: _loggerFactory.CreateLogger<JsonLibraryStore>());
         var historyStore = new JsonHistoryStore(logger: _loggerFactory.CreateLogger<JsonHistoryStore>());
+        var grepService = new GrepService(_loggerFactory.CreateLogger<GrepService>());
+        var settingsStore = new JsonSettingsStore(logger: _loggerFactory.CreateLogger<JsonSettingsStore>());
 
         _logger.LogInformation(
             "Registered {EngineCount} engines: {Engines}",
@@ -64,6 +70,8 @@ public partial class App : Application
                     codeGeneration,
                     libraryStore,
                     historyStore,
+                    grepService,
+                    settingsStore,
                     _loggerFactory.CreateLogger<MainWindowViewModel>()),
             };
 

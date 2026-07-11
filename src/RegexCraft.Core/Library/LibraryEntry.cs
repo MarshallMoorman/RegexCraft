@@ -15,6 +15,11 @@ public sealed class LibraryEntry
     public bool Singleline { get; set; }
     public bool ExplicitCapture { get; set; }
     public bool IgnorePatternWhitespace { get; set; }
+    /// <summary>Optional category / folder label (e.g. "Email", "Validation").</summary>
+    public string Category { get; set; } = string.Empty;
+    /// <summary>Comma/semicolon-separated tags for filtering.</summary>
+    public string Tags { get; set; } = string.Empty;
+    public bool IsFavorite { get; set; }
     public DateTimeOffset CreatedUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset ModifiedUtc { get; set; } = DateTimeOffset.UtcNow;
 }

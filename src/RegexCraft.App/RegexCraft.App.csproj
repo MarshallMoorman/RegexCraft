@@ -6,6 +6,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>RegexCraft.App</RootNamespace>
+    <AssemblyTitle>RegexCraft</AssemblyTitle>
+    <Product>RegexCraft</Product>
+    <ApplicationTitle>RegexCraft</ApplicationTitle>
   </PropertyGroup>
 
   <ItemGroup>

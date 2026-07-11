@@ -5,6 +5,36 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-07-11
+
+### Added
+
+- **GREP** mode: search and replace across folders using the current engine/pattern/options
+  - Folder picker, recursive scan, include/exclude globs
+  - Async search with progress text and **cancellation**
+  - Results list (file, line, context) + file preview with match highlighting
+  - **Dry-run** replace and optional **`.bak` backups** when writing
+  - Works with both **.NET** and **PCRE2** via `IRegexEngine`
+- Core services: `IGrepService` / `GrepService`, `FileGlobMatcher`, GREP result models
+- **Settings** persistence (`settings.json`): theme, flavor, options, GREP paths/globs, window size/position
+- Library **favorites**, **category**, and **tags** (search + favorite-first sort)
+- Keyboard **Ctrl+5** for GREP; status-bar shortcut hints updated
+- User doc: `docs/user/grepping.md`
+- NUnit coverage for globs, GREP search/replace (dry-run + write), settings, library favorites
+
+### Fixed
+
+- macOS / system chrome title no longer shows **“Avalonia Application”** — set `Application.Name` and assembly title to **RegexCraft**; window title binds to mode-aware `WindowTitle`
+
+### Changed
+
+- Root **README.md** rewritten as a timeless project README (no phase language)
+- Generate snippets include clearer language headers; C# uses match timeout
+- Options tooltips explain engine mapping; status/options context labels refined
+- Analysis / Generate / Library / History UX polish (favorite toggle, richer library form)
+- Version bumped to **0.4.0**
+- AGENTS.md / HANDOFF.md updated for Phase 3 → Phase 4
+
 ## [0.3.0] — 2026-07-11
 
 ### Added

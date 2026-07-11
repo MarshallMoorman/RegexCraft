@@ -1,8 +1,10 @@
 using RegexCraft.App.ViewModels;
 using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Codegen;
+using RegexCraft.Core.Grep;
 using RegexCraft.Core.Tokens;
 using RegexCraft.Core.Library;
+using RegexCraft.Core.Settings;
 using RegexCraft.Engines;
 using RegexCraft.Core.Flavors;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -47,6 +49,8 @@ public sealed class MainWindowViewModelTests
             new CodeGenerationService(),
             new JsonLibraryStore(Path.Combine(_tempDir, "library.json")),
             new JsonHistoryStore(Path.Combine(_tempDir, "history.json")),
+            new GrepService(),
+            new JsonSettingsStore(Path.Combine(_tempDir, "settings.json")),
             NullLogger<MainWindowViewModel>.Instance);
     }
 
@@ -168,8 +172,54 @@ public sealed class MainWindowViewModelTests
         Assert.That(vm.IsGenerateTab, Is.True);
         Assert.That(vm.GeneratedCode, Is.Not.Empty);
 
+        vm.SelectRightTabCommand.Execute("Grep");
+        Assert.That(vm.IsGrepTab, Is.True);
+        Assert.That(vm.IsGrepMode, Is.True);
+        Assert.That(vm.WindowTitle, Does.Contain("GREP"));
+
         vm.SelectRightTabCommand.Execute("Test");
         Assert.That(vm.IsTestTab, Is.True);
+        Assert.That(vm.WindowTitle, Is.EqualTo("RegexCraft"));
+    }
+
+    [Test]
+    public async Task GrepSearch_FindsHitsInTempFolder()
+    {
+        var file = Path.Combine(_tempDir, "sample.txt");
+        await File.WriteAllTextAsync(file, "alpha\nbeta 42 gamma\n42 again\n");
+
+        var vm = CreateVm();
+        vm.Pattern = @"\d+";
+        vm.GrepRootPath = _tempDir;
+        vm.GrepIncludeGlobs = "*.txt";
+        vm.GrepExcludeGlobs = "";
+        vm.GrepRecursive = false;
+        vm.SelectRightTabCommand.Execute("Grep");
+
+        await vm.RunGrepSearchCommand.ExecuteAsync(null);
+
+        Assert.That(vm.HasError, Is.False, vm.ErrorText);
+        Assert.That(vm.GrepHits.Count, Is.EqualTo(2));
+        Assert.That(vm.GrepHits.All(h => h.MatchValue == "42"), Is.True);
+    }
+
+    [Test]
+    public void Library_FavoriteAndCategory_Persist()
+    {
+        var vm = CreateVm();
+        vm.Pattern = @"\w+";
+        vm.LibraryName = "Words";
+        vm.LibraryCategory = "Basics";
+        vm.LibraryTags = "demo,words";
+        vm.LibraryFavorite = true;
+        vm.SaveToLibraryCommand.Execute(null);
+
+        Assert.That(vm.LibraryItems, Has.Count.EqualTo(1));
+        Assert.That(vm.LibraryItems[0].IsFavorite, Is.True);
+        Assert.That(vm.LibraryItems[0].Category, Is.EqualTo("Basics"));
+
+        vm.ToggleLibraryFavoriteCommand.Execute(vm.LibraryItems[0]);
+        Assert.That(vm.LibraryItems[0].IsFavorite, Is.False);
     }
 
     [Test]

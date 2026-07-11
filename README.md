@@ -1,28 +1,44 @@
 # RegexCraft
 
-**Modern cross-platform regular expression tool** for exploring, testing, and comparing regex flavors.
+**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, generating, and grepping with multiple regex engines.
 
 | | |
 |---|---|
-| **Version** | 0.3.0 (Phase 2) |
+| **Version** | 0.4.0 |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · NUnit · Serilog |
 | **License** | MIT |
 
-## Features (Phase 2)
+---
 
-- Multi-panel professional UI with light/dark blue theme  
-- AvaloniaEdit regex editor with **professional syntax highlighting**  
-- Searchable **text-only token palette** (no token icons)  
-- Rich live **analysis tree** (click node → select in editor)  
-- **Test** with match + group highlighting for **.NET** and **PCRE2**  
-- Full **Replace** preview with substitution highlighting and backreferences  
-- Full **Split** with parts list and delimiter highlighting  
-- **Code generation** for C#, JS, Python, PHP, Java, Go, Rust  
-- Persistent **Library** and **History**  
-- Keyboard shortcuts (Ctrl+Enter, Ctrl+1–4)  
+## Features
 
-## How to Build & Run
+- **Multi-engine testing** — run the same pattern under **.NET** (`System.Text.RegularExpressions`) and **PCRE2** (PCRE.NET)
+- **Professional editor** — AvaloniaEdit with regex syntax highlighting, line numbers, and live analysis
+- **Live Match mode** — subject highlighting for matches and capture groups, expandable match list with Copy / Go
+- **Replace & Split** — live preview, substitution highlighting, backreferences (`$1`, `${name}`, …)
+- **GREP** — search and replace across folders with include/exclude globs, async progress, cancellation, dry-run, and backups
+- **Code generation** — C#, JavaScript, Python, PHP, Java, Go, Rust for IsMatch / Match / Matches / Replace / Split
+- **Analysis Tree** — hierarchical breakdown of the pattern; click a node to select it in the editor
+- **Token palette** — searchable text-only tokens (no per-token icons), engine-aware hints
+- **Library & History** — save favorites with categories/tags; automatic recent-pattern history
+- **Light / Dark / System themes** — consistent blue design tokens (no hard-coded UI colors)
+- **Keyboard shortcuts** — Ctrl+Enter to run; Ctrl+1–5 for modes
+
+## Screenshots
+
+See `docs/development/` for development baselines. Product screenshots for the website may be added under `docs/user/` later.
+
+## Engines
+
+| Id | Display | Match | Replace | Split | GREP |
+|----|---------|-------|---------|-------|------|
+| `dotnet` | .NET | Yes | Yes | Yes | Yes |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes |
+
+Both engines share the same result models so highlighting, groups, GREP, and codegen stay engine-agnostic.
+
+## Build & run
 
 ```bash
 # Prerequisites: .NET 10 SDK
@@ -31,41 +47,50 @@ dotnet test
 dotnet run --project src/RegexCraft.App
 ```
 
-Logs: `logs/regexcraft-*.log` (gitignored).
+Logs are written under `logs/` (gitignored).  
+Library, History, and Settings live in the OS application-data folder:
 
-## Solution Structure
+- **macOS**: `~/Library/Application Support/RegexCraft`
+- **Windows**: `%AppData%/RegexCraft`
+- **Linux**: `~/.config/RegexCraft` (or equivalent ApplicationData)
+
+## Solution layout
 
 ```
 RegexCraft/
 ├── src/
-│   ├── RegexCraft.Core/       # Engines API, tokens, analysis, codegen, library
+│   ├── RegexCraft.Core/       # Engines API, tokens, analysis, GREP, codegen, library, settings
 │   ├── RegexCraft.Engines/    # DotNet + PCRE2 (Match / Replace / Split)
 │   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit
 ├── tests/RegexCraft.Tests/
 ├── docs/
-│   ├── user/                  # Getting started, testing, replace, codegen, library
-│   └── development/           # Architecture, phase requirements
-├── Directory.Build.props      # Version 0.3.0
+│   ├── user/                  # End-user guides
+│   └── development/           # Architecture & phase requirements
+├── Directory.Build.props      # Version
 └── AGENTS.md / HANDOFF.md
 ```
 
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Enter (⌘+Enter on macOS) | Run current mode |
+| Ctrl+1 | Match / Test |
+| Ctrl+2 | Replace |
+| Ctrl+3 | Split |
+| Ctrl+4 | Generate |
+| Ctrl+5 | GREP |
+
 ## Documentation
 
-- [Getting started](docs/user/getting-started.md)  
-- [Testing regexes](docs/user/testing-regexes.md)  
-- [Replacing](docs/user/replacing.md)  
-- [Generating code](docs/user/generating-code.md)  
-- [Library and History](docs/user/library-and-history.md)  
-- [Architecture](docs/development/architecture.md)  
-- [Changelog](docs/CHANGELOG.md)  
-- [Phase 2 requirements](docs/development/PHASE-2-REQUIREMENTS.md)  
-
-## Engines
-
-| Id | Display | Match | Replace | Split |
-|----|---------|-------|---------|-------|
-| `dotnet` | .NET | Yes | Yes | Yes |
-| `pcre2` | PCRE2 | Yes | Yes | Yes |
+- [Getting started](docs/user/getting-started.md)
+- [Testing regexes](docs/user/testing-regexes.md)
+- [Replacing](docs/user/replacing.md)
+- [GREP (file search & replace)](docs/user/grepping.md)
+- [Generating code](docs/user/generating-code.md)
+- [Library and History](docs/user/library-and-history.md)
+- [Architecture](docs/development/architecture.md)
+- [Changelog](docs/CHANGELOG.md)
 
 ## License
 

@@ -31,7 +31,10 @@ public sealed class JsonLibraryStore : ILibraryStore
     {
         EnsureLoaded();
         lock (_gate)
-            return _entries.OrderByDescending(e => e.ModifiedUtc).ToList();
+            return _entries
+                .OrderByDescending(e => e.IsFavorite)
+                .ThenByDescending(e => e.ModifiedUtc)
+                .ToList();
     }
 
     public IReadOnlyList<LibraryEntry> Search(string? query)
@@ -44,7 +47,9 @@ public sealed class JsonLibraryStore : ILibraryStore
                 Contains(e.Name, query) ||
                 Contains(e.Description, query) ||
                 Contains(e.Pattern, query) ||
-                Contains(e.Subject, query))
+                Contains(e.Subject, query) ||
+                Contains(e.Category, query) ||
+                Contains(e.Tags, query))
             .ToList();
     }
 
@@ -85,6 +90,9 @@ public sealed class JsonLibraryStore : ILibraryStore
                 existing.Singleline = entry.Singleline;
                 existing.ExplicitCapture = entry.ExplicitCapture;
                 existing.IgnorePatternWhitespace = entry.IgnorePatternWhitespace;
+                existing.Category = entry.Category;
+                existing.Tags = entry.Tags;
+                existing.IsFavorite = entry.IsFavorite;
                 existing.ModifiedUtc = DateTimeOffset.UtcNow;
                 entry = existing;
                 _logger.LogInformation("Library: updated entry {Id} ({Name})", entry.Id, entry.Name);
@@ -177,6 +185,9 @@ public sealed class JsonLibraryStore : ILibraryStore
         Singleline = e.Singleline,
         ExplicitCapture = e.ExplicitCapture,
         IgnorePatternWhitespace = e.IgnorePatternWhitespace,
+        Category = e.Category,
+        Tags = e.Tags,
+        IsFavorite = e.IsFavorite,
         CreatedUtc = e.CreatedUtc,
         ModifiedUtc = e.ModifiedUtc,
     };

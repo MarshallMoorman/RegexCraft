@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 0.3.0 (Phase 2)
+**Version**: 0.4.0
 
 ## Overview
 
@@ -8,7 +8,7 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │ RegexCraft.App (Avalonia 12 + AvaloniaEdit)                      │
 │  Toolbar · Tokens/Library/History · Editor · Analysis            │
-│  Test / Replace / Split / Generate · Status                      │
+│  Test / Replace / Split / Generate / GREP · Status               │
 └───────────────────────────────┬──────────────────────────────────┘
                                 │
         ┌───────────────────────┼───────────────────────┐
@@ -19,25 +19,25 @@
  FlavorService            EngineFactory
  TokenCatalog
  RegexAnalysisService
- MatchHighlightBuilder
- ReplaceHighlightBuilder
+ MatchHighlightBuilder / ReplaceHighlightBuilder
  CodeGenerationService
- JsonLibraryStore / JsonHistoryStore
+ GrepService / FileGlobMatcher
+ JsonLibraryStore / JsonHistoryStore / JsonSettingsStore
  TokenInsertion
 ```
 
-## UI layout (Phase 2)
+## UI layout
 
 ```
-Toolbar: Flavor | Match | Replace | Split | Generate | Options | Theme
+Toolbar: Flavor | Match | Replace | Split | Generate | GREP | Options | Theme
 ┌──────────┬────────────────────────────┬────────────────────┐
 │ Tokens   │ Regex Editor (AvaloniaEdit)│ Test | Replace     │
 │ Library  │ blue syntax highlighting   │ Split | Generate   │
-│ History  │ ─────────────────────────  │ Subject + HL       │
-│          │ Analysis Tree (rich, live) │ Matches + Groups   │
-│          │ click → select in editor   │ Replace preview HL │
+│ History  │ ─────────────────────────  │ GREP               │
+│          │ Analysis Tree (rich, live) │ Subject / GREP UI  │
+│          │ click → select in editor   │ Results + preview  │
 └──────────┴────────────────────────────┴────────────────────┘
-Status: Flavor | Engine | Counts | Time | Shortcuts
+Status: Flavor | Engine | Counts | Time | Shortcuts (Ctrl+1–5)
 ```
 
 ### Modes
@@ -48,23 +48,31 @@ Status: Flavor | Engine | Counts | Time | Shortcuts
 | **Replace** | Live replace preview, substitution spans highlighted, backrefs |
 | **Split** | Parts list, delimiter highlights on subject, remove-empty option |
 | **Generate** | Language + operation → snippet; Copy to clipboard |
+| **GREP** | Folder search/replace, globs, progress, cancel, dry-run, preview |
 
 ### Live updates
 
 `MainWindowViewModel` debounces (~200 ms) pattern/subject/option changes, then:
 
 1. Rebuilds the analysis tree  
-2. Runs Match on the active engine  
+2. Runs Match on the active engine (when not on GREP-only live path)  
 3. Rebuilds highlight spans and match list  
 4. Refreshes Replace or Split when that tab is active  
 5. Regenerates code when pattern/options/language change  
 
+GREP work is **async**, reports progress, and supports **cancellation**.
+
 ### Keyboard
 
-- **Ctrl+Enter** — Run current mode  
-- **Ctrl+1…4** — Test / Replace / Split / Generate  
+- **Ctrl+Enter** — Run current mode (Search in GREP)  
+- **Ctrl+1…5** — Test / Replace / Split / Generate / GREP  
 
-## Core services (Phase 2)
+### Application identity
+
+- `Application.Name = "RegexCraft"` (macOS menu bar / system name; avoids “Avalonia Application”)  
+- `Window.Title` bound to mode-aware `WindowTitle`  
+
+## Core services
 
 | Type | Role |
 |------|------|
@@ -74,55 +82,39 @@ Status: Flavor | Engine | Counts | Time | Shortcuts
 | `MatchHighlightBuilder` | Match/group → `HighlightSpan` |
 | `ReplaceHighlightBuilder` | Replacement spans + split delimiters |
 | `ICodeGenerationService` | Multi-language snippets |
-| `ILibraryStore` / `JsonLibraryStore` | Saved patterns (JSON) |
+| `IGrepService` / `GrepService` | Async file search & replace via `IRegexEngine` |
+| `FileGlobMatcher` | Include/exclude globs (`*`, `?`, `**`) |
+| `ILibraryStore` / `JsonLibraryStore` | Saved patterns (JSON), favorites/tags |
 | `IHistoryStore` / `JsonHistoryStore` | Recent patterns (JSON, capped) |
+| `ISettingsStore` / `JsonSettingsStore` | Theme, flavor, GREP paths, window bounds |
 | `IRegexEngine` | Match / Replace / Split |
 
 ## Engines
 
-| Id | Display | Match | Replace | Split |
-|----|---------|-------|---------|-------|
-| `dotnet` | .NET | Yes | Yes (+ spans) | Yes |
-| `pcre2` | PCRE2 | Yes | Yes (manual `$n`/`${name}` expansion + spans) | Yes |
+| Id | Display | Match | Replace | Split | GREP |
+|----|---------|-------|---------|-------|------|
+| `dotnet` | .NET | Yes | Yes (+ spans) | Yes | Yes |
+| `pcre2` | PCRE2 | Yes | Yes (manual `$n`/`${name}` expansion + spans) | Yes | Yes |
 
 Both return the same result models so highlighting and group UI stay engine-agnostic.
+
+## GREP pipeline
+
+1. Enumerate files under root (recursive optional)  
+2. Filter by include/exclude globs and max file size; skip binary-ish content  
+3. For each file: `IRegexEngine.Match` (search) or `Replace` (replace)  
+4. Map match offsets → line number + line text  
+5. Report `IProgress<GrepProgress>`; honor `CancellationToken`  
+6. Replace: dry-run computes previews; live write optional `.bak` then UTF-8 text  
 
 ## Persistence
 
 User data directory via `AppDataPaths.GetDataDirectory()`:
 
-- `library.json` — saved patterns  
+- `library.json` — saved patterns (favorites, category, tags)  
 - `history.json` — recent patterns (max ~40)  
+- `settings.json` — UI / GREP preferences and window bounds  
 
 ## Theme
 
 `Themes/Colors.axaml` ThemeDictionaries (Light/Dark). UI and highlight brushes use `{DynamicResource …}` only.
-
-Key highlight keys: `MatchHighlight`, `GroupHighlight0`–`3`, plus brand blues.
-
-## Logging
-
-Serilog file sink, 7-day rolling, `appsettings.json`. Logs flavor selection, tests, replace/split, library saves, codegen copy, errors.
-
-## Testing
-
-NUnit covers engines (Match/Replace/Split/backrefs), tokens, insertion, analysis, highlight builders, codegen, library/history stores, ViewModel workflows.
-
-```bash
-dotnet test
-dotnet test --filter Category=Analysis
-dotnet test --filter Category=Codegen
-dotnet test --filter Category=Library
-```
-
-## Versioning
-
-`Directory.Build.props` → `0.3.0`  
-Central packages: `Directory.Packages.props` (includes `Avalonia.AvaloniaEdit`)
-
-## Out of scope (still)
-
-- GREP / multi-file search  
-- Debug step-through  
-- Engines beyond .NET + PCRE2  
-- Cloud library sync / plugins  

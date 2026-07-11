@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
@@ -16,37 +17,78 @@ public partial class MainWindow : Window
 {
     private readonly MatchHighlightTransformer _subjectHighlighter = new();
     private readonly MatchHighlightTransformer _replaceHighlighter = new();
+    private readonly MatchHighlightTransformer _grepHighlighter = new();
     private MainWindowViewModel? _vm;
     private bool _syncingPattern;
     private bool _syncingSubject;
     private bool _syncingReplace;
+    private bool _boundsApplied;
 
     public MainWindow()
     {
         InitializeComponent();
         Title = "RegexCraft";
         Opened += OnOpened;
+        Closing += OnClosing;
         DataContextChanged += OnDataContextChanged;
         KeyDown += OnKeyDown;
     }
 
     private void OnOpened(object? sender, EventArgs e)
     {
-        Title = "RegexCraft";
+        Title = _vm?.WindowTitle ?? "RegexCraft";
         ConfigurePatternEditor();
         ConfigureSubjectEditor();
         ConfigureReplaceEditor();
+        ConfigureGrepPreviewEditor();
         ApplyThemeBrushes();
+        ApplySavedBounds();
         ActualThemeVariantChanged += (_, _) =>
         {
             ApplyThemeBrushes();
             ApplyRegexHighlighting();
             RefreshSubjectHighlights();
             RefreshReplaceHighlights();
+            RefreshGrepHighlights();
         };
 
-        // Expand analysis tree items by default when the tree loads
         ExpandAnalysisTree();
+    }
+
+    private void OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_vm is null) return;
+        try
+        {
+            var pos = Position;
+            _vm.PersistWindowBounds(Width, Height, pos.X, pos.Y);
+        }
+        catch
+        {
+            // ignore bound persistence failures
+        }
+    }
+
+    private void ApplySavedBounds()
+    {
+        if (_boundsApplied || _vm is null) return;
+        _boundsApplied = true;
+        var s = _vm.LoadedSettings;
+        if (s.WindowWidth is > 400 and < 10000)
+            Width = s.WindowWidth.Value;
+        if (s.WindowHeight is > 300 and < 10000)
+            Height = s.WindowHeight.Value;
+        if (s.WindowX is not null && s.WindowY is not null)
+        {
+            try
+            {
+                Position = new PixelPoint(s.WindowX.Value, s.WindowY.Value);
+            }
+            catch
+            {
+                // multi-monitor edge cases
+            }
+        }
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -61,6 +103,8 @@ public partial class MainWindow : Window
                 _vm.RunReplaceCommand.Execute(null);
             else if (_vm.IsSplitTab)
                 _vm.RunSplitCommand.Execute(null);
+            else if (_vm.IsGrepTab)
+                _ = _vm.RunGrepSearchCommand.ExecuteAsync(null);
             else
                 _vm.RunTestCommand.Execute(null);
             e.Handled = true;
@@ -87,6 +131,11 @@ public partial class MainWindow : Window
             _vm.SelectRightTabCommand.Execute("Generate");
             e.Handled = true;
         }
+        else if (ctrl && e.Key == Key.D5)
+        {
+            _vm.SelectRightTabCommand.Execute("Grep");
+            e.Handled = true;
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -98,6 +147,8 @@ public partial class MainWindow : Window
             _vm.SelectPatternRangeRequested -= OnSelectPatternRange;
             _vm.SelectSubjectRangeRequested -= OnSelectSubjectRange;
             _vm.CopyTextRequested -= OnCopyText;
+            _vm.GrepPreviewChanged -= OnGrepPreviewChanged;
+            _vm.PickFolderRequested -= OnPickFolderRequested;
             _vm.PropertyChanged -= OnVmPropertyChanged;
         }
 
@@ -105,12 +156,14 @@ public partial class MainWindow : Window
         if (_vm is null)
             return;
 
-        Title = "RegexCraft";
+        Title = _vm.WindowTitle;
         _vm.InsertTokenRequested += OnInsertTokenRequested;
         _vm.HighlightsChanged += OnHighlightsChanged;
         _vm.SelectPatternRangeRequested += OnSelectPatternRange;
         _vm.SelectSubjectRangeRequested += OnSelectSubjectRange;
         _vm.CopyTextRequested += OnCopyText;
+        _vm.GrepPreviewChanged += OnGrepPreviewChanged;
+        _vm.PickFolderRequested += OnPickFolderRequested;
         _vm.PropertyChanged += OnVmPropertyChanged;
 
         if (PatternEditor.Document is not null && PatternEditor.Document.Text != _vm.Pattern)
@@ -217,6 +270,18 @@ public partial class MainWindow : Window
         ReplacePreviewEditor.TextArea.TextView.LineTransformers.Add(_replaceHighlighter);
     }
 
+    private void ConfigureGrepPreviewEditor()
+    {
+        if (GrepPreviewEditor is null)
+            return;
+
+        GrepPreviewEditor.Document ??= new TextDocument();
+        GrepPreviewEditor.Options.EnableHyperlinks = false;
+        GrepPreviewEditor.Options.EnableEmailHyperlinks = false;
+        GrepPreviewEditor.IsReadOnly = true;
+        GrepPreviewEditor.TextArea.TextView.LineTransformers.Add(_grepHighlighter);
+    }
+
     private void ApplyRegexHighlighting()
     {
         var dark = ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
@@ -233,6 +298,7 @@ public partial class MainWindow : Window
 
         _subjectHighlighter.SetBrushes(match, g0, g1, g2, g3);
         _replaceHighlighter.SetBrushes(match, g0, g1, g2, g3);
+        _grepHighlighter.SetBrushes(match, g0, g1, g2, g3);
 
         var bg = TryBrush("BackgroundSecondaryBrush");
         var fg = TryBrush("TextPrimaryBrush");
@@ -244,6 +310,8 @@ public partial class MainWindow : Window
                 ReplacePreviewEditor.Background = bg;
             if (GenerateCodeEditor is not null)
                 GenerateCodeEditor.Background = bg;
+            if (GrepPreviewEditor is not null)
+                GrepPreviewEditor.Background = bg;
         }
 
         if (fg is not null)
@@ -254,6 +322,8 @@ public partial class MainWindow : Window
                 ReplacePreviewEditor.Foreground = fg;
             if (GenerateCodeEditor is not null)
                 GenerateCodeEditor.Foreground = fg;
+            if (GrepPreviewEditor is not null)
+                GrepPreviewEditor.Foreground = fg;
         }
     }
 
@@ -288,6 +358,63 @@ public partial class MainWindow : Window
             RefreshSubjectHighlights();
             RefreshReplaceHighlights();
         });
+    }
+
+    private void OnGrepPreviewChanged()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_vm is null || GrepPreviewEditor?.Document is null)
+                return;
+
+            if (GrepPreviewEditor.Document.Text != _vm.GrepPreviewText)
+                GrepPreviewEditor.Document.Text = _vm.GrepPreviewText ?? string.Empty;
+            RefreshGrepHighlights();
+
+            // Scroll to first match if any
+            var first = _vm.GrepPreviewHighlights.FirstOrDefault();
+            if (first is not null
+                && first.Range.Start >= 0
+                && first.Range.Start < GrepPreviewEditor.Document.TextLength)
+            {
+                try
+                {
+                    GrepPreviewEditor.ScrollToLine(
+                        GrepPreviewEditor.Document.GetLineByOffset(first.Range.Start).LineNumber);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+        });
+    }
+
+    private async Task<string?> OnPickFolderRequested()
+    {
+        try
+        {
+            var top = TopLevel.GetTopLevel(this);
+            if (top is null)
+                return null;
+
+            var folders = await top.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select folder to GREP",
+                AllowMultiple = false,
+            });
+
+            var folder = folders.FirstOrDefault();
+            if (folder is null)
+                return null;
+
+            // Prefer local path
+            return folder.TryGetLocalPath() ?? folder.Path.LocalPath;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void OnSelectPatternRange(int start, int length)
@@ -329,6 +456,9 @@ public partial class MainWindow : Window
     {
         if (_vm is null)
             return;
+
+        if (e.PropertyName == nameof(MainWindowViewModel.WindowTitle))
+            Title = _vm.WindowTitle;
 
         if (e.PropertyName == nameof(MainWindowViewModel.Pattern) && !_syncingPattern)
         {
@@ -393,6 +523,14 @@ public partial class MainWindow : Window
             return;
         _replaceHighlighter.SetSpans(_vm.ReplaceHighlights);
         ReplacePreviewEditor.TextArea.TextView.Redraw();
+    }
+
+    private void RefreshGrepHighlights()
+    {
+        if (_vm is null || GrepPreviewEditor is null)
+            return;
+        _grepHighlighter.SetSpans(_vm.GrepPreviewHighlights);
+        GrepPreviewEditor.TextArea.TextView.Redraw();
     }
 
     private void ExpandAnalysisTree()

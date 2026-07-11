@@ -70,6 +70,34 @@ public sealed class LibraryHistoryStoreTests
     }
 
     [Test]
+    public void Library_FavoritesAndTags_SearchAndSort()
+    {
+        var path = Path.Combine(_dir, "library-fav.json");
+        var store = new JsonLibraryStore(path);
+        store.Save(new LibraryEntry
+        {
+            Name = "Plain",
+            Pattern = "a",
+            Category = "Misc",
+            Tags = "x",
+            IsFavorite = false,
+        });
+        store.Save(new LibraryEntry
+        {
+            Name = "Starred",
+            Pattern = "b",
+            Category = "Email",
+            Tags = "inbox,mail",
+            IsFavorite = true,
+        });
+
+        var all = store.GetAll();
+        Assert.That(all[0].Name, Is.EqualTo("Starred"));
+        Assert.That(store.Search("Email"), Has.Count.EqualTo(1));
+        Assert.That(store.Search("inbox"), Has.Count.EqualTo(1));
+    }
+
+    [Test]
     public void History_AddDedupAndCap()
     {
         var path = Path.Combine(_dir, "history.json");

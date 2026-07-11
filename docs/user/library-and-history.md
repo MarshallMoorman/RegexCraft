@@ -1,6 +1,6 @@
 # Library and History
 
-Phase 2 ships real, persistent **Library** and **History** stores so patterns survive app restarts.
+RegexCraft ships real, persistent **Library** and **History** stores so patterns survive app restarts. Preferences (theme, flavor, GREP paths, window size) live in a separate **settings** file.
 
 ## Where data lives
 
@@ -16,6 +16,7 @@ Files:
 
 - `library.json` — saved patterns  
 - `history.json` — recent patterns  
+- `settings.json` — theme, flavor, options, GREP defaults, window bounds  
 
 ## Library
 
@@ -25,18 +26,21 @@ Open the **Library** tab on the left sidebar.
 
 1. Set the pattern (and optional subject/replacement/options/flavor) in the main UI.  
 2. Enter a **Name** and optional **Description**.  
-3. Click **Save to Library**.  
+3. Optionally set **Category**, **Tags** (comma-separated), and **Favorite**.  
+4. Click **Save to Library**.  
 
 Saved entries store:
 
-- Name, description  
+- Name, description, category, tags, favorite flag  
 - Pattern, subject, replacement  
 - Flavor id  
 - Regex options (ignore case, multiline, singleline, explicit capture, ignore pattern whitespace)  
 
-### Load / search / delete
+### Load / search / delete / favorite
 
-- Use the search box to filter by name, description, pattern, or subject.  
+- Use the search box to filter by name, description, pattern, subject, category, or tags.  
+- Favorites sort to the top of the list.  
+- **★ / ☆** toggles favorite without re-entering the form.  
 - **Load** restores the entry into the editor and switches to **Test**.  
 - **✕** deletes the entry permanently.  
 
@@ -54,5 +58,6 @@ History does **not** store full option checkboxes (flavor + pattern + subject + 
 ## Tips
 
 - Name library items by intent (`Email addresses`, `ISO dates`) rather than the raw pattern.  
+- Use categories/tags for large libraries (e.g. `Validation`, `Logs`).  
 - Use History for quick undo of exploratory edits; use Library for keepers.  
 - Library saves are logged via Serilog.  
