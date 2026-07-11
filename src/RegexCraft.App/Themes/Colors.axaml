@@ -1,0 +1,145 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Professional Microsoft-style blue palette.
+    All app colors must come from these named resources — never hard-code.
+  -->
+  <ResourceDictionary.ThemeDictionaries>
+
+    <!-- ========== LIGHT ========== -->
+    <ResourceDictionary x:Key="Light">
+      <!-- Brand blues -->
+      <Color x:Key="PrimaryBlue">#0078D4</Color>
+      <Color x:Key="PrimaryBlueHover">#106EBE</Color>
+      <Color x:Key="PrimaryBluePressed">#005A9E</Color>
+      <Color x:Key="AccentBlue">#00A4EF</Color>
+      <Color x:Key="AccentBlueSoft">#E5F3FF</Color>
+
+      <!-- Surfaces -->
+      <Color x:Key="BackgroundPrimary">#F3F6F9</Color>
+      <Color x:Key="BackgroundSecondary">#FFFFFF</Color>
+      <Color x:Key="BackgroundTertiary">#E8EEF4</Color>
+      <Color x:Key="SurfaceElevated">#FFFFFF</Color>
+      <Color x:Key="BorderSubtle">#D0D7DE</Color>
+      <Color x:Key="BorderStrong">#8B9AAB</Color>
+
+      <!-- Text -->
+      <Color x:Key="TextPrimary">#1B1F24</Color>
+      <Color x:Key="TextSecondary">#57606A</Color>
+      <Color x:Key="TextOnPrimary">#FFFFFF</Color>
+      <Color x:Key="TextMuted">#8B949E</Color>
+
+      <!-- Semantic -->
+      <Color x:Key="Success">#1A7F37</Color>
+      <Color x:Key="Warning">#9A6700</Color>
+      <Color x:Key="Error">#CF222E</Color>
+      <Color x:Key="Info">#0969DA</Color>
+
+      <!-- Match highlighting (for Phase 1 readiness) -->
+      <Color x:Key="MatchHighlight">#FFF3B0</Color>
+      <Color x:Key="GroupHighlight0">#A5D6FF</Color>
+      <Color x:Key="GroupHighlight1">#B4F0C8</Color>
+      <Color x:Key="GroupHighlight2">#FFC9B8</Color>
+      <Color x:Key="GroupHighlight3">#E0C3FC</Color>
+
+      <!-- Brushes -->
+      <SolidColorBrush x:Key="PrimaryBlueBrush" Color="{StaticResource PrimaryBlue}" />
+      <SolidColorBrush x:Key="PrimaryBlueHoverBrush" Color="{StaticResource PrimaryBlueHover}" />
+      <SolidColorBrush x:Key="PrimaryBluePressedBrush" Color="{StaticResource PrimaryBluePressed}" />
+      <SolidColorBrush x:Key="AccentBlueBrush" Color="{StaticResource AccentBlue}" />
+      <SolidColorBrush x:Key="AccentBlueSoftBrush" Color="{StaticResource AccentBlueSoft}" />
+
+      <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="{StaticResource BackgroundPrimary}" />
+      <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondary}" />
+      <SolidColorBrush x:Key="BackgroundTertiaryBrush" Color="{StaticResource BackgroundTertiary}" />
+      <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevated}" />
+      <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtle}" />
+      <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrong}" />
+
+      <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}" />
+      <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}" />
+      <SolidColorBrush x:Key="TextOnPrimaryBrush" Color="{StaticResource TextOnPrimary}" />
+      <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMuted}" />
+
+      <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}" />
+      <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}" />
+      <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource Error}" />
+      <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource Info}" />
+
+      <SolidColorBrush x:Key="MatchHighlightBrush" Color="{StaticResource MatchHighlight}" />
+      <SolidColorBrush x:Key="GroupHighlight0Brush" Color="{StaticResource GroupHighlight0}" />
+      <SolidColorBrush x:Key="GroupHighlight1Brush" Color="{StaticResource GroupHighlight1}" />
+      <SolidColorBrush x:Key="GroupHighlight2Brush" Color="{StaticResource GroupHighlight2}" />
+      <SolidColorBrush x:Key="GroupHighlight3Brush" Color="{StaticResource GroupHighlight3}" />
+    </ResourceDictionary>
+
+    <!-- ========== DARK ========== -->
+    <ResourceDictionary x:Key="Dark">
+      <!-- Brand blues (slightly brighter for dark surfaces) -->
+      <Color x:Key="PrimaryBlue">#3AA0F3</Color>
+      <Color x:Key="PrimaryBlueHover">#5BB0F5</Color>
+      <Color x:Key="PrimaryBluePressed">#1E88E5</Color>
+      <Color x:Key="AccentBlue">#4FC3F7</Color>
+      <Color x:Key="AccentBlueSoft">#0D2A45</Color>
+
+      <!-- Surfaces -->
+      <Color x:Key="BackgroundPrimary">#0D1117</Color>
+      <Color x:Key="BackgroundSecondary">#161B22</Color>
+      <Color x:Key="BackgroundTertiary">#21262D</Color>
+      <Color x:Key="SurfaceElevated">#1C2128</Color>
+      <Color x:Key="BorderSubtle">#30363D</Color>
+      <Color x:Key="BorderStrong">#484F58</Color>
+
+      <!-- Text -->
+      <Color x:Key="TextPrimary">#E6EDF3</Color>
+      <Color x:Key="TextSecondary">#8B949E</Color>
+      <Color x:Key="TextOnPrimary">#FFFFFF</Color>
+      <Color x:Key="TextMuted">#6E7681</Color>
+
+      <!-- Semantic -->
+      <Color x:Key="Success">#3FB950</Color>
+      <Color x:Key="Warning">#D29922</Color>
+      <Color x:Key="Error">#F85149</Color>
+      <Color x:Key="Info">#58A6FF</Color>
+
+      <!-- Match highlighting -->
+      <Color x:Key="MatchHighlight">#5C4B12</Color>
+      <Color x:Key="GroupHighlight0">#0C4A6E</Color>
+      <Color x:Key="GroupHighlight1">#14532D</Color>
+      <Color x:Key="GroupHighlight2">#7C2D12</Color>
+      <Color x:Key="GroupHighlight3">#4C1D95</Color>
+
+      <!-- Brushes -->
+      <SolidColorBrush x:Key="PrimaryBlueBrush" Color="{StaticResource PrimaryBlue}" />
+      <SolidColorBrush x:Key="PrimaryBlueHoverBrush" Color="{StaticResource PrimaryBlueHover}" />
+      <SolidColorBrush x:Key="PrimaryBluePressedBrush" Color="{StaticResource PrimaryBluePressed}" />
+      <SolidColorBrush x:Key="AccentBlueBrush" Color="{StaticResource AccentBlue}" />
+      <SolidColorBrush x:Key="AccentBlueSoftBrush" Color="{StaticResource AccentBlueSoft}" />
+
+      <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="{StaticResource BackgroundPrimary}" />
+      <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondary}" />
+      <SolidColorBrush x:Key="BackgroundTertiaryBrush" Color="{StaticResource BackgroundTertiary}" />
+      <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevated}" />
+      <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtle}" />
+      <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrong}" />
+
+      <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}" />
+      <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}" />
+      <SolidColorBrush x:Key="TextOnPrimaryBrush" Color="{StaticResource TextOnPrimary}" />
+      <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMuted}" />
+
+      <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}" />
+      <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}" />
+      <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource Error}" />
+      <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource Info}" />
+
+      <SolidColorBrush x:Key="MatchHighlightBrush" Color="{StaticResource MatchHighlight}" />
+      <SolidColorBrush x:Key="GroupHighlight0Brush" Color="{StaticResource GroupHighlight0}" />
+      <SolidColorBrush x:Key="GroupHighlight1Brush" Color="{StaticResource GroupHighlight1}" />
+      <SolidColorBrush x:Key="GroupHighlight2Brush" Color="{StaticResource GroupHighlight2}" />
+      <SolidColorBrush x:Key="GroupHighlight3Brush" Color="{StaticResource GroupHighlight3}" />
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

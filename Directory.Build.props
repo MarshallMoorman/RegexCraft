@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Authors>Marshall Moorman</Authors>
+    <Product>RegexCraft</Product>
+    <Description>Modern cross-platform regular expression tool</Description>
+    <Company>Marshall Moorman</Company>
+    <Copyright>Copyright © Marshall Moorman 2026</Copyright>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,223 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RegexCraft.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DesignWidth="960" d:DesignHeight="720"
+        x:Class="RegexCraft.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="RegexCraft"
+        Width="960" Height="720"
+        MinWidth="720" MinHeight="520"
+        Background="{DynamicResource BackgroundPrimaryBrush}">
+
+  <Design.DataContext>
+    <vm:MainWindowViewModel />
+  </Design.DataContext>
+
+  <DockPanel>
+
+    <!-- Header -->
+    <Border DockPanel.Dock="Top"
+            Background="{DynamicResource PrimaryBlueBrush}"
+            Padding="16,12">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <TextBlock Text="RegexCraft"
+                     FontSize="20"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextOnPrimaryBrush}"
+                     VerticalAlignment="Center" />
+          <Border Background="{DynamicResource AccentBlueSoftBrush}"
+                  CornerRadius="4"
+                  Padding="8,2"
+                  VerticalAlignment="Center">
+            <TextBlock Text="{Binding VersionText}"
+                       FontSize="12"
+                       Foreground="{DynamicResource PrimaryBlueBrush}"
+                       FontWeight="Medium" />
+          </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <TextBlock Text="Theme:"
+                     Foreground="{DynamicResource TextOnPrimaryBrush}"
+                     VerticalAlignment="Center"
+                     Opacity="0.85"
+                     FontSize="12" />
+          <Button Content="{Binding ThemeLabel}"
+                  Command="{Binding CycleThemeCommand}"
+                  Padding="10,4"
+                  MinWidth="72"
+                  ToolTip.Tip="Cycle theme: System → Light → Dark" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom"
+            Background="{DynamicResource BackgroundTertiaryBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="16,8">
+      <TextBlock Text="{Binding StatusText}"
+                 Foreground="{DynamicResource TextSecondaryBrush}"
+                 FontSize="12" />
+    </Border>
+
+    <!-- Main content -->
+    <ScrollViewer Padding="16" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="14" MaxWidth="920">
+
+        <!-- Engine + Options card -->
+        <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+          <StackPanel Spacing="12">
+            <TextBlock Text="Engine &amp; Options"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="12">
+              <TextBlock Text="Flavor / Engine"
+                         VerticalAlignment="Center"
+                         Foreground="{DynamicResource TextSecondaryBrush}" />
+              <ComboBox Grid.Column="1"
+                        ItemsSource="{Binding Flavors}"
+                        SelectedItem="{Binding SelectedFlavor}"
+                        MinWidth="180"
+                        HorizontalAlignment="Stretch">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding DisplayName}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+
+              <CheckBox Grid.Column="2"
+                        Content="Ignore case"
+                        IsChecked="{Binding IgnoreCase}"
+                        Foreground="{DynamicResource TextPrimaryBrush}" />
+              <CheckBox Grid.Column="3"
+                        Content="Multiline"
+                        IsChecked="{Binding Multiline}"
+                        Foreground="{DynamicResource TextPrimaryBrush}" />
+              <CheckBox Grid.Column="4"
+                        Content="Singleline"
+                        IsChecked="{Binding Singleline}"
+                        Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Pattern -->
+        <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Pattern"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding Pattern}"
+                     PlaceholderText="Enter regular expression…"
+                     FontFamily="Menlo, Consolas, monospace"
+                     AcceptsReturn="False" />
+          </StackPanel>
+        </Border>
+
+        <!-- Subject -->
+        <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Subject"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding Subject}"
+                     PlaceholderText="Text to test against…"
+                     FontFamily="Menlo, Consolas, monospace"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="80"
+                     MaxHeight="160" />
+          </StackPanel>
+        </Border>
+
+        <!-- Replacement + actions -->
+        <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Replacement"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding Replacement}"
+                     PlaceholderText="Replacement pattern (e.g. $1 or ${name})…"
+                     FontFamily="Menlo, Consolas, monospace" />
+
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+              <Button Content="Test Match"
+                      Command="{Binding RunMatchCommand}"
+                      Padding="16,8"
+                      MinWidth="120"
+                      Background="{DynamicResource PrimaryBlueBrush}"
+                      Foreground="{DynamicResource TextOnPrimaryBrush}"
+                      FontWeight="SemiBold" />
+              <Button Content="Test Replace"
+                      Command="{Binding RunReplaceCommand}"
+                      Padding="16,8"
+                      MinWidth="120"
+                      Background="{DynamicResource AccentBlueBrush}"
+                      Foreground="{DynamicResource TextOnPrimaryBrush}"
+                      FontWeight="SemiBold" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Results -->
+        <Border Background="{DynamicResource BackgroundSecondaryBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16"
+                MinHeight="180">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Results"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding ResultsText}"
+                     IsReadOnly="True"
+                     FontFamily="Menlo, Consolas, monospace"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="140"
+                     Background="{DynamicResource BackgroundTertiaryBrush}"
+                     Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderSubtleBrush}" />
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="Phase 0 shell — full editor, token palette, and analysis tree arrive in Phase 1."
+                   Foreground="{DynamicResource TextMutedBrush}"
+                   FontSize="11"
+                   HorizontalAlignment="Center"
+                   Margin="0,4,0,8" />
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>
