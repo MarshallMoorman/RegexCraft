@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 0.7.0
+**Version**: 0.8.0
 
 ## Overview
 
@@ -10,6 +10,7 @@
 │  Toolbar · Tokens/Library/History · Editor · Analysis            │
 │  Test / Replace / Split / Generate / GREP (single stretch host)  │
 │  Fidelity banner · Column splitters · Status                     │
+│  About RegexCraft dialog · regexcraft-icon (ICO/ICNS/PNG)        │
 └───────────────────────────────┬──────────────────────────────────┘
                                 │
         ┌───────────────────────┼───────────────────────┐
@@ -27,6 +28,15 @@
  JsonLibraryStore (+ BuiltInLibrary) / JsonHistoryStore / JsonSettingsStore
  TokenInsertion
 ```
+
+### Testing layers
+
+| Layer | Location | Notes |
+|-------|----------|--------|
+| Unit | `tests/RegexCraft.Tests/**` | Core, Engines, ViewModels, services |
+| Headless UI | `tests/RegexCraft.Tests/Headless/` | Avalonia.Headless.NUnit + Skia |
+| Screenshots | `Category=Screenshots` | `CaptureRenderedFrame()` → `docs/screenshots/` |
+
 
 ## UI layout
 

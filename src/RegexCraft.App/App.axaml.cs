@@ -1,5 +1,6 @@
 using System.Reflection;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.Configuration;
@@ -36,7 +37,7 @@ public partial class App : Application
         _logger = _loggerFactory.CreateLogger<App>();
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        var versionText = version is null ? "0.4.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        var versionText = version is null ? "0.8.0" : $"{version.Major}.{version.Minor}.{version.Build}";
 
         _logger.LogInformation("RegexCraft {Version} starting", versionText);
         _logger.LogDebug("Configuration loaded. Serilog section present: {HasSerilog}",
@@ -85,5 +86,27 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
         _logger.LogInformation("RegexCraft UI ready");
+    }
+
+    /// <summary>Shows the custom About RegexCraft dialog (replaces Avalonia's default About).</summary>
+    private void AboutMenuItem_OnClick(object? sender, EventArgs e) => ShowAboutDialog();
+
+    public static void ShowAboutDialog(Window? owner = null)
+    {
+        var about = new AboutWindow();
+        if (owner is not null)
+        {
+            _ = about.ShowDialog(owner);
+            return;
+        }
+
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is not null)
+        {
+            _ = about.ShowDialog(desktop.MainWindow);
+            return;
+        }
+
+        about.Show();
     }
 }

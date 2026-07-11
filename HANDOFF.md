@@ -1,49 +1,48 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: 0.7.0 (Phase 6 complete — multi-flavor expansion)  
+**Current Version**: 0.8.0 (Phase 7 complete — branding + automated testing)  
 **Date**: 2026-07-11  
 **Next**: Toward **1.0** (Debug, Compare, packaging, website — do not rush 1.0)
 
 ---
 
-## What Was Completed in Phase 6
+## What Was Completed in Phase 7
 
-1. **Theme persistence fixed**  
-   - Theme (Light / Dark / System) saved in `settings.json` and restored on startup  
-   - Root cause: `SelectedFlavor` assignment during VM init triggered `PersistSettings` and overwrote theme with the default **before** `ApplyThemeFromSettings`  
-   - Fix: suppress settings saves for the entire settings-load block; re-apply theme on window open  
+1. **Application icon**  
+   - Blue “RC” monogram assets: `regexcraft-icon.ico` / `.png` / `.icns` (+ source `regexcraft-512.png`)  
+   - Wired as `Window.Icon`, `ApplicationIcon`, and About image  
 
-2. **Generate tab auto-run**  
-   - C# (default) generates immediately on startup and when Generate is selected  
-   - Regenerates on pattern / options / flavor / language / operation changes  
-   - Generate editor document synced on open and property change (including force refresh)  
+2. **Custom About RegexCraft**  
+   - Replaced Avalonia default About  
+   - `NativeMenu` on Application + Help menu on MainWindow: **About RegexCraft**  
+   - Dialog: name, version, description, copyright (Marshall Moorman), regexcraft.com + GitHub links, “Built with Avalonia”  
 
-3. **Default Library**  
-   - ~20 built-in patterns (email, URL, IPv4/IPv6, phones, dates, time, hex color, UUID, credit card, password, HTML tags, whitespace, log levels, semver, slug, …)  
-   - Merged into `library.json` on load; **Built-in** badge in UI; not deletable; favorites preserved  
+3. **Expanded automated testing**  
+   - ~330 NUnit tests (unit + headless UI + screenshots)  
+   - New unit coverage: engine edge cases, full codegen matrix, built-in library compile checks, token insertion, replace highlights, ViewModel theme/options/history, branding  
+   - Avalonia.Headless.NUnit + Skia (`UseHeadlessDrawing = false`) for UI workflows  
+   - Screenshot category writes `docs/screenshots/*.png` for README/docs  
 
-4. **Multi-flavor expansion**  
-   - Engines: **.NET**, **PCRE2**, **JavaScript (Jint)**  
-   - Flavors: .NET, PCRE2, JavaScript, TypeScript, Python, Java, PHP, Ruby, Go, Rust, Perl, Kotlin, Swift  
-   - `TestingFidelity` + banner + status labels  
-   - Codegen expanded (TypeScript, Ruby, Perl, Kotlin, Swift + existing languages)  
+4. **Bugfixes found while testing**  
+   - Built-in URL slug sample now matches its subject  
+   - `ReapplyThemeFromSettings` uses in-memory `ThemeLabel` (no longer clobbering cycles on open)  
 
-- Version **0.7.0**; NUnit **195** tests (all green)
+- Version **0.8.0**; all tests green  
 
 ## Versioning recommendation
 
-Stay on **0.7.x** / **0.8.x** for depth features. Ship **1.0.0** only after:
+Stay on **0.8.x** / **0.9.x** for depth features. Ship **1.0.0** only after:
 
 1. At least one of Debug or Compare feels production-ready  
 2. Packaging / install story is documented  
 3. Website (regexcraft.com) has a real landing page + download path  
 4. A short public beta or RC cycle with no P0 layout/engine bugs  
 
-Optional tags: `0.8.0` (Debug), `0.9.0` (Compare/export), `1.0.0-rc1`.
+Optional tags: `0.9.0` (Debug or Compare), `1.0.0-rc1`.
 
 ---
 
-## Recommended Post-0.7 Roadmap
+## Recommended Post-0.8 Roadmap
 
 ### Priority A — Product depth
 
@@ -82,8 +81,8 @@ Optional tags: `0.8.0` (Debug), `0.9.0` (Compare/export), `1.0.0-rc1`.
 
 ### Priority D — 1.0 & presence
 
-10. **Packaging** — documented `dotnet publish` per OS; optional installers  
-11. **Website (regexcraft.com)** — feature list, screenshots, download, docs  
+10. **Packaging** — documented `dotnet publish` per OS; optional installers; use `.icns`/`.ico` in bundles  
+11. **Website (regexcraft.com)** — feature list, screenshots from `docs/screenshots/`, download, docs  
 12. **1.0 release** — CHANGELOG, tag, GitHub Release assets  
 
 **Out of scope unless requested**: cloud library sync, plugin system, full visual regex builder.
@@ -102,25 +101,29 @@ Optional tags: `0.8.0` (Debug), `0.9.0` (Compare/export), `1.0.0-rc1`.
 - Large multi-MB subjects still not stress-tested.  
 - Avalonia.AvaloniaEdit is 12.0.0 while Avalonia is 12.1.0.  
 - Free-spacing `# …` comments not syntax-highlighted (avoids `#hex` false positives).  
-- Built-in library patterns refresh body on upgrade; only favorite flag is user-owned on built-ins.
+- Built-in library patterns refresh body on upgrade; only favorite flag is user-owned on built-ins.  
+- Screenshot dark-mode pattern editor may need an extra highlight refresh if theme is forced only after first paint (production theme cycle is fine).  
+- GitHub URL in About points at a conventional repo path; update if the public repo differs.
 
 ## How to Continue in a New Conversation
 
-1. Open latest `main` at **v0.7.0**.  
+1. Open latest `main` at **v0.8.0**.  
 2. Read this `HANDOFF.md` and `AGENTS.md`.  
 3. Pick a roadmap item (recommend **Debug** or **Compare**).  
-4. Author `docs/development/PHASE-7-REQUIREMENTS.md` if doing a full phase.  
-5. Do not re-build Phase 0–6 foundations unless blocked.  
-6. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating the baseline.
+4. Author `docs/development/PHASE-8-REQUIREMENTS.md` if doing a full phase.  
+5. Do not re-build Phase 0–7 foundations unless blocked.  
+6. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating a baseline.  
+7. Regenerate docs screenshots with `dotnet test --filter Category=Screenshots` when UI changes.
 
 ## Key Files to Review First
 
 | Path | Why |
 |------|-----|
+| `src/RegexCraft.App/Views/AboutWindow.axaml` | Custom About |
+| `src/RegexCraft.App/Assets/regexcraft-icon.*` | Branding |
+| `tests/RegexCraft.Tests/Headless/` | UI + screenshot tests |
+| `docs/screenshots/` | README/doc images |
 | `src/RegexCraft.Core/Flavors/` | Flavor registry + fidelity |
 | `src/RegexCraft.Engines/JavaScript/` | Jint engine |
-| `src/RegexCraft.Core/Library/BuiltInLibrary.cs` | Default patterns |
-| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Settings suppress, generate, flavors |
-| `src/RegexCraft.App/Views/MainWindow.axaml` | Fidelity banner, library badges |
-| `docs/user/flavors.md` | User-facing fidelity guide |
-| `Directory.Build.props` | Version 0.7.0 |
+| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Settings, modes, theme |
+| `Directory.Build.props` | Version 0.8.0 |

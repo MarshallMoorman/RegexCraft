@@ -9,6 +9,7 @@
     <AssemblyTitle>RegexCraft</AssemblyTitle>
     <Product>RegexCraft</Product>
     <ApplicationTitle>RegexCraft</ApplicationTitle>
+    <ApplicationIcon>Assets\regexcraft-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

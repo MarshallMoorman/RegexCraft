@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="RegexCraft.App.Views.AboutWindow"
+        Title="About RegexCraft"
+        Icon="/Assets/regexcraft-icon.ico"
+        Width="440"
+        Height="460"
+        MinWidth="400"
+        MinHeight="400"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundPrimaryBrush}"
+        ShowInTaskbar="False">
+
+  <DockPanel Margin="28,24">
+    <Button DockPanel.Dock="Bottom"
+            Content="Close"
+            Classes="primaryAction"
+            HorizontalAlignment="Right"
+            MinWidth="96"
+            Margin="0,16,0,0"
+            Click="CloseButton_OnClick"
+            IsDefault="True"
+            IsCancel="True"
+            AutomationProperties.Name="Close About" />
+
+    <StackPanel Spacing="12" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+        <Image Source="/Assets/regexcraft-icon.png"
+               Width="72"
+               Height="72"
+               HorizontalAlignment="Center"
+               Margin="0,8,0,4"
+               AutomationProperties.Name="RegexCraft icon" />
+
+        <TextBlock Text="RegexCraft"
+                   FontSize="26"
+                   FontWeight="SemiBold"
+                   HorizontalAlignment="Center"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
+                   AutomationProperties.Name="App name" />
+
+        <TextBlock x:Name="VersionTextBlock"
+                   Text="Version 0.8.0"
+                   FontSize="13"
+                   HorizontalAlignment="Center"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   AutomationProperties.Name="App version" />
+
+        <TextBlock Text="Modern cross-platform regular expression workbench for exploring, testing, replacing, grepping, and generating code across many regex flavors."
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   FontSize="13"
+                   LineHeight="20"
+                   MaxWidth="360"
+                   HorizontalAlignment="Center"
+                   Margin="0,4,0,0"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
+                   AutomationProperties.Name="App description" />
+
+        <TextBlock Text="Copyright © Marshall Moorman 2026"
+                   FontSize="12"
+                   HorizontalAlignment="Center"
+                   Margin="0,4,0,0"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   AutomationProperties.Name="Copyright" />
+
+        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" Margin="0,6,0,0">
+          <Button Content="regexcraft.com"
+                  Classes="ghost"
+                  FontSize="13"
+                  Click="Website_OnClick"
+                  AutomationProperties.Name="Website link" />
+          <Button Content="GitHub"
+                  Classes="ghost"
+                  FontSize="13"
+                  Click="GitHub_OnClick"
+                  AutomationProperties.Name="GitHub link" />
+        </StackPanel>
+
+        <Border Height="1"
+                Background="{DynamicResource BorderSubtleBrush}"
+                Margin="32,12"
+                Opacity="0.8" />
+
+        <TextBlock Text="Built with Avalonia"
+                   FontSize="11"
+                   HorizontalAlignment="Center"
+                   Foreground="{DynamicResource TextMutedBrush}"
+                   AutomationProperties.Name="Built with Avalonia" />
+    </StackPanel>
+  </DockPanel>
+</Window>

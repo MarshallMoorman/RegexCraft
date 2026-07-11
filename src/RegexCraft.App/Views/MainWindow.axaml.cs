@@ -59,6 +59,8 @@ public partial class MainWindow : Window
         ExpandAnalysisTree();
     }
 
+    private void AboutMenuItem_OnClick(object? sender, EventArgs e) => App.ShowAboutDialog(this);
+
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (_vm is null) return;

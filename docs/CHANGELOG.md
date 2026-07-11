@@ -5,6 +5,28 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] — 2026-07-11
+
+### Added
+
+- **RegexCraft application icon** — multi-resolution ICO / ICNS / PNG (blue “RC” monogram); set as window icon and `ApplicationIcon`
+- **Custom About RegexCraft dialog** — version, description, copyright, links to regexcraft.com and GitHub, “Built with Avalonia” credit; native menu item **About RegexCraft** (replaces Avalonia’s default About)
+- **Avalonia.Headless UI tests** — main window workflows (modes, flavor, match/replace/split, library/history, theme, generate, About)
+- **Automated screenshot capture** — `Category=Screenshots` writes high-quality PNGs to `docs/screenshots/` via `CaptureRenderedFrame()` for README and docs
+- Expanded NUnit coverage: engine edge cases, codegen matrix (all languages × operations), built-in library validation, token insertion, replace highlights, ViewModel theme/options/history, branding smoke tests
+
+### Fixed
+
+- Built-in **URL slug** sample pattern/subject now produces matches (anchors were preventing demos)
+- Theme re-apply on window open no longer overwrites an already-cycled in-memory theme preference
+
+### Changed
+
+- NUnit bumped to **4.5.1** (required by Avalonia.Headless.NUnit 12.1)
+- README includes real screenshots and instructions for running tests / regenerating captures
+- Version bumped to **0.8.0**
+- AGENTS.md / HANDOFF.md updated for post–Phase-7 roadmap
+
 ## [0.7.0] — 2026-07-11
 
 ### Fixed

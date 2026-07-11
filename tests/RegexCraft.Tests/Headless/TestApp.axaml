@@ -1,21 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="RegexCraft.App.App"
-             xmlns:local="using:RegexCraft.App"
+             x:Class="RegexCraft.Tests.Headless.TestApp"
              Name="RegexCraft"
-             RequestedThemeVariant="Default">
-
-  <!-- Replaces Avalonia's default "About Avalonia" application menu (macOS). -->
-  <NativeMenu.Menu>
-    <NativeMenu>
-      <NativeMenuItem Header="About RegexCraft"
-                      Click="AboutMenuItem_OnClick" />
-    </NativeMenu>
-  </NativeMenu.Menu>
-
-  <Application.DataTemplates>
-    <local:ViewLocator />
-  </Application.DataTemplates>
+             RequestedThemeVariant="Light">
 
   <Application.Resources>
     <ResourceDictionary>
@@ -29,7 +16,6 @@
     <FluentTheme />
     <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
 
-    <!-- Shared button styles used by About and other dialogs -->
     <Style Selector="Button.primaryAction">
       <Setter Property="Padding" Value="12,6" />
       <Setter Property="Background" Value="{DynamicResource PrimaryBlueBrush}" />

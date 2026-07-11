@@ -166,8 +166,8 @@ public static class BuiltInLibrary
             "slug",
             "URL slug",
             "Lowercase alphanumeric words joined by hyphens.",
-            @"^[a-z0-9]+(?:-[a-z0-9]+)*$",
-            "my-cool-post vs My_Post",
+            @"\b[a-z0-9]+(?:-[a-z0-9]+)+\b",
+            "Posts: my-cool-post and another-slug vs My_Post.",
             "Web",
             "slug,url"),
         Entry(

@@ -4,7 +4,7 @@
 
 RegexCraft is a modern, cross-platform regular expression workbench built for **multiple regex flavors**. Test patterns under **.NET**, **PCRE2**, and **JavaScript**, with approximate testing for Python, Java, PHP, and more — plus professional highlighting, replace/split previews, **GREP across files**, code generation, and a live analysis tree.
 
-**Current version**: 0.7.0
+**Current version**: 0.8.0
 
 ## Requirements
 
@@ -32,6 +32,7 @@ dotnet run --project src/RegexCraft.App
 9. Open **GREP**, pick a project folder, set include globs (e.g. `*.cs`), and **Search**.
 10. Open **Library** — load a **Built-in** pattern (email, UUID, …), or save your own with category/tags.
 11. Cycle **Theme** (System → Light → Dark), quit, and relaunch — your theme should restore.
+12. Open **Help → About RegexCraft** (macOS application menu, or the Help native menu) for version, copyright, and links.
 
 ## Keyboard shortcuts
 

@@ -465,13 +465,12 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Re-applies the persisted theme preference to the running application.
+    /// Re-applies the current theme preference to the running application.
     /// Called from the view on open so Avalonia has finished initializing.
+    /// Uses <see cref="ThemeLabel"/> (source of truth after load/cycle), not a re-read of disk.
     /// </summary>
     public void ReapplyThemeFromSettings()
     {
-        ApplyThemeFromSettings(_settings.Theme);
-        // Prefer the in-memory label (may have been cycled since load).
         ApplyThemeToApplication();
     }
 
@@ -1440,6 +1439,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private static string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.7.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "0.8.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

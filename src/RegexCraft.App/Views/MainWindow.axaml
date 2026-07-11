@@ -9,11 +9,23 @@
         d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="RegexCraft.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/regexcraft-icon.ico"
         Title="{Binding WindowTitle}"
         Width="1320" Height="860"
         MinWidth="1000" MinHeight="680"
         Background="{DynamicResource BackgroundPrimaryBrush}">
+
+  <!-- Window menus (Windows/Linux menu bar; macOS supplements Application menu). -->
+  <NativeMenu.Menu>
+    <NativeMenu>
+      <NativeMenuItem Header="Help">
+        <NativeMenu>
+          <NativeMenuItem Header="About RegexCraft"
+                          Click="AboutMenuItem_OnClick" />
+        </NativeMenu>
+      </NativeMenuItem>
+    </NativeMenu>
+  </NativeMenu.Menu>
 
   <Design.DataContext>
     <vm:MainWindowViewModel />

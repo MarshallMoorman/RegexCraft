@@ -4,10 +4,17 @@
 
 | | |
 |---|---|
-| **Version** | 0.7.0 |
+| **Version** | 0.8.0 |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
 | **License** | MIT |
+
+![RegexCraft Match mode (light)](docs/screenshots/main-test-light.png)
+
+<p align="center">
+  <img src="docs/screenshots/main-test-dark.png" alt="RegexCraft Match mode (dark)" width="49%" />
+  <img src="docs/screenshots/main-generate.png" alt="RegexCraft Generate mode" width="49%" />
+</p>
 
 ---
 
@@ -24,6 +31,7 @@
 - **Token palette** — searchable text-only tokens, engine-aware support  
 - **Library & History** — **20 built-in** common patterns (email, URL, IP, dates, UUID, …) plus user saves with categories/tags; searchable history  
 - **Light / Dark / System themes** — preference **persisted and restored** correctly across restarts  
+- **Custom About dialog** + **RegexCraft application icon** (no Avalonia defaults)  
 - **Resizable panels** — drag splitters between sidebar, editor, and mode panel  
 - **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–5 for modes  
 
@@ -59,6 +67,48 @@ Library, History, and Settings live in the OS application-data folder:
 - **Windows**: `%AppData%/RegexCraft`
 - **Linux**: `~/.config/RegexCraft` (or equivalent ApplicationData)
 
+## Running the tests
+
+```bash
+# Full suite (unit + headless UI + screenshots)
+dotnet test
+
+# By category
+dotnet test --filter Category=Engines
+dotnet test --filter Category=Analysis
+dotnet test --filter Category=Codegen
+dotnet test --filter Category=Library
+dotnet test --filter Category=Grep
+dotnet test --filter Category=ViewModels
+dotnet test --filter Category=Flavors
+dotnet test --filter Category=UI
+dotnet test --filter Category=Headless
+dotnet test --filter Category=Screenshots
+dotnet test --filter Category=Branding
+```
+
+Unit tests are fast. Headless UI tests use **Avalonia.Headless.NUnit** with Skia so they run on CI without a display.
+
+### Regenerating screenshots
+
+Screenshot tests render the main window and About dialog via `CaptureRenderedFrame()` and write PNGs to `docs/screenshots/`:
+
+```bash
+dotnet test --filter Category=Screenshots
+```
+
+| File | Description |
+|------|-------------|
+| `main-test-light.png` | Match mode, light theme |
+| `main-test-dark.png` | Match mode, dark theme |
+| `main-replace.png` | Replace mode |
+| `main-generate.png` | Generate mode (C#) |
+| `main-grep.png` | GREP mode |
+| `main-library.png` | Library sidebar |
+| `about-light.png` / `about-dark.png` | About RegexCraft dialog |
+
+Do **not** commit temporary or low-quality captures; only regenerate and keep images that look good in docs.
+
 ## Solution layout
 
 ```
@@ -66,9 +116,10 @@ RegexCraft/
 ├── src/
 │   ├── RegexCraft.Core/       # Flavors, tokens, analysis, GREP, codegen, library, settings
 │   ├── RegexCraft.Engines/    # DotNet + PCRE2 + JavaScript (Jint)
-│   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit
-├── tests/RegexCraft.Tests/
+│   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit + icon + About
+├── tests/RegexCraft.Tests/    # NUnit unit + Avalonia headless UI + screenshots
 ├── docs/
+│   ├── screenshots/           # Auto-captured PNGs for README/docs
 │   ├── user/                  # End-user guides (incl. flavors.md)
 │   └── development/           # Architecture & phase requirements
 ├── Directory.Build.props      # Version

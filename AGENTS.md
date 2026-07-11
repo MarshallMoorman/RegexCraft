@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 6 complete (v0.7.0)  
+**Last updated**: 2026-07-11 — Phase 7 complete (v0.8.0)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -10,6 +10,9 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit + Jint  
 - **UI Pattern**: MVVM (CommunityToolkit.Mvvm)  
 - **Testing**: NUnit only. All new code must have tests. `dotnet test`  
+  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, ViewModels, Flavors, Branding  
+  - UI / headless: `Category=UI`, `Category=Headless` (Avalonia.Headless.NUnit + Skia)  
+  - Screenshots: `Category=Screenshots` → `docs/screenshots/` via `CaptureRenderedFrame()`  
 - **Logging**: Microsoft.Extensions.Logging + Serilog file sink. No `Console.WriteLine` for real logging  
 - **Theme**: Named resources only from `Themes/Colors.axaml`. No hard-coded UI colors  
 - **Tokens**: Text-only palette — **no icons for individual tokens**  
@@ -18,7 +21,8 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Commits**: One clean commit per completed phase on `main`  
 - **Planning docs**: Phase requirements live under `docs/development/`; root keeps AGENTS/HANDOFF/README only  
 - **Persistence**: Library/History/Settings JSON under OS ApplicationData `RegexCraft/`  
-- **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)
+- **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)  
+- **Branding**: App icon in `src/RegexCraft.App/Assets/regexcraft-icon.*`; About is custom (`AboutWindow`), menu **About RegexCraft**
 
 ## Architecture Quick Reference
 
@@ -26,10 +30,10 @@ Living guide for AI agents and humans working on RegexCraft.
 |---------|------|
 | `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity**, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP**, built-in library |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
-| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
-| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, GREP, flavors, VMs) |
+| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon** |
+| `RegexCraft.Tests` | NUnit unit + **Avalonia headless UI** + **screenshot capture** |
 
-### UI map (Phase 6)
+### UI map (Phase 6–7)
 
 - Left: Tokens / Library / History — Library shows **Built-in** badge; built-ins not deletable  
 - Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
@@ -38,8 +42,9 @@ Living guide for AI agents and humans working on RegexCraft.
 - Fidelity **banner** when testing is High/Approximate  
 - Status: flavor (+ fidelity) / engine, counts, timing, shortcuts  
 - Generate: auto-runs for default **C#** and on every pattern/options/language change  
+- **Help → About RegexCraft** (native menu) opens custom About dialog  
 
-### Still relevant from Phase 3–5
+### Still relevant from Phase 3–6
 
 - `IGrepService` / GREP models, settings store, library favorites, resizable columns  
 - `MainWindowViewModel` live test/replace/split, GREP async, settings  
@@ -67,6 +72,16 @@ dotnet test
 dotnet run --project src/RegexCraft.App
 ```
 
+### Tests & screenshots
+
+```bash
+dotnet test --filter Category=Engines
+dotnet test --filter Category=UI
+dotnet test --filter Category=Screenshots   # writes docs/screenshots/*.png
+```
+
+Do not commit temporary or bad screenshots; only keep final good captures under `docs/screenshots/`.
+
 ## Theme Colors
 
 `src/RegexCraft.App/Themes/Colors.axaml` — Light/Dark dictionaries.
@@ -79,7 +94,7 @@ Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `Edi
 
 - Theme must be restored from `settings.json` on startup.  
 - **Critical**: suppress settings saves while applying loaded settings in the VM constructor (setting `SelectedFlavor` must not overwrite theme with the default).  
-- Re-apply theme on window open via `ReapplyThemeFromSettings()`.
+- Re-apply theme on window open via `ReapplyThemeFromSettings()` (uses in-memory `ThemeLabel`, not a disk re-read that would clobber cycles).
 
 ## After Completing a Milestone
 
@@ -102,6 +117,10 @@ dotnet test --filter Category=Library
 dotnet test --filter Category=Grep
 dotnet test --filter Category=ViewModels
 dotnet test --filter Category=Flavors
+dotnet test --filter Category=UI
+dotnet test --filter Category=Headless
+dotnet test --filter Category=Screenshots
+dotnet test --filter Category=Branding
 ```
 
 Logs: `logs/` (gitignored).  
@@ -111,9 +130,13 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
+- About: `src/RegexCraft.App/Views/AboutWindow.axaml`  
+- Icon: `src/RegexCraft.App/Assets/regexcraft-icon.ico` (+ `.png`, `.icns`)  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
 - Flavors: `src/RegexCraft.Core/Flavors/`  
 - JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
 - Built-in library: `src/RegexCraft.Core/Library/BuiltInLibrary.cs`  
 - Theme: `src/RegexCraft.App/Themes/Colors.axaml`  
+- Headless tests: `tests/RegexCraft.Tests/Headless/`  
+- Screenshots: `docs/screenshots/`  
 - User flavors doc: `docs/user/flavors.md`  
