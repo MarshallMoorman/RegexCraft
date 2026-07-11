@@ -1,96 +1,102 @@
-# RegexCraft Architecture (Phase 0)
+# RegexCraft Architecture
+
+**Version**: 0.2.0 (Phase 1)
 
 ## Overview
 
 ```
-┌─────────────────────┐
-│  RegexCraft.App     │  Avalonia 12 UI (MVVM)
-│  (shell, theme,     │
-│   logging bootstrap)│
-└──────────┬──────────┘
-           │ uses
-           ▼
-┌─────────────────────┐     ┌──────────────────────┐
-│  RegexCraft.Core    │◄────│ RegexCraft.Engines   │
-│  IRegexEngine       │     │ DotNetRegexEngine    │
-│  Result models      │     │ PcreRegexEngine      │
-│  FlavorService      │     │ EngineFactory        │
-└─────────────────────┘     └──────────────────────┘
-           ▲
-           │ tested by
-┌─────────────────────┐
-│ RegexCraft.Tests    │  NUnit
-└─────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ RegexCraft.App (Avalonia 12 + AvaloniaEdit)                      │
+│  Toolbar · Tokens · Editor · Analysis · Test/Replace · Status    │
+└───────────────────────────────┬──────────────────────────────────┘
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        ▼                       ▼                       ▼
+ RegexCraft.Core          RegexCraft.Engines      Theme / Serilog
+ IRegexEngine             DotNetRegexEngine       Colors.axaml
+ Result models            PcreRegexEngine         appsettings.json
+ FlavorService            EngineFactory
+ TokenCatalog
+ RegexAnalysisService
+ MatchHighlightBuilder
+ TokenInsertion
 ```
+
+## UI layout (Phase 1)
+
+```
+Toolbar: Flavor | Match | Replace | Split(stub) | Options | Theme
+┌──────────┬────────────────────────────┬────────────────────┐
+│ Tokens   │ Regex Editor (AvaloniaEdit)│ Test | Replace     │
+│ search   │ blue syntax highlighting   │ Subject + HL       │
+│ text list│ ─────────────────────────  │ Matches + Groups   │
+│ Library* │ Analysis Tree (live)       │ Replace preview    │
+│ History* │                            │                    │
+└──────────┴────────────────────────────┴────────────────────┘
+Status: Flavor | Engine | Matches | Time
+* placeholders only
+```
+
+### Editor
+
+- **AvaloniaEdit** `TextEditor` for pattern and subject  
+- Pattern: custom `RegexHighlightingDefinition` (groups, classes, quantifiers, escapes, anchors)  
+- Subject: `MatchHighlightTransformer` paints `HighlightSpan` ranges from engine results  
+- Token insert targets caret/selection via `EditorBinding` + `TokenInsertion`  
+
+### Live updates
+
+`MainWindowViewModel` debounces (~200 ms) pattern/subject/option changes, then:
+
+1. Rebuilds the analysis tree  
+2. Runs Match on the active engine  
+3. Rebuilds highlight spans and match list  
+4. Optionally refreshes Replace preview when that tab is active  
+
+## Core services (Phase 1)
+
+| Type | Role |
+|------|------|
+| `ITokenCatalog` / `TokenCatalog` | Text-only token definitions + search |
+| `TokenInsertion` | Pure insert/replace-selection logic |
+| `IRegexAnalysisService` / `RegexAnalysisService` | Structural analysis tree (engine-agnostic) |
+| `MatchHighlightBuilder` | `MatchCollectionResult` → `HighlightSpan` list |
+| `IRegexEngine` | Unchanged from Phase 0 (Match / Replace) |
 
 ## Engines
 
-Every engine implements `IRegexEngine`:
+| Id | Display | Implementation |
+|----|---------|----------------|
+| `dotnet` | .NET | `System.Text.RegularExpressions` |
+| `pcre2` | PCRE2 | PCRE.NET |
 
-| Member | Purpose |
-|--------|---------|
-| `Id` | Stable id (`dotnet`, `pcre2`) |
-| `DisplayName` | UI label |
-| `SupportsFullTesting` | Tier 1 engines |
-| `SupportsReplace` | Replace support flag |
-| `Match(...)` | All matches + groups |
-| `Replace(...)` | Substitution |
-
-Both engines map `RegexOptionsEx` to native flags and return **the same** result models. Invalid patterns yield `Success = false` and an `ErrorMessage` instead of crashing the UI.
-
-### Result models (highlight-ready)
-
-- `MatchCollectionResult` — success/error, list of matches, duration, engine id
-- `MatchResult` — `Index`, `Length`, `Value`, `Groups`
-- `GroupResult` — number, name, index, length, value, success
-- `ReplaceResult` — result string, replacement count, duration
-
-UI layers can paint ranges from `Index`/`Length` without knowing which engine ran.
-
-## Flavor system
-
-`FlavorDefinition` describes a flavor and which `EngineId` implements it.  
-`FlavorService` holds hard-coded Phase 0 flavors and resolves `IRegexEngine` instances.
-
-**Adding a third flavor later:**
-
-1. Implement `IRegexEngine` (if needed) in `RegexCraft.Engines`
-2. Register it in `EngineFactory.CreateDefaultEngines`
-3. Add a `FlavorDefinition` in `FlavorService` (or load from YAML/JSON later)
+Both return the same result models so highlighting and group UI stay engine-agnostic.
 
 ## Theme
 
-`Themes/Colors.axaml` defines `ResourceDictionary.ThemeDictionaries` for **Light** and **Dark** with named colors and brushes (Microsoft-style blues). All UI chrome uses `{DynamicResource ...}`. No hard-coded colors; no purple.
+`Themes/Colors.axaml` ThemeDictionaries (Light/Dark). UI and highlight brushes use `{DynamicResource …}` only.
 
-Theme cycle in the shell: System → Light → Dark → System (`Application.RequestedThemeVariant`).
+Key highlight keys: `MatchHighlight`, `GroupHighlight0`–`3`, plus brand blues.
 
 ## Logging
 
-- Abstractions: `Microsoft.Extensions.Logging`
-- Provider: **Serilog** file sink
-- Config: `appsettings.json` (+ `appsettings.Development.json`)
-- Defaults: daily rolling files at `logs/regexcraft-.log`, **7-day** retention, Information minimum (Debug in Development)
-- Bootstrapped in `App.OnFrameworkInitializationCompleted` via `LoggingBootstrap`
+Serilog file sink, 7-day rolling, `appsettings.json`. Logs flavor selection, tests, errors.
 
 ## Testing
 
-NUnit project `RegexCraft.Tests`:
-
-- Shared engine scenarios in `EngineTestBase` (Match, Replace, named groups, options, invalid patterns, Unicode, large input)
-- Concrete fixtures for DotNet and PCRE2
-- Flavor registry and result model unit tests
-- Categories: `Engines`, `DotNet`, `Pcre`, `Core`, `Flavors`
+NUnit covers engines (Phase 0), tokens, insertion, analysis, highlight builder, ViewModel workflows (engine switch, invalid pattern, replace, token insert).
 
 ```bash
 dotnet test
-dotnet test --filter Category=Engines
+dotnet test --filter Category=Analysis
+dotnet test --filter Category=Highlighting
 ```
 
 ## Versioning
 
-Single source of truth: `Directory.Build.props` → `<Version>0.1.0</Version>`.  
-Package versions: central management in `Directory.Packages.props`.
+`Directory.Build.props` → `0.2.0`  
+Central packages: `Directory.Packages.props` (includes `Avalonia.AvaloniaEdit`)
 
-## Out of scope (Phase 0)
+## Out of scope (still)
 
-AvaloniaEdit, token palette, analysis tree, library/history, GREP, code gen, debug stepping, more than two engines.
+GREP, Library/History persistence, code gen, debug stepping, Split panel, additional engines.

@@ -1,16 +1,15 @@
 # RegexCraft – User Documentation
 
-Welcome. This section will grow as features land.
-
 ## Contents
 
 | Document | Description |
 |----------|-------------|
-| [Getting started](getting-started.md) | What RegexCraft is and how to run Phase 0 |
+| [Getting started](getting-started.md) | Install, run, first walkthrough |
+| [Testing regular expressions](testing-regexes.md) | Test panel, highlighting, groups, engines, Replace |
 
-## Coming in later phases
+## Coming later
 
-- Full pattern editor with syntax highlighting
-- Token palette and live analysis tree
-- Rich match highlighting and group visualization
-- Library, history, GREP, and code generation
+- Library / History persistence  
+- GREP  
+- Code generation  
+- Debug stepping  

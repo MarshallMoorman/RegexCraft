@@ -1,64 +1,72 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: 0.1.0 (Phase 0 complete)  
+**Current Version**: 0.2.0 (Phase 1 complete)  
 **Date**: 2026-07-11  
-**Next Phase**: Phase 1  
+**Next Phase**: Phase 2  
 
 ---
 
-## What Was Completed in Phase 0
+## What Was Completed in Phase 1
 
-- Solution structure: `RegexCraft.Core` / `RegexCraft.Engines` / `RegexCraft.App` / `RegexCraft.Tests`
-- `IRegexEngine` abstraction + consistent Match/Replace result models (groups & named groups, highlight-friendly ranges)
-- Two fully working engines: `DotNetRegexEngine` + `PcreRegexEngine`
-- Flavor system: `FlavorDefinition` + `FlavorService` / `IFlavorService`
-- Variable-driven professional blue light/dark theme (`Themes/Colors.axaml`)
-- Serilog file logging (7-day rolling, `appsettings.json` configurable)
-- NUnit suite covering both engines (shared scenarios), flavors, and result models
-- Minimal Avalonia shell: flavor dropdown, options, Match/Replace, results with groups, theme cycle, version
-- `docs/` user + development docs and CHANGELOG for 0.1.0
-- Versioning via `Directory.Build.props` (`0.1.0`) + central package management
-- MIT LICENSE, `.gitignore`, README, this handoff file
+- Multi-panel professional UI (toolbar, tokens, editor, analysis, test/replace, status)
+- AvaloniaEdit pattern editor with blue regex syntax highlighting, line numbers, current line
+- Text-only searchable Token palette (categories, tooltips, insert at caret/selection)
+- Live Analysis Tree (debounced; incomplete patterns handled without crashes)
+- Test panel: subject editor + match/group highlighting for **both** .NET and PCRE2
+- Expandable match list with numbered and named groups (index/length/value)
+- Basic Replace panel with preview and replacement count
+- Flavor switch re-tests automatically; status bar shows engine + matches + timing
+- Core helpers: `TokenCatalog`, `TokenInsertion`, `RegexAnalysisService`, `MatchHighlightBuilder`
+- NUnit: 87 tests (engines + tokens + analysis + highlighting + ViewModels)
+- Docs: testing guide, updated getting-started/architecture/CHANGELOG
+- Phase 0 planning files moved to `docs/development/`
+- Version **0.2.0**
 
-## Exact Next Steps for Phase 1
+## Exact Next Steps for Phase 2
 
-Phase 1 focus: **Core Editor + Test + Highlighting** (highest priority features)
+Suggested Phase 2 focus (confirm with a formal `PHASE-2-REQUIREMENTS.md` before implementing):
 
-1. Add **AvaloniaEdit** for the main regex editor with blue syntax highlighting (use theme resources only).
-2. Implement text-based searchable **Token palette** (categories + labels + tooltips) — **no icons for tokens**.
-3. Live **Analysis Tree** (AST → hierarchical explanation). Prefer engine-agnostic or .NET-first parsing if PCRE AST is hard.
-4. Full **Test panel** with excellent match highlighting and group display for **both** engines (consume `Index`/`Length` from existing result models).
-5. Evolve the Phase 0 shell into the real multi-panel layout (editor | palette | test | analysis).
-6. Keep both engines working; expand tests for highlighting helpers and any new services.
-7. Write user docs for the new testing experience under `docs/user/`.
-8. When green → bump to **0.2.0**, update AGENTS.md + this HANDOFF.md, update CHANGELOG, commit.
+1. **Library** — save/load named patterns (local storage), categories, open into editor.
+2. **History** — recent patterns/subjects with one-click restore (persistence + UI beyond placeholders).
+3. **Split panel** — implement Split using `IRegexEngine` (add `Split` to the interface if needed) with both engines.
+4. **Options polish** — richer options UI; persist last-used flavor/options/theme.
+5. **Editor upgrades** — find/replace in pattern, multi-line pattern comfort, optional word-wrap toggle, better incomplete-parse messaging.
+6. **Analysis depth** — richer explanations, error underlines in the editor, click tree node → select pattern range.
+7. **Test UX** — click match/group → select range in subject; export matches; compare .NET vs PCRE2 side-by-side mode.
+8. **Performance** — cancel in-flight tests on huge subjects; match limits; UI virtualization for large match lists.
+9. Expand tests and user docs for Library/History/Split.
+10. When green → bump to **0.3.0**, update AGENTS.md + this file, CHANGELOG, commit.
 
-## Known Issues / TODOs from Phase 0
+Optional later (not Phase 2 unless specified): GREP, code generation, debug stepping, more engines.
 
-- Empty-pattern behavior differs slightly by engine (both handled without throwing; UI does not special-case it).
-- PCRE2 `Replace` counts matches via a pre-pass (`Matches` then `Replace`); fine for Phase 0 scale.
-- `ExplicitCapture` / `IgnorePatternWhitespace` are mapped and unit-tested for option flags but not deeply exercised in shared Match scenarios.
-- Appsettings are loaded from the app output directory; running from an unusual CWD still writes `logs/` relative to CWD when Serilog expands the path — both `logs/` under CWD and output are created best-effort.
-- No Avalonia headless UI tests yet (optional; engines are fully covered).
-- Diagnostics package is Debug-only; not needed for production builds.
+## Known Issues / TODOs from Phase 1
+
+- Analysis tree is structural/heuristic — not a full flavor-faithful AST; some exotic constructs are “Special group” or partial.
+- Token insert with View attached uses editor caret; unit tests use pure `TokenInsertion` when no event subscriber.
+- Replace tab MultiBinding for count is simple; fine for Phase 1.
+- Split is disabled stub only.
+- Library/History are non-functional placeholders.
+- Avalonia.AvaloniaEdit is 12.0.0 while Avalonia is 12.1.0 (compatible; watch for package updates).
+- Debounced live test uses `Task.Run` + UI dispatcher; fine for desktop, not stress-tested on multi-MB subjects.
+- Group highlight color set includes a soft violet (`GroupHighlight3`) for distinguishability — chrome remains blue-only.
 
 ## How to Continue in a New Conversation
 
-1. Pull/open latest `main` at v0.1.0.
-2. Read this `HANDOFF.md` and `AGENTS.md`.
-3. Skim `docs/development/architecture.md` and `PHASE-0-REQUIREMENTS.md` for historical context.
-4. Obtain or write **Phase 1 requirements**, then implement against them.
-5. Do **not** re-litigate Phase 0 architecture unless a hard blocker appears.
+1. Open latest `main` at v0.2.0.  
+2. Read this `HANDOFF.md` and `AGENTS.md`.  
+3. Read `docs/development/architecture.md` and `docs/development/PHASE-1-REQUIREMENTS.md` for history.  
+4. Author or load `docs/development/PHASE-2-REQUIREMENTS.md`, then implement.  
+5. Do not re-build Phase 0/1 foundations unless blocked.
 
 ## Key Files to Review First
 
 | Path | Why |
 |------|-----|
-| `src/RegexCraft.Core/Engines/IRegexEngine.cs` | Engine contract |
-| `src/RegexCraft.Core/Models/` | Result shapes for highlighting |
-| `src/RegexCraft.Engines/DotNet/` + `Pcre/` | Engine implementations |
-| `src/RegexCraft.Core/Flavors/FlavorService.cs` | Flavor → engine resolution |
-| `src/RegexCraft.App/Themes/Colors.axaml` | Theme tokens |
-| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Current shell logic to evolve |
-| `Directory.Build.props` | Current version |
-| `tests/RegexCraft.Tests/Engines/` | Patterns for new engine tests |
+| `src/RegexCraft.App/Views/MainWindow.axaml` | Multi-panel layout |
+| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Live test orchestration |
+| `src/RegexCraft.App/Highlighting/` | Syntax + match transformers |
+| `src/RegexCraft.Core/Tokens/` | Palette catalog |
+| `src/RegexCraft.Core/Analysis/` | Analysis tree |
+| `src/RegexCraft.Core/Highlighting/` | Highlight span builder |
+| `Directory.Build.props` | Version 0.2.0 |
+| `docs/user/testing-regexes.md` | User-facing Test docs |

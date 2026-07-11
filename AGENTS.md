@@ -1,38 +1,54 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 0 complete (v0.1.0)  
+**Last updated**: 2026-07-11 — Phase 1 complete (v0.2.0)  
 **Owner**: Marshall Moorman  
 
-This file is the living guide for any AI agent (or human) working on RegexCraft.
+Living guide for AI agents and humans working on RegexCraft.
 
 ## Project Conventions
 
-- **Language / Framework**: C# / .NET 10 + Avalonia 12
-- **UI Pattern**: MVVM (CommunityToolkit.Mvvm)
-- **Testing**: NUnit only. All new code must have tests. Run with `dotnet test`.
-- **Logging**: Microsoft.Extensions.Logging abstractions + Serilog (file sink). Never use `Console.WriteLine` for real logging.
-- **Theme**: All colors must come from the named resources in `Themes/Colors.axaml` ThemeDictionaries. Never hard-code colors. No purple — professional blues only.
-- **Versioning**: Managed only in `Directory.Build.props`. Bump according to phase.
-- **Packages**: Central Package Management via `Directory.Packages.props`.
-- **Commits**: One clean commit per completed phase on `main`.
+- **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit  
+- **UI Pattern**: MVVM (CommunityToolkit.Mvvm)  
+- **Testing**: NUnit only. All new code must have tests. `dotnet test`  
+- **Logging**: Microsoft.Extensions.Logging + Serilog file sink. No `Console.WriteLine` for real logging  
+- **Theme**: Named resources only from `Themes/Colors.axaml`. No hard-coded UI colors  
+- **Tokens**: Text-only palette — **no icons for individual tokens**  
+- **Versioning**: Only in `Directory.Build.props`  
+- **Packages**: Central management in `Directory.Packages.props`  
+- **Commits**: One clean commit per completed phase on `main`  
+- **Planning docs**: Phase requirements live under `docs/development/`; root keeps AGENTS/HANDOFF/README only  
 
 ## Architecture Quick Reference
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, result models, `RegexOptionsEx`, Flavor system |
+| `RegexCraft.Core` | `IRegexEngine`, models, flavors, tokens, analysis, highlight builder, token insertion |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, `EngineFactory` |
-| `RegexCraft.App` | Avalonia UI, theme, Serilog bootstrap, shell ViewModels |
-| `RegexCraft.Tests` | NUnit coverage for engines + core |
+| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
+| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, VMs) |
 
-Flavors map to engines via `FlavorService`. Adding a new flavor should only require a definition + optional new engine class registered in `EngineFactory`.
+### UI map (Phase 1)
 
-## Current Engines (Phase 0)
+- Left: Token palette (search + categories) + Library/History placeholders  
+- Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
+- Right: Test (subject + highlights + groups) / Replace preview  
+- Toolbar: Flavor, Match, Replace, Options, Theme  
+- Status: flavor/engine, match count, timing  
 
-| Id | Display Name | Full Testing | Notes |
-|----|--------------|--------------|-------|
+### Key Phase 1 types
+
+- `TokenCatalog` / `TokenInsertion`  
+- `RegexAnalysisService` → `AnalysisNode` tree  
+- `MatchHighlightBuilder` → `HighlightSpan`  
+- `RegexHighlightingDefinition` + `MatchHighlightTransformer`  
+- `MainWindowViewModel` (debounce live test)  
+
+## Current Engines
+
+| Id | Display | Full Testing | Notes |
+|----|---------|--------------|-------|
 | `dotnet` | .NET | Yes | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | PCRE.NET wrapper |
+| `pcre2` | PCRE2 | Yes | PCRE.NET |
 
 ## How to Run
 
@@ -44,53 +60,33 @@ dotnet run --project src/RegexCraft.App
 
 ## Theme Colors
 
-Defined in `src/RegexCraft.App/Themes/Colors.axaml` with Light and Dark dictionaries.
+`src/RegexCraft.App/Themes/Colors.axaml` — Light/Dark dictionaries.
 
-Key resources (use as brushes with `…Brush` suffix in XAML):
-
-| Resource | Purpose |
-|----------|---------|
-| `PrimaryBlue` | Brand / header / primary buttons |
-| `PrimaryBlueHover` / `PrimaryBluePressed` | Interaction states |
-| `AccentBlue` / `AccentBlueSoft` | Accents |
-| `BackgroundPrimary` / `Secondary` / `Tertiary` | Surfaces |
-| `TextPrimary` / `TextSecondary` / `TextOnPrimary` | Typography |
-| `BorderSubtle` / `BorderStrong` | Borders |
-| `MatchHighlight` / `GroupHighlight0–3` | Future match UI |
-| `Success` / `Warning` / `Error` / `Info` | Semantic |
-
-Always bind with `{DynamicResource PrimaryBlueBrush}` (etc.).
-
-## Logging
-
-- Config: root `appsettings.json` (copied to app output)
-- Path: `logs/regexcraft-.log`, rolling daily, retain **7** files
-- Development: `appsettings.Development.json` raises minimum level to Debug
-- Set `DOTNET_ENVIRONMENT=Development` for dev overrides
+Use brushes: `{DynamicResource PrimaryBlueBrush}`, `MatchHighlightBrush`, `GroupHighlight0Brush`–`3`, etc.
 
 ## After Completing a Phase
 
-1. All tests green (`dotnet test`)
-2. Update this AGENTS.md if conventions changed
-3. Update HANDOFF.md with exact next steps
-4. Bump version in `Directory.Build.props`
-5. Update `docs/CHANGELOG.md`
-6. Commit on `main` with a clear phase message
+1. All tests green  
+2. Update this AGENTS.md if conventions changed  
+3. Rewrite HANDOFF.md with exact next steps  
+4. Bump version in `Directory.Build.props`  
+5. Update `docs/CHANGELOG.md` and user/dev docs  
+6. Commit on `main` with a clear phase message  
 
 ## Useful Commands
 
 ```bash
 dotnet test --filter Category=Engines
-dotnet test --filter Category=DotNet
-dotnet test --filter Category=Pcre
+dotnet test --filter Category=Analysis
+dotnet test --filter Category=Highlighting
+dotnet test --filter Category=Tokens
 ```
 
-Logs appear in `logs/` (gitignored).
+Logs: `logs/` (gitignored).
 
-## Key Source Paths
+## Key Paths
 
-- Interfaces / models: `src/RegexCraft.Core/`
-- Engines: `src/RegexCraft.Engines/DotNet/`, `…/Pcre/`
-- Theme: `src/RegexCraft.App/Themes/Colors.axaml`
-- Shell VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`
-- Requirements history: `PHASE-0-REQUIREMENTS.md`
+- Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
+- Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
+- VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
+- Tokens/Analysis/Highlight: `src/RegexCraft.Core/`  

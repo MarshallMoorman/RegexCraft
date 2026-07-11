@@ -7,7 +7,9 @@ using Microsoft.Extensions.Logging;
 using RegexCraft.App.Services;
 using RegexCraft.App.ViewModels;
 using RegexCraft.App.Views;
+using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Flavors;
+using RegexCraft.Core.Tokens;
 using RegexCraft.Engines;
 
 namespace RegexCraft.App;
@@ -28,7 +30,7 @@ public partial class App : Application
         _logger = _loggerFactory.CreateLogger<App>();
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        var versionText = version is null ? "0.1.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        var versionText = version is null ? "0.2.0" : $"{version.Major}.{version.Minor}.{version.Build}";
 
         _logger.LogInformation("RegexCraft {Version} starting", versionText);
         _logger.LogDebug("Configuration loaded. Serilog section present: {HasSerilog}",
@@ -36,6 +38,8 @@ public partial class App : Application
 
         var engines = EngineFactory.CreateDefaultEngines(_loggerFactory);
         var flavorService = new FlavorService(engines, _loggerFactory.CreateLogger<FlavorService>());
+        var tokenCatalog = new TokenCatalog();
+        var analysisService = new RegexAnalysisService();
 
         _logger.LogInformation(
             "Registered {EngineCount} engines: {Engines}",
@@ -48,6 +52,8 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(
                     flavorService,
+                    tokenCatalog,
+                    analysisService,
                     _loggerFactory.CreateLogger<MainWindowViewModel>()),
             };
 

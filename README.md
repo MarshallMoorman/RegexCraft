@@ -4,70 +4,62 @@
 
 | | |
 |---|---|
-| **Version** | 0.1.0 (Phase 0) |
+| **Version** | 0.2.0 (Phase 1) |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
-| **Stack** | .NET 10 · Avalonia 12 · NUnit · Serilog |
+| **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · NUnit · Serilog |
 | **License** | MIT |
 
-## Status
+## Features (Phase 1)
 
-Phase 0 establishes the multi-engine foundation:
-
-- `IRegexEngine` abstraction with consistent Match / Replace result models (groups + named groups)
-- Two working engines: **.NET** (`System.Text.RegularExpressions`) and **PCRE2** (via PCRE.NET)
-- Flavor registry so new engines plug in with a definition + optional engine class
-- Variable-driven professional **blue** light/dark theme
-- Serilog file logging (7-day rolling, configurable)
-- Minimal Avalonia shell to select an engine and run Match / Replace
-- NUnit suite covering engines and core services
-
-Full editor, token palette, analysis tree, and richer testing UI arrive in **Phase 1**.
+- Multi-panel professional UI with light/dark blue theme  
+- AvaloniaEdit regex editor with **blue syntax highlighting**  
+- Searchable **text-only token palette** (no token icons)  
+- Live **analysis tree** of the pattern structure  
+- **Test** panel with excellent match + group highlighting for **.NET** and **PCRE2**  
+- Basic **Replace** preview  
+- Live debounced testing + explicit Run  
 
 ## How to Build & Run
 
 ```bash
 # Prerequisites: .NET 10 SDK
-
 dotnet build
 dotnet test
 dotnet run --project src/RegexCraft.App
 ```
 
-Logs are written to `logs/regexcraft-*.log` (gitignored).
+Logs: `logs/regexcraft-*.log` (gitignored).
 
 ## Solution Structure
 
 ```
 RegexCraft/
 ├── src/
-│   ├── RegexCraft.Core/       # Interfaces, models, flavor system
-│   ├── RegexCraft.Engines/    # DotNet + PCRE2 engines
-│   └── RegexCraft.App/        # Avalonia UI shell
-├── tests/
-│   └── RegexCraft.Tests/      # NUnit tests
+│   ├── RegexCraft.Core/       # Engines API, tokens, analysis, highlighting helpers
+│   ├── RegexCraft.Engines/    # DotNet + PCRE2
+│   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit
+├── tests/RegexCraft.Tests/
 ├── docs/
-│   ├── user/                  # Getting started
-│   ├── development/           # Architecture
-│   └── CHANGELOG.md
-├── Directory.Build.props      # Version 0.1.0
-└── Directory.Packages.props   # Central package management
+│   ├── user/                  # Getting started, testing guide
+│   └── development/           # Architecture, phase requirements
+├── Directory.Build.props      # Version 0.2.0
+└── AGENTS.md / HANDOFF.md
 ```
 
 ## Documentation
 
-- [Getting started](docs/user/getting-started.md)
-- [User docs index](docs/user/README.md)
-- [Architecture](docs/development/architecture.md)
-- [Changelog](docs/CHANGELOG.md)
-- [AGENTS.md](AGENTS.md) — conventions for contributors and AI agents
-- [HANDOFF.md](HANDOFF.md) — phase handoff notes
+- [Getting started](docs/user/getting-started.md)  
+- [Testing regexes](docs/user/testing-regexes.md)  
+- [Architecture](docs/development/architecture.md)  
+- [Changelog](docs/CHANGELOG.md)  
+- [Phase 1 requirements](docs/development/PHASE-1-REQUIREMENTS.md)  
 
-## Engines (Phase 0)
+## Engines
 
-| Id | Display | Full testing | Implementation |
-|----|---------|--------------|----------------|
-| `dotnet` | .NET | Yes | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | PCRE.NET |
+| Id | Display | Notes |
+|----|---------|-------|
+| `dotnet` | .NET | `System.Text.RegularExpressions` |
+| `pcre2` | PCRE2 | PCRE.NET |
 
 ## License
 
