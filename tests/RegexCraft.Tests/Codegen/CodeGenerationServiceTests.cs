@@ -13,18 +13,26 @@ public sealed class CodeGenerationServiceTests
     public void SetUp() => _svc = new CodeGenerationService();
 
     [Test]
-    public void SupportedLanguages_HasAtLeastSix()
+    public void SupportedLanguages_HasExpandedSet()
     {
-        Assert.That(_svc.SupportedLanguages.Count, Is.GreaterThanOrEqualTo(6));
+        Assert.That(_svc.SupportedLanguages.Count, Is.GreaterThanOrEqualTo(10));
+        Assert.That(_svc.SupportedLanguages, Does.Contain(CodeLanguage.TypeScript));
+        Assert.That(_svc.SupportedLanguages, Does.Contain(CodeLanguage.Ruby));
+        Assert.That(_svc.SupportedLanguages, Does.Contain(CodeLanguage.Kotlin));
     }
 
     [TestCase(CodeLanguage.CSharp, "using System.Text.RegularExpressions")]
     [TestCase(CodeLanguage.JavaScript, "new RegExp")]
+    [TestCase(CodeLanguage.TypeScript, "RegExp")]
     [TestCase(CodeLanguage.Python, "import re")]
     [TestCase(CodeLanguage.Php, "preg_")]
     [TestCase(CodeLanguage.Java, "Pattern.compile")]
     [TestCase(CodeLanguage.Go, "regexp")]
     [TestCase(CodeLanguage.Rust, "Regex::new")]
+    [TestCase(CodeLanguage.Ruby, "Regexp")]
+    [TestCase(CodeLanguage.Perl, "=~")]
+    [TestCase(CodeLanguage.Kotlin, "Regex(")]
+    [TestCase(CodeLanguage.Swift, "NSRegularExpression")]
     public void Generate_Matches_IncludesLanguageMarkers(CodeLanguage lang, string expectedFragment)
     {
         var code = _svc.Generate(

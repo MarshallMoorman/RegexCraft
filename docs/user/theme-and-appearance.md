@@ -8,7 +8,7 @@ Use the **Theme** button in the toolbar to cycle:
 
 **System → Light → Dark → …**
 
-Your last choice is saved in `settings.json` and restored on the next launch.
+Your last choice is saved in `settings.json` and restored on the next launch (including after a full quit). Theme cycles **System → Light → Dark → System** based on your saved preference, not the OS’s momentary effective variant.
 
 ## What is themed
 

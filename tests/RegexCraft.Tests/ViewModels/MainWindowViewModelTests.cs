@@ -58,14 +58,95 @@ public sealed class MainWindowViewModelTests
     public void Constructor_LoadsFlavorsAndRunsInitialTest()
     {
         var vm = CreateVm();
-        Assert.That(vm.Flavors, Has.Count.EqualTo(2));
+        Assert.That(vm.Flavors.Count, Is.GreaterThanOrEqualTo(10));
         Assert.That(vm.SelectedFlavor, Is.Not.Null);
         Assert.That(vm.TokenCategories, Is.Not.Empty);
         Assert.That(vm.AnalysisNodes, Is.Not.Empty);
         Assert.That(vm.Matches, Is.Not.Empty);
         Assert.That(vm.CurrentHighlights, Is.Not.Empty);
         Assert.That(vm.HasError, Is.False);
-        Assert.That(vm.CodeLanguages.Count, Is.GreaterThanOrEqualTo(6));
+        Assert.That(vm.CodeLanguages.Count, Is.GreaterThanOrEqualTo(10));
+        Assert.That(vm.GeneratedCode, Is.Not.Empty);
+        Assert.That(vm.GeneratedCode, Does.Contain("Regex").Or.Contain("regex").IgnoreCase);
+    }
+
+    [Test]
+    public void GenerateTab_AutoGeneratesForDefaultCSharp()
+    {
+        var vm = CreateVm();
+        Assert.That(vm.SelectedCodeLanguage?.Id, Is.EqualTo("csharp"));
+        Assert.That(vm.GeneratedCode, Does.Contain("System.Text.RegularExpressions"));
+
+        vm.SelectRightTabCommand.Execute("Generate");
+        Assert.That(vm.IsGenerateTab, Is.True);
+        Assert.That(vm.GeneratedCode, Does.Contain("System.Text.RegularExpressions"));
+        Assert.That(vm.GeneratedCode, Does.Contain("var pattern"));
+    }
+
+    [Test]
+    public void Generate_UpdatesWhenPatternChanges()
+    {
+        var vm = CreateVm();
+        vm.SelectRightTabCommand.Execute("Generate");
+        vm.Pattern = @"\d{4}";
+        Assert.That(vm.GeneratedCode, Does.Contain(@"\d{4}").Or.Contain("d{4}"));
+    }
+
+    [Test]
+    public void Settings_ThemeRoundTrip_ViaStore()
+    {
+        var settingsPath = Path.Combine(_tempDir, "settings.json");
+        var store = new JsonSettingsStore(settingsPath);
+        store.Save(new AppSettings { Theme = "Dark", FlavorId = "javascript" });
+
+        var engines = EngineFactory.CreateDefaultEngines();
+        var flavors = new FlavorService(engines);
+        var vm = new MainWindowViewModel(
+            flavors,
+            new TokenCatalog(),
+            new RegexAnalysisService(),
+            new CodeGenerationService(),
+            new JsonLibraryStore(Path.Combine(_tempDir, "library-theme.json")),
+            new JsonHistoryStore(Path.Combine(_tempDir, "history-theme.json")),
+            new GrepService(),
+            store,
+            NullLogger<MainWindowViewModel>.Instance);
+
+        Assert.That(vm.ThemeLabel, Is.EqualTo("Dark"));
+        Assert.That(vm.SelectedFlavor?.Id, Is.EqualTo("javascript"));
+    }
+
+    [Test]
+    public void Library_HasBuiltInPatterns()
+    {
+        var vm = CreateVm();
+        vm.SelectLeftTabCommand.Execute("Library");
+        Assert.That(vm.LibraryItems.Count, Is.GreaterThanOrEqualTo(12));
+        Assert.That(vm.LibraryItems.Any(i => i.IsBuiltIn), Is.True);
+    }
+
+    [Test]
+    public void SwitchToPython_ShowsFidelityBanner()
+    {
+        var vm = CreateVm();
+        var python = vm.Flavors.First(f => f.Id == "python");
+        vm.SelectedFlavor = python;
+        Assert.That(vm.ShowFidelityBanner, Is.True);
+        Assert.That(vm.FidelityBannerText, Does.Contain("Python").IgnoreCase);
+        Assert.That(vm.StatusEngine, Does.Contain("Approximate").Or.Contain("Python"));
+    }
+
+    [Test]
+    public void SwitchToJavaScript_TestsWithJsEngine()
+    {
+        var vm = CreateVm();
+        vm.SelectedFlavor = vm.Flavors.First(f => f.Id == "javascript");
+        vm.Pattern = @"\d+";
+        vm.Subject = "a1b2";
+        vm.RunTestCommand.Execute(null);
+        Assert.That(vm.HasError, Is.False);
+        Assert.That(vm.Matches.Count, Is.EqualTo(2));
+        Assert.That(vm.StatusEngine, Does.Contain("JavaScript").IgnoreCase);
     }
 
     [Test]
@@ -214,19 +295,22 @@ public sealed class MainWindowViewModelTests
         vm.LibraryFavorite = true;
         vm.SaveToLibraryCommand.Execute(null);
 
-        Assert.That(vm.LibraryItems, Has.Count.EqualTo(1));
-        Assert.That(vm.LibraryItems[0].IsFavorite, Is.True);
-        Assert.That(vm.LibraryItems[0].Category, Is.EqualTo("Basics"));
+        var words = vm.LibraryItems.First(i => i.Name == "Words");
+        Assert.That(words.IsFavorite, Is.True);
+        Assert.That(words.Category, Is.EqualTo("Basics"));
+        Assert.That(words.IsBuiltIn, Is.False);
 
-        vm.ToggleLibraryFavoriteCommand.Execute(vm.LibraryItems[0]);
-        Assert.That(vm.LibraryItems[0].IsFavorite, Is.False);
+        vm.ToggleLibraryFavoriteCommand.Execute(words);
+        Assert.That(vm.LibraryItems.First(i => i.Name == "Words").IsFavorite, Is.False);
     }
 
     [Test]
     public void BothEngines_ProduceHighlightsForSample()
     {
         var vm = CreateVm();
-        foreach (var flavor in vm.Flavors)
+        // Full-fidelity engines only — approximate flavors still run but may diverge on edge patterns.
+        foreach (var flavor in vm.Flavors.Where(f =>
+                     f.Id is "dotnet" or "pcre2" or "javascript" or "typescript" or "php"))
         {
             vm.SelectedFlavor = flavor;
             vm.RunTestCommand.Execute(null);
@@ -246,11 +330,11 @@ public sealed class MainWindowViewModelTests
         vm.LibraryDescription = "Find digits";
         vm.SaveToLibraryCommand.Execute(null);
 
-        Assert.That(vm.LibraryItems, Has.Count.EqualTo(1));
-        Assert.That(vm.LibraryItems[0].Name, Is.EqualTo("Digits"));
+        var digits = vm.LibraryItems.First(i => i.Name == "Digits");
+        Assert.That(digits.IsBuiltIn, Is.False);
 
         vm.Pattern = "changed";
-        vm.LoadLibraryItemCommand.Execute(vm.LibraryItems[0]);
+        vm.LoadLibraryItemCommand.Execute(digits);
         Assert.That(vm.Pattern, Is.EqualTo(@"\d+"));
         Assert.That(vm.Subject, Is.EqualTo("x1y"));
     }
@@ -259,12 +343,26 @@ public sealed class MainWindowViewModelTests
     public void Library_Delete()
     {
         var vm = CreateVm();
+        var before = vm.LibraryItems.Count;
         vm.Pattern = "abc";
         vm.LibraryName = "Temp";
         vm.SaveToLibraryCommand.Execute(null);
-        Assert.That(vm.LibraryItems, Has.Count.EqualTo(1));
-        vm.DeleteLibraryItemCommand.Execute(vm.LibraryItems[0]);
-        Assert.That(vm.LibraryItems, Is.Empty);
+        Assert.That(vm.LibraryItems.Count, Is.EqualTo(before + 1));
+        var temp = vm.LibraryItems.First(i => i.Name == "Temp");
+        vm.DeleteLibraryItemCommand.Execute(temp);
+        Assert.That(vm.LibraryItems.Any(i => i.Name == "Temp"), Is.False);
+        Assert.That(vm.LibraryItems.Count, Is.EqualTo(before));
+    }
+
+    [Test]
+    public void Library_CannotDeleteBuiltIn()
+    {
+        var vm = CreateVm();
+        var builtin = vm.LibraryItems.First(i => i.IsBuiltIn);
+        var count = vm.LibraryItems.Count;
+        vm.DeleteLibraryItemCommand.Execute(builtin);
+        Assert.That(vm.LibraryItems.Count, Is.EqualTo(count));
+        Assert.That(vm.LibraryItems.Any(i => i.Id == builtin.Id), Is.True);
     }
 
     [Test]

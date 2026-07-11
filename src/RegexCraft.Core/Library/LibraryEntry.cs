@@ -1,6 +1,6 @@
 namespace RegexCraft.Core.Library;
 
-/// <summary>A user-saved regex pattern with optional metadata.</summary>
+/// <summary>A user-saved or built-in regex pattern with optional metadata.</summary>
 public sealed class LibraryEntry
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -20,6 +20,8 @@ public sealed class LibraryEntry
     /// <summary>Comma/semicolon-separated tags for filtering.</summary>
     public string Tags { get; set; } = string.Empty;
     public bool IsFavorite { get; set; }
+    /// <summary>True for shipped default patterns (read-only pattern body).</summary>
+    public bool IsBuiltIn { get; set; }
     public DateTimeOffset CreatedUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset ModifiedUtc { get; set; } = DateTimeOffset.UtcNow;
 }

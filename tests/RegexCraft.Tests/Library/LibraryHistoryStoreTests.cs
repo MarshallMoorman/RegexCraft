@@ -45,13 +45,15 @@ public sealed class LibraryHistoryStoreTests
         });
 
         Assert.That(saved.Id, Is.Not.Empty);
+        Assert.That(saved.IsBuiltIn, Is.False);
 
         var reloaded = new JsonLibraryStore(path);
         var all = reloaded.GetAll();
-        Assert.That(all, Has.Count.EqualTo(1));
-        Assert.That(all[0].Name, Is.EqualTo("Email"));
-        Assert.That(all[0].Pattern, Is.EqualTo(@"\w+@\w+"));
-        Assert.That(all[0].IgnoreCase, Is.True);
+        // Built-ins are always merged in
+        Assert.That(all.Count, Is.GreaterThanOrEqualTo(1 + BuiltInLibrary.GetDefaults().Count));
+        var user = all.First(e => e.Name == "Email" && !e.IsBuiltIn);
+        Assert.That(user.Pattern, Is.EqualTo(@"\w+@\w+"));
+        Assert.That(user.IgnoreCase, Is.True);
     }
 
     [Test]
@@ -62,11 +64,52 @@ public sealed class LibraryHistoryStoreTests
         store.Save(new LibraryEntry { Name = "Digits", Pattern = @"\d+" });
         store.Save(new LibraryEntry { Name = "Words", Pattern = @"\w+" });
 
-        Assert.That(store.Search("digit"), Has.Count.EqualTo(1));
+        Assert.That(store.Search("digit").Count(e => e.Name == "Digits"), Is.EqualTo(1));
         var id = store.GetAll().First(e => e.Name == "Digits").Id;
         Assert.That(store.Delete(id), Is.True);
-        Assert.That(store.GetAll(), Has.Count.EqualTo(1));
-        Assert.That(store.GetAll()[0].Name, Is.EqualTo("Words"));
+        Assert.That(store.GetAll().Any(e => e.Name == "Digits"), Is.False);
+        Assert.That(store.GetAll().Any(e => e.Name == "Words"), Is.True);
+    }
+
+    [Test]
+    public void Library_SeedsBuiltInsOnEmptyFile()
+    {
+        var path = Path.Combine(_dir, "library-empty.json");
+        var store = new JsonLibraryStore(path);
+        var all = store.GetAll();
+        var builtins = BuiltInLibrary.GetDefaults();
+        Assert.That(all.Count, Is.GreaterThanOrEqualTo(builtins.Count));
+        Assert.That(all.Count(e => e.IsBuiltIn), Is.EqualTo(builtins.Count));
+        Assert.That(all.Any(e => e.Name.Contains("Email", StringComparison.OrdinalIgnoreCase)), Is.True);
+        Assert.That(all.Any(e => e.Name.Contains("UUID", StringComparison.OrdinalIgnoreCase)), Is.True);
+        Assert.That(File.Exists(path), Is.True);
+    }
+
+    [Test]
+    public void Library_CannotDeleteBuiltIn()
+    {
+        var path = Path.Combine(_dir, "library-builtin-del.json");
+        var store = new JsonLibraryStore(path);
+        var builtin = store.GetAll().First(e => e.IsBuiltIn);
+        Assert.That(store.Delete(builtin.Id), Is.False);
+        Assert.That(store.GetById(builtin.Id), Is.Not.Null);
+    }
+
+    [Test]
+    public void Library_BuiltInFavoritePreservedOnReload()
+    {
+        var path = Path.Combine(_dir, "library-fav-builtin.json");
+        var store = new JsonLibraryStore(path);
+        var builtin = store.GetAll().First(e => e.IsBuiltIn);
+        builtin.IsFavorite = true;
+        store.Save(builtin);
+
+        var reloaded = new JsonLibraryStore(path);
+        var again = reloaded.GetById(builtin.Id);
+        Assert.That(again, Is.Not.Null);
+        Assert.That(again!.IsFavorite, Is.True);
+        Assert.That(again.IsBuiltIn, Is.True);
+        Assert.That(again.Pattern, Is.EqualTo(builtin.Pattern));
     }
 
     [Test]
@@ -93,8 +136,9 @@ public sealed class LibraryHistoryStoreTests
 
         var all = store.GetAll();
         Assert.That(all[0].Name, Is.EqualTo("Starred"));
-        Assert.That(store.Search("Email"), Has.Count.EqualTo(1));
-        Assert.That(store.Search("inbox"), Has.Count.EqualTo(1));
+        Assert.That(store.Search("inbox").Count(e => e.Name == "Starred"), Is.EqualTo(1));
+        // "Email" may also match built-in email patterns
+        Assert.That(store.Search("Email").Any(e => e.Name == "Starred"), Is.True);
     }
 
     [Test]

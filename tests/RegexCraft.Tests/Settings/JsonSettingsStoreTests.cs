@@ -51,4 +51,15 @@ public sealed class JsonSettingsStoreTests
         Assert.That(loaded.GrepRecursive, Is.False);
         Assert.That(loaded.WindowWidth, Is.EqualTo(1400));
     }
+
+    [TestCase("Light")]
+    [TestCase("Dark")]
+    [TestCase("System")]
+    public void Theme_PersistsAcrossReload(string theme)
+    {
+        var path = Path.Combine(_dir, $"theme-{theme}.json");
+        new JsonSettingsStore(path).Save(new AppSettings { Theme = theme });
+        var loaded = new JsonSettingsStore(path).Load();
+        Assert.That(loaded.Theme, Is.EqualTo(theme));
+    }
 }

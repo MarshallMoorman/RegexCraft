@@ -16,10 +16,11 @@ This guide covers the **Test** panel, highlighting, groups, engines, and options
 
 ## Match testing
 
-1. Choose a **flavor** (.NET or PCRE2) in the toolbar.
-2. Enter a pattern in the **Regex Editor** (or click tokens from the left).
-3. Enter or edit the **Subject** text on the right (**Test** tab).
-4. Results update **live** (debounced) as you type. Click **Run** or press **Ctrl+Enter** for an immediate run.
+1. Choose a **flavor** in the toolbar (.NET, PCRE2, JavaScript, Python, PHP, …). See [Flavors & testing fidelity](flavors.md).
+2. If testing is approximate, read the blue **fidelity banner** so you know which engine is actually running.
+3. Enter a pattern in the **Regex Editor** (or click tokens from the left).
+4. Enter or edit the **Subject** text on the right (**Test** tab).
+5. Results update **live** (debounced) as you type. Click **Run** or press **Ctrl+Enter** for an immediate run.
 
 ### Highlighting
 

@@ -1,13 +1,13 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 5 complete (v0.6.0)  
+**Last updated**: 2026-07-11 — Phase 6 complete (v0.7.0)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
 
 ## Project Conventions
 
-- **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit  
+- **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit + Jint  
 - **UI Pattern**: MVVM (CommunityToolkit.Mvvm)  
 - **Testing**: NUnit only. All new code must have tests. `dotnet test`  
 - **Logging**: Microsoft.Extensions.Logging + Serilog file sink. No `Console.WriteLine` for real logging  
@@ -24,49 +24,40 @@ Living guide for AI agents and humans working on RegexCraft.
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, flavors, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP** |
-| `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, `EngineFactory` |
+| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity**, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP**, built-in library |
+| `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
 | `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels |
-| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, GREP, VMs) |
+| `RegexCraft.Tests` | NUnit (engines, tokens, analysis, highlighting, codegen, library, GREP, flavors, VMs) |
 
-### UI map (Phase 5)
+### UI map (Phase 6)
 
-- Left: Tokens / Library / History tabs — equal-width token category panels; History searchable  
-- Center: Pattern editor (AvaloniaEdit) with high-contrast light/dark syntax + Analysis Tree  
-- Right: **single mode host** — Test / Replace / Split / Generate / GREP each fill the panel completely  
-- Body: resizable columns via GridSplitters (sidebar | center | modes)  
-- Toolbar: Flavor, Match/Replace/Split/Generate/GREP modes, Options, Theme (persisted)  
-- Status: flavor/engine, counts, timing, shortcut hints  
-- Shortcuts: Ctrl+Enter run; Ctrl+1–5 modes  
+- Left: Tokens / Library / History — Library shows **Built-in** badge; built-ins not deletable  
+- Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
+- Right: **single mode host** — Test / Replace / Split / Generate / GREP  
+- Toolbar: **expanded Flavor list**, modes, Options, Theme (persisted correctly)  
+- Fidelity **banner** when testing is High/Approximate  
+- Status: flavor (+ fidelity) / engine, counts, timing, shortcuts  
+- Generate: auto-runs for default **C#** and on every pattern/options/language change  
 
-### Key layout / theme types
+### Still relevant from Phase 3–5
 
-- Theme: `EditorForeground` / `EditorBackground` / `EditorSelection` / `Syntax*Brush` resources  
-- `RegexHighlightingDefinition` + `RegexSyntaxPalette` (light + dark high-contrast)  
-- AvaloniaEdit fully themed (fg/bg/selection/caret/line numbers/current line)  
-- Right modes: `Grid.rightMode`, `Border.editorFrame`, `Border.listFrame` styles  
-- Token category expanders: shared `tokenCategory` style, stretch width  
-
-### Still relevant from Phase 3–4
-
-- `IGrepService` / `GrepService` / `FileGlobMatcher` / GREP models  
-- `ISettingsStore` / `JsonSettingsStore` / `AppSettings` (theme, flavor, options, GREP, window bounds)  
-- Library: `Category`, `Tags`, `IsFavorite`  
-- `MainWindowViewModel` (live test/replace/split, GREP async, settings, favorites, history search)  
-- `Application.Name` + `WindowTitle` binding for correct window title  
+- `IGrepService` / GREP models, settings store, library favorites, resizable columns  
+- `MainWindowViewModel` live test/replace/split, GREP async, settings  
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines`  
-- `RegexAnalysisService` → rich `AnalysisNode` tree  
-- `MatchHighlightBuilder` / `ReplaceHighlightBuilder`  
-- `ICodeGenerationService` / `CodeGenerationService`  
-- `ILibraryStore` / `JsonLibraryStore`, `IHistoryStore` / `JsonHistoryStore`  
-- `IRegexEngine.Split` + `SplitResult`  
+- `RegexAnalysisService`, highlight builders, codegen service  
 
 ## Current Engines
 
 | Id | Display | Full Testing | Replace | Split | GREP | Notes |
 |----|---------|--------------|---------|-------|------|-------|
-| `dotnet` | .NET | Yes | Yes | Yes | Yes | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | PCRE.NET; manual backref expansion for `$1` / `${name}` |
+| `dotnet` | .NET | Yes | Yes | Yes | Yes | Also backs approximate Python/Java/Go/Rust/Kotlin/Swift |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | Also backs PHP (High) / Ruby / Perl (Approximate) |
+| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | JS + TypeScript flavors |
+
+### Flavors (registry)
+
+Defined in `FlavorService.BuildDefaultFlavors()` with `TestingFidelity` + `FidelityNote`.  
+Only flavors whose `EngineId` is registered are shown.
 
 ## How to Run
 
@@ -82,7 +73,13 @@ dotnet run --project src/RegexCraft.App
 
 Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `EditorBackgroundBrush`, `SyntaxGroupBrush`, `MatchHighlightBrush`, `GroupHighlight0Brush`–`3`, etc.
 
-**Never hard-code UI colors.** Editor and syntax colors must come from theme resources so light mode stays highly readable.
+**Never hard-code UI colors.**
+
+## Settings / theme persistence
+
+- Theme must be restored from `settings.json` on startup.  
+- **Critical**: suppress settings saves while applying loaded settings in the VM constructor (setting `SelectedFlavor` must not overwrite theme with the default).  
+- Re-apply theme on window open via `ReapplyThemeFromSettings()`.
 
 ## After Completing a Milestone
 
@@ -104,6 +101,7 @@ dotnet test --filter Category=Codegen
 dotnet test --filter Category=Library
 dotnet test --filter Category=Grep
 dotnet test --filter Category=ViewModels
+dotnet test --filter Category=Flavors
 ```
 
 Logs: `logs/` (gitignored).  
@@ -114,7 +112,8 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
+- Flavors: `src/RegexCraft.Core/Flavors/`  
+- JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
+- Built-in library: `src/RegexCraft.Core/Library/BuiltInLibrary.cs`  
 - Theme: `src/RegexCraft.App/Themes/Colors.axaml`  
-- Syntax: `src/RegexCraft.App/Highlighting/RegexHighlightingDefinition.cs`  
-- GREP: `src/RegexCraft.Core/Grep/`  
-- Tokens/Analysis/Highlight/Codegen/Library/Settings: `src/RegexCraft.Core/`  
+- User flavors doc: `docs/user/flavors.md`  

@@ -5,6 +5,29 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] — 2026-07-11
+
+### Fixed
+
+- **Theme persistence** — Light / Dark / System now restores correctly after restart (settings save was overwriting theme with the default during ViewModel init when flavor selection ran first)
+- **Generate tab** — C# (and any selected language) produces code immediately when the tab is shown and whenever pattern/options/flavor/language change; editor text stays in sync without toggling the language dropdown
+
+### Added
+
+- **Built-in Library** — ~20 curated patterns (email, URL, IPv4/IPv6, phones, dates, time, hex color, UUID, credit card, strong password, HTML tags, whitespace, log levels, ISO datetime, slug, semver, …) merged on first run; **Built-in** badge; non-deletable; favorites preserved
+- **JavaScript engine** (Jint) for high-fidelity ECMAScript testing
+- **Expanded flavors**: JavaScript, TypeScript, Python, Java, PHP, Ruby, Go, Rust, Perl, Kotlin, Swift (plus existing .NET and PCRE2)
+- **Testing fidelity** metadata (`Full` / `High` / `Approximate`) with UI banner and status-bar labels
+- Code generation targets: TypeScript, Ruby, Perl, Kotlin, Swift (in addition to C#, JS, Python, PHP, Java, Go, Rust)
+- User guide: `docs/user/flavors.md`
+
+### Changed
+
+- Flavor registry filters to engines that are registered; PHP shares PCRE2; Python/Java/etc. map to closest engines with clear notes
+- Generate panel copy clarifies auto-update behavior
+- Version bumped to **0.7.0**
+- AGENTS.md / HANDOFF.md rewritten for post–Phase-6 roadmap
+
 ## [0.6.0] — 2026-07-11
 
 ### Fixed

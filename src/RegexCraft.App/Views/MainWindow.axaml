@@ -251,8 +251,10 @@
                      Margin="0,0,2,0" />
           <ComboBox ItemsSource="{Binding Flavors}"
                     SelectedItem="{Binding SelectedFlavor}"
-                    MinWidth="110"
-                    ToolTip.Tip="Select regex flavor / engine (.NET or PCRE2)">
+                    MinWidth="130"
+                    MaxWidth="200"
+                    ToolTip.Tip="{Binding FlavorTooltip}"
+                    AutomationProperties.Name="Regex flavor">
             <ComboBox.ItemTemplate>
               <DataTemplate>
                 <TextBlock Text="{Binding DisplayName}" />
@@ -533,7 +535,7 @@
                      FontSize="12" />
             <TextBlock DockPanel.Dock="Top"
                        IsVisible="{Binding !LibraryItems.Count}"
-                       Text="No saved patterns yet. Save your first pattern above."
+                       Text="No library patterns match. Built-in samples load automatically on first run."
                        TextWrapping="Wrap"
                        Margin="14,8"
                        FontSize="12"
@@ -547,11 +549,24 @@
                   <Border Padding="8,8" Margin="0,2" CornerRadius="4"
                           Background="{DynamicResource BackgroundTertiaryBrush}">
                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                      <TextBlock Text="{Binding Name}"
-                                 FontWeight="SemiBold"
-                                 FontSize="12"
-                                 Foreground="{DynamicResource TextPrimaryBrush}"
-                                 TextTrimming="CharacterEllipsis" />
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding Name}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" />
+                        <Border IsVisible="{Binding IsBuiltIn}"
+                                Background="{DynamicResource AccentBlueSoftBrush}"
+                                CornerRadius="3"
+                                Padding="5,1"
+                                VerticalAlignment="Center">
+                          <TextBlock Text="Built-in"
+                                     FontSize="10"
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource PrimaryBlueBrush}" />
+                        </Border>
+                      </StackPanel>
                       <TextBlock Grid.Row="1"
                                  Text="{Binding Subtitle}"
                                  FontSize="11"
@@ -573,6 +588,7 @@
                                 CommandParameter="{Binding}" />
                         <Button Content="✕"
                                 Classes="ghost"
+                                IsVisible="{Binding CanDelete}"
                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteLibraryItemCommand}"
                                 CommandParameter="{Binding}"
                                 ToolTip.Tip="Delete" />
@@ -781,6 +797,20 @@
                     ToolTip.Tip="Search &amp; replace across files"
                     AutomationProperties.Name="GREP mode tab" />
           </StackPanel>
+
+          <Border DockPanel.Dock="Top"
+                  IsVisible="{Binding ShowFidelityBanner}"
+                  Background="{DynamicResource AccentBlueSoftBrush}"
+                  BorderBrush="{DynamicResource PrimaryBlueBrush}"
+                  BorderThickness="0,0,0,1"
+                  Padding="12,8"
+                  Margin="0,0,0,0">
+            <TextBlock Text="{Binding FidelityBannerText}"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       AutomationProperties.Name="Flavor fidelity note" />
+          </Border>
 
           <Border DockPanel.Dock="Top"
                   IsVisible="{Binding HasError}"
@@ -1026,7 +1056,7 @@
               <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,10">
                 <TextBlock Text="Code Generation" Classes="sectionLabel" FontSize="13" />
                 <TextBlock Classes="mutedHint"
-                           Text="Idiomatic snippets for the current pattern, subject, options, and engine. Engine-specific notes appear as comments." />
+                           Text="Snippets update automatically for the selected language when the pattern, options, flavor, or operation changes. Default language is C#." />
               </StackPanel>
               <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,8">
                 <StackPanel Margin="0,0,6,0" Spacing="4">

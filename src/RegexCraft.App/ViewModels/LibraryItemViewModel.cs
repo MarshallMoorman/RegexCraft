@@ -13,8 +13,12 @@ public sealed class LibraryItemViewModel
         Category = entry.Category ?? string.Empty;
         Tags = entry.Tags ?? string.Empty;
         IsFavorite = entry.IsFavorite;
+        IsBuiltIn = entry.IsBuiltIn;
         FavoriteLabel = entry.IsFavorite ? "★" : "☆";
+        BadgeLabel = entry.IsBuiltIn ? "Built-in" : string.Empty;
+        CanDelete = !entry.IsBuiltIn;
         var bits = new List<string>();
+        if (entry.IsBuiltIn) bits.Add("Built-in");
         if (entry.IsFavorite) bits.Add("★ Favorite");
         if (!string.IsNullOrWhiteSpace(entry.Category)) bits.Add(entry.Category.Trim());
         if (!string.IsNullOrWhiteSpace(entry.Description))
@@ -31,7 +35,10 @@ public sealed class LibraryItemViewModel
     public string Category { get; }
     public string Tags { get; }
     public bool IsFavorite { get; }
+    public bool IsBuiltIn { get; }
+    public bool CanDelete { get; }
     public string FavoriteLabel { get; }
+    public string BadgeLabel { get; }
     public string Subtitle { get; }
     public string Id => Entry.Id;
 

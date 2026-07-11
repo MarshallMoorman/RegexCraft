@@ -37,12 +37,16 @@ public partial class MainWindow : Window
     private void OnOpened(object? sender, EventArgs e)
     {
         Title = _vm?.WindowTitle ?? "RegexCraft";
+        // Re-apply theme after Avalonia has fully initialized the window/chrome.
+        _vm?.ReapplyThemeFromSettings();
         ConfigurePatternEditor();
         ConfigureSubjectEditor();
         ConfigureReplaceEditor();
+        ConfigureGenerateEditor();
         ConfigureGrepPreviewEditor();
         ApplyThemeBrushes();
         ApplySavedBounds();
+        SyncGenerateEditor();
         ActualThemeVariantChanged += (_, _) =>
         {
             ApplyThemeBrushes();
@@ -280,6 +284,28 @@ public partial class MainWindow : Window
         GrepPreviewEditor.IsReadOnly = true;
         GrepPreviewEditor.TextArea.TextView.LineTransformers.Add(_grepHighlighter);
         ApplyEditorTheme(GrepPreviewEditor, showLineNumbers: true);
+    }
+
+    private void ConfigureGenerateEditor()
+    {
+        if (GenerateCodeEditor is null)
+            return;
+
+        GenerateCodeEditor.Document ??= new TextDocument();
+        GenerateCodeEditor.Options.EnableHyperlinks = false;
+        GenerateCodeEditor.Options.EnableEmailHyperlinks = false;
+        GenerateCodeEditor.IsReadOnly = true;
+        ApplyEditorTheme(GenerateCodeEditor, showLineNumbers: true);
+    }
+
+    private void SyncGenerateEditor()
+    {
+        if (_vm is null || GenerateCodeEditor?.Document is null)
+            return;
+
+        var text = _vm.GeneratedCode ?? string.Empty;
+        if (GenerateCodeEditor.Document.Text != text)
+            GenerateCodeEditor.Document.Text = text;
     }
 
     private void ApplyRegexHighlighting()
@@ -566,6 +592,11 @@ public partial class MainWindow : Window
             && GenerateCodeEditor?.Document is not null)
         {
             GenerateCodeEditor.Document.Text = _vm.GeneratedCode ?? string.Empty;
+        }
+
+        if (e.PropertyName == nameof(MainWindowViewModel.IsGenerateTab) && _vm.IsGenerateTab)
+        {
+            SyncGenerateEditor();
         }
 
         if (e.PropertyName is nameof(MainWindowViewModel.AnalysisNodes)

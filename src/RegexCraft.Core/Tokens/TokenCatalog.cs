@@ -70,8 +70,8 @@ public sealed class TokenCatalog : ITokenCatalog
         Add("Character Classes", "hex", "Hex digit class", "[0-9A-Fa-f]", "Matches a hexadecimal digit.", "[0-9A-Fa-f]+");
         Add("Character Classes", "alpha", "Letters a–zA–Z", "[a-zA-Z]", "ASCII letters only.", "[a-zA-Z]+");
         Add("Character Classes", "alnum", "Alphanumeric", "[a-zA-Z0-9]", "ASCII letters and digits.");
-        Add("Character Classes", "h-space", "Horizontal space", "\\h", "Horizontal whitespace (PCRE).", null, null, "pcre2");
-        Add("Character Classes", "v-space", "Vertical space", "\\v", "Vertical whitespace (PCRE).", null, null, "pcre2");
+        Add("Character Classes", "h-space", "Horizontal space", "\\h", "Horizontal whitespace (PCRE/PHP/Ruby).", null, null, "pcre2");
+        Add("Character Classes", "v-space", "Vertical space", "\\v", "Vertical whitespace (PCRE/PHP/Ruby).", null, null, "pcre2");
 
         // Quantifiers
         Add("Quantifiers", "zero-or-more", "Zero or more", "*", "Matches the previous atom 0+ times (greedy).", "a*");
@@ -84,8 +84,8 @@ public sealed class TokenCatalog : ITokenCatalog
         Add("Quantifiers", "lazy-plus", "Lazy +", "+?", "Non-greedy one or more.", "a+?");
         Add("Quantifiers", "lazy-opt", "Lazy ?", "??", "Non-greedy optional.");
         Add("Quantifiers", "lazy-between", "Lazy {n,m}", "{n,m}?", "Non-greedy between n and m.", "a{2,4}?", 1);
-        Add("Quantifiers", "possessive-plus", "Possessive +", "++", "Possessive one or more (no backtrack).", "a++", null, "pcre2");
-        Add("Quantifiers", "possessive-star", "Possessive *", "*+", "Possessive zero or more (PCRE).", "a*+", null, "pcre2");
+        Add("Quantifiers", "possessive-plus", "Possessive +", "++", "Possessive one or more (no backtrack). PCRE/Java/PHP.", "a++", null, "pcre2");
+        Add("Quantifiers", "possessive-star", "Possessive *", "*+", "Possessive zero or more (PCRE/Java/PHP).", "a*+", null, "pcre2");
 
         // Groups
         Add("Groups", "capture", "Capturing group", "()", "Creates a numbered capturing group.", "(abc)", 1);
@@ -95,7 +95,7 @@ public sealed class TokenCatalog : ITokenCatalog
         Add("Groups", "atomic", "Atomic group", "(?>)", "Atomic (possessive) group.", "(?>a+)", 3);
         Add("Groups", "branch-reset", "Conditional", "(?(1))", "Conditional if group 1 matched.", null, 4);
         Add("Groups", "cond-named", "Conditional (named)", "(?(name))", "Conditional if named group matched.", null, 7);
-        Add("Groups", "balancing", "Balancing group", "(?<open-close>)", "Balancing group (.NET).", null, 8, "dotnet");
+        Add("Groups", "balancing", "Balancing group", "(?<open-close>)", "Balancing group (.NET only).", null, 8, "dotnet");
 
         // Lookarounds
         Add("Lookarounds", "pos-lookahead", "Positive lookahead", "(?=)", "Asserts that the pattern matches ahead.", "\\d(?=px)", 3);

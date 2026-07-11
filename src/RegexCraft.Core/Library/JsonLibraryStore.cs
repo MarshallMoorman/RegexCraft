@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace RegexCraft.Core.Library;
 
 /// <summary>
-/// JSON-file backed library of saved patterns.
+/// JSON-file backed library of saved patterns, with built-in defaults merged in.
 /// </summary>
 public sealed class JsonLibraryStore : ILibraryStore
 {
@@ -33,7 +33,11 @@ public sealed class JsonLibraryStore : ILibraryStore
         lock (_gate)
             return _entries
                 .OrderByDescending(e => e.IsFavorite)
+                .ThenBy(e => e.IsBuiltIn ? 0 : 1) // built-ins after favorites, before plain user entries when unfavorited sort ties
+                .ThenBy(e => e.Category, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
                 .ThenByDescending(e => e.ModifiedUtc)
+                .Select(Clone)
                 .ToList();
     }
 
@@ -49,7 +53,8 @@ public sealed class JsonLibraryStore : ILibraryStore
                 Contains(e.Pattern, query) ||
                 Contains(e.Subject, query) ||
                 Contains(e.Category, query) ||
-                Contains(e.Tags, query))
+                Contains(e.Tags, query) ||
+                (e.IsBuiltIn && Contains("built-in", query)))
             .ToList();
     }
 
@@ -57,7 +62,10 @@ public sealed class JsonLibraryStore : ILibraryStore
     {
         EnsureLoaded();
         lock (_gate)
-            return _entries.FirstOrDefault(e => e.Id == id);
+        {
+            var e = _entries.FirstOrDefault(x => x.Id == id);
+            return e is null ? null : Clone(e);
+        }
     }
 
     public LibraryEntry Save(LibraryEntry entry)
@@ -70,12 +78,22 @@ public sealed class JsonLibraryStore : ILibraryStore
             var existing = _entries.FirstOrDefault(e => e.Id == entry.Id);
             if (existing is null)
             {
+                // Never create new built-ins via Save — user entries only
+                entry.IsBuiltIn = false;
                 entry.CreatedUtc = DateTimeOffset.UtcNow;
                 entry.ModifiedUtc = entry.CreatedUtc;
-                if (string.IsNullOrWhiteSpace(entry.Id))
+                if (string.IsNullOrWhiteSpace(entry.Id) || BuiltInLibrary.IsBuiltInId(entry.Id))
                     entry.Id = Guid.NewGuid().ToString("N");
                 _entries.Add(entry);
                 _logger.LogInformation("Library: saved new entry {Id} ({Name})", entry.Id, entry.Name);
+            }
+            else if (existing.IsBuiltIn || BuiltInLibrary.IsBuiltInId(existing.Id))
+            {
+                // Built-ins: only favorite (and display metadata) may change
+                existing.IsFavorite = entry.IsFavorite;
+                existing.ModifiedUtc = DateTimeOffset.UtcNow;
+                entry = existing;
+                _logger.LogInformation("Library: updated built-in favorite {Id} ({Name})", entry.Id, entry.Name);
             }
             else
             {
@@ -93,6 +111,7 @@ public sealed class JsonLibraryStore : ILibraryStore
                 existing.Category = entry.Category;
                 existing.Tags = entry.Tags;
                 existing.IsFavorite = entry.IsFavorite;
+                existing.IsBuiltIn = false;
                 existing.ModifiedUtc = DateTimeOffset.UtcNow;
                 entry = existing;
                 _logger.LogInformation("Library: updated entry {Id} ({Name})", entry.Id, entry.Name);
@@ -108,7 +127,17 @@ public sealed class JsonLibraryStore : ILibraryStore
         EnsureLoaded();
         lock (_gate)
         {
-            var removed = _entries.RemoveAll(e => e.Id == id) > 0;
+            var existing = _entries.FirstOrDefault(e => e.Id == id);
+            if (existing is null)
+                return false;
+
+            if (existing.IsBuiltIn || BuiltInLibrary.IsBuiltInId(existing.Id))
+            {
+                _logger.LogInformation("Library: refused delete of built-in {Id}", id);
+                return false;
+            }
+
+            var removed = _entries.Remove(existing);
             if (removed)
             {
                 PersistUnlocked();
@@ -125,6 +154,7 @@ public sealed class JsonLibraryStore : ILibraryStore
         {
             if (_loaded) return;
             LoadUnlocked();
+            MergeBuiltInsUnlocked();
             _loaded = true;
         }
     }
@@ -148,6 +178,55 @@ public sealed class JsonLibraryStore : ILibraryStore
         {
             _logger.LogError(ex, "Library: failed to load {Path}", _filePath);
             _entries = new List<LibraryEntry>();
+        }
+    }
+
+    /// <summary>
+    /// Ensures every built-in id exists. Refreshes pattern body for built-ins
+    /// while preserving user favorite flags.
+    /// </summary>
+    private void MergeBuiltInsUnlocked()
+    {
+        var defaults = BuiltInLibrary.GetDefaults();
+        var changed = false;
+
+        foreach (var builtin in defaults)
+        {
+            var existing = _entries.FirstOrDefault(e => e.Id == builtin.Id);
+            if (existing is null)
+            {
+                _entries.Add(Clone(builtin));
+                changed = true;
+            }
+            else
+            {
+                // Refresh shipped content; keep favorite preference
+                var fav = existing.IsFavorite;
+                existing.Name = builtin.Name;
+                existing.Description = builtin.Description;
+                existing.Pattern = builtin.Pattern;
+                existing.Subject = builtin.Subject;
+                existing.Replacement = builtin.Replacement;
+                existing.FlavorId = builtin.FlavorId;
+                existing.Category = builtin.Category;
+                existing.Tags = builtin.Tags;
+                existing.IsBuiltIn = true;
+                existing.IsFavorite = fav;
+                // leave ModifiedUtc if only favorite differed
+            }
+        }
+
+        // Mark any leftover entries with builtin- prefix as built-in
+        foreach (var e in _entries.Where(e => BuiltInLibrary.IsBuiltInId(e.Id)))
+            e.IsBuiltIn = true;
+
+        if (changed || !File.Exists(_filePath))
+        {
+            PersistUnlocked();
+            _logger.LogInformation(
+                "Library: merged {BuiltInCount} built-in patterns (total {Total})",
+                defaults.Count,
+                _entries.Count);
         }
     }
 
@@ -188,6 +267,7 @@ public sealed class JsonLibraryStore : ILibraryStore
         Category = e.Category,
         Tags = e.Tags,
         IsFavorite = e.IsFavorite,
+        IsBuiltIn = e.IsBuiltIn,
         CreatedUtc = e.CreatedUtc,
         ModifiedUtc = e.ModifiedUtc,
     };

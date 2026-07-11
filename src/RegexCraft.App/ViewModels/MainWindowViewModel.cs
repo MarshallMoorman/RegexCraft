@@ -63,6 +63,11 @@ public partial class MainWindowViewModel : ViewModelBase
         _logger = logger;
         _settings = _settingsStore.Load();
 
+        // Suppress until all settings-backed properties are applied; otherwise
+        // SelectedFlavor / option property changers overwrite theme (and other prefs)
+        // with defaults before ApplyThemeFromSettings runs.
+        _suppressSettingsSave = true;
+
         Flavors = new ObservableCollection<FlavorDefinition>(_flavorService.GetFlavors());
         SelectedFlavor = Flavors.FirstOrDefault(f => f.Id == _settings.FlavorId)
             ?? Flavors.FirstOrDefault();
@@ -79,7 +84,6 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedCodegenOperation = CodegenOperations.FirstOrDefault(o => o.Id == "Matches")
             ?? CodegenOperations.FirstOrDefault();
 
-        _suppressSettingsSave = true;
         Pattern = @"(?<user>\w+)@(?<domain>\w+\.\w+)";
         Subject = "Contact us at support@regexcraft.com or hello@example.org today.\nAlso try: admin@regexcraft.com";
         Replacement = "[$1]";
@@ -107,11 +111,16 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshLibrary();
         RefreshHistory();
         RefreshAnalysis();
+        UpdateFlavorUiState();
         RunTestCore(live: false);
-        RefreshGeneratedCode();
+        RefreshGeneratedCode(force: true);
         UpdateOptionsEnabledState();
 
-        _logger.LogInformation("MainWindowViewModel initialized (v{Version})", VersionText);
+        _logger.LogInformation(
+            "MainWindowViewModel initialized (v{Version}, {FlavorCount} flavors, theme={Theme})",
+            VersionText,
+            Flavors.Count,
+            ThemeLabel);
     }
 
     /// <summary>Design-time / test convenience constructor.</summary>
@@ -195,6 +204,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _generatedCode = string.Empty;
     [ObservableProperty] private CodeLanguageItem? _selectedCodeLanguage;
     [ObservableProperty] private CodegenOperationItem? _selectedCodegenOperation;
+    [ObservableProperty] private bool _showFidelityBanner;
+    [ObservableProperty] private string _fidelityBannerText = string.Empty;
+    [ObservableProperty] private string _flavorTooltip = "Select regex flavor";
     [ObservableProperty] private string _librarySearch = string.Empty;
     [ObservableProperty] private string _historySearch = string.Empty;
     [ObservableProperty] private string _historyEmptyMessage = "History is empty. Patterns appear here after you test them.";
@@ -238,7 +250,10 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnPatternChanged(string value)
     {
         ScheduleLiveUpdate();
-        RefreshGeneratedCode();
+        if (IsGenerateTab)
+            RefreshGeneratedCode();
+        else
+            RefreshGeneratedCode();
     }
 
     partial void OnSubjectChanged(string value)
@@ -294,17 +309,13 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnSelectedFlavorChanged(FlavorDefinition? value)
     {
         if (value is null) return;
-        _logger.LogInformation("Flavor selected: {FlavorId}", value.Id);
-        StatusEngine = $"Flavor: {value.DisplayName} | Engine: {value.EngineId}";
-        OptionsContextLabel = value.EngineId switch
-        {
-            "pcre2" => "Options apply to PCRE2 (PCRE.NET) — Explicit capture maps approximately",
-            _ => "Options apply to .NET (System.Text.RegularExpressions)",
-        };
+        _logger.LogInformation("Flavor selected: {FlavorId} (engine={EngineId}, fidelity={Fidelity})",
+            value.Id, value.EngineId, value.Fidelity);
+        UpdateFlavorUiState();
         UpdateOptionsEnabledState();
         RebuildTokenList();
         ScheduleLiveUpdate();
-        RefreshGeneratedCode();
+        RefreshGeneratedCode(force: true);
         PersistSettings();
         UpdateWindowTitle();
     }
@@ -312,8 +323,8 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnTokenSearchChanged(string value) => RebuildTokenList();
     partial void OnLibrarySearchChanged(string value) => RefreshLibrary();
     partial void OnHistorySearchChanged(string value) => RefreshHistory();
-    partial void OnSelectedCodeLanguageChanged(CodeLanguageItem? value) => RefreshGeneratedCode();
-    partial void OnSelectedCodegenOperationChanged(CodegenOperationItem? value) => RefreshGeneratedCode();
+    partial void OnSelectedCodeLanguageChanged(CodeLanguageItem? value) => RefreshGeneratedCode(force: true);
+    partial void OnSelectedCodegenOperationChanged(CodegenOperationItem? value) => RefreshGeneratedCode(force: true);
 
     partial void OnSelectedAnalysisNodeChanged(AnalysisNode? value)
     {
@@ -408,7 +419,10 @@ public partial class MainWindowViewModel : ViewModelBase
         else if (IsSplitTab)
             RunSplitCore(live: false);
         else if (IsGenerateTab)
-            RefreshGeneratedCode();
+        {
+            RefreshGeneratedCode(force: true);
+            StatusText = $"Generate — {SelectedCodeLanguage?.DisplayName ?? "C#"} snippet ready";
+        }
         else if (IsTestTab)
             RunTestCore(live: false);
         else if (IsGrepTab)
@@ -437,27 +451,28 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void CycleTheme()
     {
-        var app = Application.Current;
-        if (app is null) return;
+        // Cycle preference label (not Avalonia's current effective variant) so System is stable.
+        ThemeLabel = ThemeLabel switch
+        {
+            "System" => "Light",
+            "Light" => "Dark",
+            _ => "System",
+        };
 
-        if (app.RequestedThemeVariant is null || app.RequestedThemeVariant == ThemeVariant.Default)
-        {
-            app.RequestedThemeVariant = ThemeVariant.Light;
-            ThemeLabel = "Light";
-        }
-        else if (app.RequestedThemeVariant == ThemeVariant.Light)
-        {
-            app.RequestedThemeVariant = ThemeVariant.Dark;
-            ThemeLabel = "Dark";
-        }
-        else
-        {
-            app.RequestedThemeVariant = ThemeVariant.Default;
-            ThemeLabel = "System";
-        }
-
+        ApplyThemeToApplication();
         _logger.LogInformation("Theme set to {Theme}", ThemeLabel);
         PersistSettings();
+    }
+
+    /// <summary>
+    /// Re-applies the persisted theme preference to the running application.
+    /// Called from the view on open so Avalonia has finished initializing.
+    /// </summary>
+    public void ReapplyThemeFromSettings()
+    {
+        ApplyThemeFromSettings(_settings.Theme);
+        // Prefer the in-memory label (may have been cycled since load).
+        ApplyThemeToApplication();
     }
 
     [RelayCommand]
@@ -573,6 +588,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private void DeleteLibraryItem(LibraryItemViewModel? item)
     {
         if (item is null) return;
+        if (item.IsBuiltIn)
+        {
+            StatusText = "Built-in patterns cannot be deleted";
+            return;
+        }
+
         if (_libraryStore.Delete(item.Id))
         {
             RefreshLibrary();
@@ -929,6 +950,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     if (token.IsCancellationRequested) return;
                     RefreshAnalysis();
+                    RefreshGeneratedCode();
                     if (IsGrepTab)
                         return; // don't spam live match while grepping UI
                     RunTestCore(live: true);
@@ -1012,11 +1034,12 @@ public partial class MainWindowViewModel : ViewModelBase
         !string.IsNullOrEmpty(source) &&
         source.Contains(query, StringComparison.OrdinalIgnoreCase);
 
-    private void RefreshGeneratedCode()
+    private void RefreshGeneratedCode(bool force = false)
     {
         if (SelectedCodeLanguage is null || SelectedCodegenOperation is null)
         {
-            GeneratedCode = string.Empty;
+            if (force || GeneratedCode.Length > 0)
+                GeneratedCode = string.Empty;
             return;
         }
 
@@ -1024,15 +1047,28 @@ public partial class MainWindowViewModel : ViewModelBase
         var op = ParseOperation(SelectedCodegenOperation.Id);
         var engineId = SelectedFlavor?.EngineId ?? "dotnet";
 
+        string code;
         try
         {
-            GeneratedCode = _codeGeneration.Generate(
+            code = _codeGeneration.Generate(
                 lang, op, Pattern, Subject, Replacement, BuildOptions(), engineId);
         }
         catch (Exception ex)
         {
-            GeneratedCode = $"// Code generation error: {ex.Message}";
+            code = $"// Code generation error: {ex.Message}";
             _logger.LogWarning(ex, "Code generation failed");
+        }
+
+        // Force PropertyChanged when the editor needs a re-sync (e.g. Generate tab shown)
+        // even if the generated text is identical.
+        if (force && string.Equals(code, GeneratedCode, StringComparison.Ordinal))
+        {
+            GeneratedCode = code + "\u200b"; // zero-width space pulse
+            GeneratedCode = code;
+        }
+        else
+        {
+            GeneratedCode = code;
         }
     }
 
@@ -1040,11 +1076,16 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         "csharp" => CodeLanguage.CSharp,
         "javascript" => CodeLanguage.JavaScript,
+        "typescript" => CodeLanguage.TypeScript,
         "python" => CodeLanguage.Python,
         "php" => CodeLanguage.Php,
         "java" => CodeLanguage.Java,
         "go" => CodeLanguage.Go,
         "rust" => CodeLanguage.Rust,
+        "ruby" => CodeLanguage.Ruby,
+        "perl" => CodeLanguage.Perl,
+        "kotlin" => CodeLanguage.Kotlin,
+        "swift" => CodeLanguage.Swift,
         _ => CodeLanguage.CSharp,
     };
 
@@ -1075,7 +1116,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         IsRunning = true;
-        StatusEngine = $"Flavor: {SelectedFlavor!.DisplayName} | Engine: {engine.DisplayName}";
+        UpdateStatusEngine(engine);
         var options = BuildOptions();
         var result = engine.Match(Pattern, Subject, options);
 
@@ -1304,9 +1345,15 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             "Light" => "Light",
             "Dark" => "Dark",
+            "System" => "System",
             _ => "System",
         };
 
+        ApplyThemeToApplication();
+    }
+
+    private void ApplyThemeToApplication()
+    {
         var app = Application.Current;
         if (app is null) return;
 
@@ -1316,6 +1363,52 @@ public partial class MainWindowViewModel : ViewModelBase
             "Dark" => ThemeVariant.Dark,
             _ => ThemeVariant.Default,
         };
+    }
+
+    private void UpdateFlavorUiState()
+    {
+        var flavor = SelectedFlavor;
+        if (flavor is null)
+        {
+            ShowFidelityBanner = false;
+            FidelityBannerText = string.Empty;
+            FlavorTooltip = "Select regex flavor";
+            OptionsContextLabel = "Options apply to the current engine";
+            StatusEngine = "—";
+            return;
+        }
+
+        var engine = _flavorService.GetEngine(flavor.EngineId);
+        var engineName = engine?.DisplayName ?? flavor.EngineId;
+        StatusEngine = $"Flavor: {flavor.StatusLabel} | Engine: {engineName}";
+
+        ShowFidelityBanner = flavor.ShowFidelityBanner && !string.IsNullOrWhiteSpace(flavor.FidelityNote);
+        FidelityBannerText = flavor.FidelityNote ?? string.Empty;
+
+        FlavorTooltip = string.IsNullOrWhiteSpace(flavor.Notes)
+            ? $"{flavor.DisplayName} — testing: {flavor.Fidelity.DisplayName()} via {engineName}"
+            : $"{flavor.DisplayName} — {flavor.Notes}";
+
+        OptionsContextLabel = flavor.EngineId switch
+        {
+            "pcre2" => $"Options apply to {engineName} (PCRE2) — Explicit capture maps approximately",
+            "javascript" => $"Options apply to {engineName} — i/m/s flags map; ExplicitCapture / IgnorePatternWhitespace are N/A in JS",
+            _ when flavor.Fidelity.IsApproximateOrWeaker() =>
+                $"Options apply to approximate engine ({engineName}) for {flavor.DisplayName}",
+            _ => $"Options apply to {engineName}",
+        };
+    }
+
+    private void UpdateStatusEngine(IRegexEngine engine)
+    {
+        var flavor = SelectedFlavor;
+        if (flavor is null)
+        {
+            StatusEngine = $"Engine: {engine.DisplayName}";
+            return;
+        }
+
+        StatusEngine = $"Flavor: {flavor.StatusLabel} | Engine: {engine.DisplayName}";
     }
 
     private void PersistSettings()
@@ -1347,6 +1440,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private static string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.6.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "0.7.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

@@ -2,12 +2,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RegexCraft.Core.Engines;
 using RegexCraft.Engines.DotNet;
+using RegexCraft.Engines.JavaScript;
 using RegexCraft.Engines.Pcre;
 
 namespace RegexCraft.Engines;
 
 /// <summary>
-/// Creates the standard set of Phase 0 engines.
+/// Creates the standard set of RegexCraft engines (.NET, PCRE2, JavaScript).
 /// </summary>
 public static class EngineFactory
 {
@@ -19,6 +20,7 @@ public static class EngineFactory
         [
             new DotNetRegexEngine(loggerFactory.CreateLogger<DotNetRegexEngine>()),
             new PcreRegexEngine(loggerFactory.CreateLogger<PcreRegexEngine>()),
+            new JavaScriptRegexEngine(loggerFactory.CreateLogger<JavaScriptRegexEngine>()),
         ];
     }
 }

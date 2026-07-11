@@ -1,6 +1,6 @@
 # Replacing Text with Regular Expressions
 
-The **Replace** mode previews substitutions using the currently selected flavor/engine (.NET or PCRE2). The replacement field, live preview editor, and replacements footer fill the right panel so you always have room to read the result.
+The **Replace** mode previews substitutions using the currently selected flavor/engine (.NET, PCRE2, JavaScript, or the approximate engine for other flavors). The replacement field, live preview editor, and replacements footer fill the right panel so you always have room to read the result.
 
 ## Open Replace
 

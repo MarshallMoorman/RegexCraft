@@ -14,7 +14,7 @@ JSON files under the user application data folder:
 
 Files:
 
-- `library.json` — saved patterns  
+- `library.json` — saved patterns **and built-in defaults**  
 - `history.json` — recent patterns  
 - `settings.json` — theme, flavor, options, GREP defaults, window bounds  
 
@@ -22,7 +22,17 @@ Files:
 
 Open the **Library** tab on the left sidebar.
 
-### Save
+### Built-in patterns
+
+RegexCraft includes a curated set of **built-in** regular expressions (email, URL, IPv4/IPv6, phone numbers, ISO/US/EU dates, time, hex color, UUID, credit card, strong password, HTML tags, whitespace runs, log levels, ISO datetime, slug, semver, and more).
+
+- Shown with a **Built-in** badge  
+- **Cannot be deleted** (delete control is hidden)  
+- Pattern body is refreshed from the app on upgrade  
+- You **can favorite** built-ins; favorites are preserved across restarts  
+- **Load** works the same as for user entries  
+
+### Save (user entries)
 
 1. Set the pattern (and optional subject/replacement/options/flavor) in the main UI.  
 2. Enter a **Name** and optional **Description**.  
@@ -38,11 +48,11 @@ Saved entries store:
 
 ### Load / search / delete / favorite
 
-- Use the search box to filter by name, description, pattern, subject, category, or tags.  
+- Use the search box to filter by name, description, pattern, subject, category, tags, or “built-in”.  
 - Favorites sort to the top of the list.  
 - **★ / ☆** toggles favorite without re-entering the form.  
 - **Load** restores the entry into the editor and switches to **Test**.  
-- **✕** deletes the entry permanently.  
+- **✕** deletes **user** entries only.  
 
 ## History
 
@@ -59,6 +69,7 @@ History does **not** store full option checkboxes (flavor + pattern + subject + 
 ## Tips
 
 - Name library items by intent (`Email addresses`, `ISO dates`) rather than the raw pattern.  
+- Start from a built-in, tweak, then **Save** as a new user entry.  
 - Use categories/tags for large libraries (e.g. `Validation`, `Logs`).  
 - Use History for quick undo of exploratory edits; use Library for keepers.  
 - Library saves are logged via Serilog.  

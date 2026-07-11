@@ -1,43 +1,41 @@
 # RegexCraft
 
-**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, and generating code with multiple regex engines.
+**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, and generating code across many regex flavors.
 
 | | |
 |---|---|
-| **Version** | 0.6.0 |
+| **Version** | 0.7.0 |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
-| **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · NUnit · Serilog |
+| **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
 | **License** | MIT |
 
 ---
 
 ## Features
 
-- **Multi-engine testing** — run the same pattern under **.NET** (`System.Text.RegularExpressions`) and **PCRE2** (PCRE.NET)
-- **Professional editor** — AvaloniaEdit with high-contrast light/dark regex syntax highlighting, line numbers, and live analysis
-- **Live Match mode** — subject highlighting for matches and capture groups, expandable match list with Copy / Go
-- **Replace & Split** — live preview that fills the panel cleanly, substitution highlighting, backreferences (`$1`, `${name}`, …)
-- **GREP** — search and replace across folders with include/exclude globs, async progress, cancellation, dry-run, and backups
-- **Code generation** — C#, JavaScript, Python, PHP, Java, Go, Rust for IsMatch / Match / Matches / Replace / Split
-- **Analysis Tree** — hierarchical breakdown of the pattern; click a node to select it in the editor
-- **Token palette** — searchable text-only tokens (no per-token icons), engine-aware hints
-- **Library & History** — save favorites with categories/tags; searchable recent-pattern history
-- **Light / Dark / System themes** — persisted preference, consistent blue design tokens, dedicated editor/syntax brushes
-- **Resizable panels** — drag splitters between sidebar, editor, and mode panel
-- **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–5 for modes
-
-## Screenshots
-
-Product screenshots for the website may be added under `docs/user/` later. Development baselines live under `docs/development/` (not required for end users).
+- **Multi-flavor testing** — .NET, PCRE2, **JavaScript** (Jint), TypeScript, Python, Java, PHP, Ruby, Go, Rust, Perl, Kotlin, Swift  
+- **Clear fidelity** — each flavor declares Full / High / Approximate testing; banners explain when results may differ  
+- **Professional editor** — AvaloniaEdit with high-contrast light/dark regex syntax highlighting, line numbers, and live analysis  
+- **Live Match mode** — subject highlighting for matches and capture groups, expandable match list with Copy / Go  
+- **Replace & Split** — live preview that fills the panel cleanly, substitution highlighting, backreferences (`$1`, `${name}`, …)  
+- **GREP** — search and replace across folders with include/exclude globs, async progress, cancellation, dry-run, and backups  
+- **Code generation** — C#, JavaScript, TypeScript, Python, PHP, Java, Go, Rust, Ruby, Perl, Kotlin, Swift  
+- **Analysis Tree** — hierarchical breakdown of the pattern; click a node to select it in the editor  
+- **Token palette** — searchable text-only tokens, engine-aware support  
+- **Library & History** — **20 built-in** common patterns (email, URL, IP, dates, UUID, …) plus user saves with categories/tags; searchable history  
+- **Light / Dark / System themes** — preference **persisted and restored** correctly across restarts  
+- **Resizable panels** — drag splitters between sidebar, editor, and mode panel  
+- **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–5 for modes  
 
 ## Engines
 
-| Id | Display | Match | Replace | Split | GREP |
-|----|---------|-------|---------|-------|------|
-| `dotnet` | .NET | Yes | Yes | Yes | Yes |
-| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes |
+| Id | Display | Match | Replace | Split | GREP | Notes |
+|----|---------|-------|---------|-------|------|-------|
+| `dotnet` | .NET | Yes | Yes | Yes | Yes | `System.Text.RegularExpressions` |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | PCRE.NET |
+| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | ECMAScript for JS / TypeScript flavors |
 
-Both engines share the same result models so highlighting, groups, GREP, and codegen stay engine-agnostic.
+Additional flavors map onto these engines with documented fidelity. See [docs/user/flavors.md](docs/user/flavors.md).
 
 ## Build & run
 
@@ -66,12 +64,12 @@ Library, History, and Settings live in the OS application-data folder:
 ```
 RegexCraft/
 ├── src/
-│   ├── RegexCraft.Core/       # Engines API, tokens, analysis, GREP, codegen, library, settings
-│   ├── RegexCraft.Engines/    # DotNet + PCRE2 (Match / Replace / Split)
+│   ├── RegexCraft.Core/       # Flavors, tokens, analysis, GREP, codegen, library, settings
+│   ├── RegexCraft.Engines/    # DotNet + PCRE2 + JavaScript (Jint)
 │   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit
 ├── tests/RegexCraft.Tests/
 ├── docs/
-│   ├── user/                  # End-user guides
+│   ├── user/                  # End-user guides (incl. flavors.md)
 │   └── development/           # Architecture & phase requirements
 ├── Directory.Build.props      # Version
 └── AGENTS.md / HANDOFF.md
@@ -91,6 +89,7 @@ RegexCraft/
 ## Documentation
 
 - [Getting started](docs/user/getting-started.md)
+- [Flavors & testing fidelity](docs/user/flavors.md)
 - [Testing regexes](docs/user/testing-regexes.md)
 - [Replacing](docs/user/replacing.md)
 - [GREP (file search & replace)](docs/user/grepping.md)
@@ -98,18 +97,3 @@ RegexCraft/
 - [Library and History](docs/user/library-and-history.md)
 - [Theme & appearance](docs/user/theme-and-appearance.md)
 - [Architecture](docs/development/architecture.md)
-- [Changelog](docs/CHANGELOG.md)
-
-## Roadmap (post-0.6)
-
-Planned after this polish release (see `HANDOFF.md`):
-
-- Debug / step-through matching
-- Additional engines (Oniguruma, RE2, …)
-- Compare mode (.NET vs PCRE2 side-by-side)
-- Export matches / GREP results
-- Official 1.0 and regexcraft.com site content
-
-## License
-
-MIT — see [LICENSE](LICENSE).
