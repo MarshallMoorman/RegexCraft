@@ -16,6 +16,17 @@ public sealed class AppSettings
     public double? WindowHeight { get; set; }
     public int? WindowX { get; set; }
     public int? WindowY { get; set; }
+
+    /// <summary>
+    /// Remembered right-panel width (px) for Test / Replace / Split / Generate / GREP.
+    /// </summary>
+    public double? RightPanelNormalWidth { get; set; }
+
+    /// <summary>
+    /// Remembered right-panel width (px) when Compare mode is active.
+    /// </summary>
+    public double? RightPanelCompareWidth { get; set; }
+
     public bool IgnoreCase { get; set; }
     public bool Multiline { get; set; }
     public bool Singleline { get; set; }

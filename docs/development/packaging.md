@@ -90,28 +90,66 @@ Run the executable from that folder (or ship the whole folder as a portable zip)
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
 | **CI** | `.github/workflows/ci.yml` | Push / PR to `main` | Restore, Debug + Release build, full `dotnet test`, TRX + optional screenshots |
-| **Publish** | `.github/workflows/publish.yml` | Manual (`workflow_dispatch`) or tag `v*` | `dotnet publish` for win-x64, linux-x64, osx-x64, osx-arm64; upload artifacts; on tag create a GitHub Release |
+| **Publish** | `.github/workflows/publish.yml` | Manual (`workflow_dispatch`) or tag `v*` | Test → `dotnet publish` for win-x64, linux-x64, osx-x64, osx-arm64 → artifacts; on tag create a **GitHub Release** with zips attached |
 
-### How to trigger a release build
+### How to cut a public release (1.0.0 and later)
 
-1. **Manual artifacts (no release)**  
-   - GitHub → **Actions** → **Publish** → **Run workflow**  
-   - Choose configuration (Release) and self-contained (true)  
-   - Download platform artifacts from the run summary  
+Version lives only in `Directory.Build.props`. Changelog lives in `docs/CHANGELOG.md`.
 
-2. **Tagged release**  
-   ```bash
-   # After version bump in Directory.Build.props and CHANGELOG
-   git tag v1.0.0-rc1
-   git push origin v1.0.0-rc1
-   ```  
-   The Publish workflow builds all RIDs and creates a GitHub Release with archives attached (using `GITHUB_TOKEN`).
+```bash
+# 1. Ensure main is green and version/CHANGELOG already committed
+git checkout main
+git pull origin main
+grep '<Version>' Directory.Build.props   # e.g. 1.0.0
+
+# 2. Tag and push the tag (this triggers Publish + GitHub Release)
+git tag -a v1.0.0 -m "RegexCraft 1.0.0"
+git push origin v1.0.0
+```
+
+What happens next:
+
+1. **Test** job on Ubuntu runs `dotnet build` + `dotnet test` (screenshots skipped for speed).  
+2. **Publish** matrix builds self-contained binaries for:
+   - `win-x64`
+   - `linux-x64`
+   - `osx-x64`
+   - `osx-arm64`  
+   Strategy is `fail-fast: false` so one RID failure does not cancel the others.  
+3. Each successful RID uploads a folder artifact and a **zip** archive (`RegexCraft-<rid>.zip`).  
+4. **GitHub Release** job (tag only):
+   - Downloads matrix artifacts  
+   - Attaches zips (or tar.gz fallback) to a new Release for that tag  
+   - Writes release notes from the matching `docs/CHANGELOG.md` section plus auto-generated commit notes  
+   - Marks pre-release when the tag contains `-`, `rc`, `beta`, or `alpha`  
+   - **Refuses** to create a release with zero archives (no empty half-created releases)
+
+### Manual artifacts (no GitHub Release)
+
+1. GitHub → **Actions** → **Publish** → **Run workflow**  
+2. Choose configuration (Release) and self-contained (true)  
+3. Download platform artifacts from the run summary  
+
+### Expected release assets
+
+| Asset | Platform |
+|-------|----------|
+| `RegexCraft-win-x64.zip` | Windows x64 |
+| `RegexCraft-linux-x64.zip` | Linux x64 |
+| `RegexCraft-osx-x64.zip` | macOS Intel |
+| `RegexCraft-osx-arm64.zip` | macOS Apple Silicon |
+
+Unzip and run `RegexCraft.App` / `RegexCraft.App.exe` from the extracted folder. No installer is required for portable use.
+
+### Permissions
+
+- Basic CI: no secrets.  
+- Publish / Release: default `GITHUB_TOKEN` with `contents: write` (configured in the workflow).  
+- No interactive secrets are required for open-source tag releases.
 
 ---
 
-## Future installer work (out of scope for packaging docs)
-
-Not required for 1.0-rc, but useful later:
+## Future installer work (out of scope for 1.0 portable zips)
 
 | Platform | Direction |
 |----------|-----------|
@@ -119,16 +157,18 @@ Not required for 1.0-rc, but useful later:
 | macOS | `.app` bundle + `.icns`, optional notarization, DMG |
 | Linux | AppImage, Flatpak, or distro packages from `linux-x64` |
 
-Until then, **portable self-contained zips** are the supported distribution format.
+Until then, **portable self-contained zips** from GitHub Releases are the supported distribution format.
 
 ---
 
 ## Versioning checklist
 
-1. Edit only `Directory.Build.props` → `<Version>1.0.0-rc1</Version>`  
-2. Update `docs/CHANGELOG.md`  
-3. Commit, tag `v1.0.0-rc1`, push tag  
-4. Confirm Publish workflow + Release on GitHub  
+1. Edit only `Directory.Build.props` → `<Version>1.0.0</Version>`  
+2. Update `docs/CHANGELOG.md` with a `## [1.0.0]` section  
+3. Update README / AGENTS / HANDOFF as needed  
+4. Commit on `main`  
+5. Tag `v1.0.0` and `git push origin v1.0.0`  
+6. Confirm **Publish** workflow + GitHub Release assets on GitHub  
 
 ---
 

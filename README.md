@@ -3,14 +3,15 @@
 **Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, comparing, and generating code across many regex flavors.
 
 [![CI](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml/badge.svg)](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/MarshallMoorman/RegexCraft)](https://github.com/MarshallMoorman/RegexCraft/releases)
 
 | | |
 |---|---|
-| **Version** | **1.0.0-rc1** |
+| **Version** | **1.0.0** |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
 | **License** | MIT |
-| **Status** | Public release candidate |
+| **Status** | Stable 1.0 |
 
 ![RegexCraft Match mode (light)](docs/screenshots/main-test-light.png)
 
@@ -19,12 +20,35 @@
   <img src="docs/screenshots/main-generate.png" alt="RegexCraft Generate mode" width="49%" />
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/main-compare.png" alt="RegexCraft Compare mode" width="66%" />
+</p>
+
+---
+
+## Download
+
+**Pre-built portable binaries** are published on every version tag:
+
+**[→ GitHub Releases](https://github.com/MarshallMoorman/RegexCraft/releases)**
+
+| Asset | Platform |
+|-------|----------|
+| `RegexCraft-win-x64.zip` | Windows x64 |
+| `RegexCraft-linux-x64.zip` | Linux x64 |
+| `RegexCraft-osx-x64.zip` | macOS Intel |
+| `RegexCraft-osx-arm64.zip` | macOS Apple Silicon |
+
+Unzip and run `RegexCraft.App` (or `RegexCraft.App.exe` on Windows) from the extracted folder. Builds are self-contained (include the .NET runtime).
+
+See [docs/development/packaging.md](docs/development/packaging.md) for how releases are cut and how to publish from source.
+
 ---
 
 ## Features
 
 - **Multi-flavor testing** — .NET, PCRE2, **JavaScript** (Jint), TypeScript, Python, Java, PHP, Ruby, Go, Rust, Perl, Kotlin, Swift  
-- **Compare mode** — side-by-side results for 2–4 flavors (validity, matches, groups, fidelity, key differences, copyable summary)  
+- **Compare mode** — side-by-side results for 2–4 flavors (validity, matches, groups, fidelity, key differences, copyable summary); **smart right-panel width** expands for cards and restores when you leave  
 - **Hardened flavor definitions** — supported options, token support matrices, known differences, preferred codegen language  
 - **Clear fidelity** — Full / High / Approximate banners; token palette dims unsupported constructs (e.g. RE2 limits for Go/Rust)  
 - **Significant automated tests** — deep coverage per real engine; core + mapping + banner + token + codegen + Compare tests  
@@ -38,10 +62,12 @@
 - **Library & History** — **20 built-in** common patterns (email, URL, IP, dates, UUID, …) plus user saves with categories/tags; searchable history  
 - **Light / Dark / System themes** — preference **persisted and restored** correctly across restarts  
 - **Custom About dialog** + **RegexCraft application icon** (no Avalonia defaults)  
-- **GitHub Actions CI** — build + test on push/PR; publish workflow for multi-RID artifacts  
+- **GitHub Actions** — CI on every push/PR; tagged releases attach multi-RID portable zips  
 - **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–6 for modes  
 
-## Engines
+## Engines & flavors
+
+### Real engines
 
 | Id | Display | Match | Replace | Split | GREP | Compare | Notes |
 |----|---------|-------|---------|-------|------|---------|-------|
@@ -49,7 +75,20 @@
 | `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | Yes | PCRE.NET |
 | `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | Yes | ECMAScript for JS / TypeScript flavors |
 
-Additional flavors map onto these engines with documented fidelity, option support, and token matrices. See [docs/user/flavors.md](docs/user/flavors.md).
+### Selectable flavors (fidelity)
+
+| Flavor | Engine | Testing fidelity |
+|--------|--------|------------------|
+| .NET | `dotnet` | **Full** |
+| PCRE2 | `pcre2` | **Full** |
+| JavaScript | `javascript` | **Full** |
+| TypeScript | `javascript` | **Full** (same engine) |
+| PHP | `pcre2` | **High** |
+| Python, Java, Kotlin, Swift | `dotnet` | **Approximate** |
+| Go, Rust | `dotnet` | **Approximate** (RE2 limits modeled in tokens/docs) |
+| Ruby, Perl | `pcre2` | **Approximate** |
+
+See [docs/user/flavors.md](docs/user/flavors.md) for option matrices, known differences, and engine evaluation notes.
 
 **Engine evaluation:** Python.NET and RE2.Managed were evaluated and not integrated (embedding cost / maintenance). Go/Rust RE2 limits are modeled in the flavor layer; JS fidelity is strengthened via Jint tests and documented gaps.
 
@@ -82,9 +121,9 @@ Library, History, and Settings live in the OS application-data folder:
 | Workflow | When | What |
 |----------|------|------|
 | [CI](.github/workflows/ci.yml) | Push / PR to `main` | Restore, Debug + Release build, full NUnit suite, TRX upload |
-| [Publish](.github/workflows/publish.yml) | Manual or tag `v*` | `dotnet publish` for win-x64, linux-x64, osx-x64, osx-arm64; artifacts; Release on tag |
+| [Publish](.github/workflows/publish.yml) | Manual or tag `v*` | Test → publish win-x64 / linux-x64 / osx-x64 / osx-arm64 → **GitHub Release** on tag |
 
-No secrets are required for the basic CI path. See packaging docs for release steps.
+No secrets are required for the basic CI path. Tag a version (`git tag v1.0.0 && git push origin v1.0.0`) to cut a Release; see packaging docs.
 
 ## Running the tests
 
@@ -137,9 +176,9 @@ Do **not** commit temporary or low-quality captures; only regenerate and keep im
 
 ```
 RegexCraft/
-├── .github/workflows/         # CI + Publish
+├── .github/workflows/         # CI + Publish (GitHub Releases)
 ├── src/
-│   ├── RegexCraft.Core/       # Flavors, Compare, tokens, analysis, GREP, codegen, library
+│   ├── RegexCraft.Core/       # Flavors, Compare, tokens, analysis, GREP, codegen, library, settings
 │   ├── RegexCraft.Engines/    # DotNet + PCRE2 + JavaScript (Jint)
 │   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit + icon + About
 ├── tests/RegexCraft.Tests/    # NUnit unit + Avalonia headless UI + screenshots
@@ -147,7 +186,7 @@ RegexCraft/
 │   ├── screenshots/           # Auto-captured PNGs for README/docs
 │   ├── user/                  # End-user guides (incl. comparing.md, flavors.md)
 │   └── development/           # Architecture, packaging, phase requirements
-├── Directory.Build.props      # Version (1.0.0-rc1)
+├── Directory.Build.props      # Version (1.0.0)
 └── AGENTS.md / HANDOFF.md
 ```
 
@@ -174,5 +213,6 @@ RegexCraft/
 - [Generating code](docs/user/generating-code.md)
 - [Library and History](docs/user/library-and-history.md)
 - [Theme & appearance](docs/user/theme-and-appearance.md)
-- [Packaging & publish](docs/development/packaging.md)
+- [Packaging & publish / GitHub Releases](docs/development/packaging.md)
 - [Architecture](docs/development/architecture.md)
+- [Changelog](docs/CHANGELOG.md)

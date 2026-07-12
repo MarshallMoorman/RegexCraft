@@ -28,7 +28,7 @@ public partial class AboutWindow : Window
         }
 
         var version = asm.GetName().Version;
-        return version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "1.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 
     private void CloseButton_OnClick(object? sender, RoutedEventArgs e) => Close();

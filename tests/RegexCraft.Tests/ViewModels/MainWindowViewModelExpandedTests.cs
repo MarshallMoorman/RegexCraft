@@ -112,6 +112,68 @@ public sealed class MainWindowViewModelExpandedTests
     }
 
     [Test]
+    public void GetTargetRightPanelWidth_Defaults_WhenUnstored()
+    {
+        var vm = CreateVm();
+        Assert.That(vm.GetTargetRightPanelWidth(compareMode: false),
+            Is.EqualTo(LayoutDefaults.RightPanelNormalDefault));
+        Assert.That(vm.GetTargetRightPanelWidth(compareMode: true),
+            Is.EqualTo(LayoutDefaults.RightPanelCompareDefault));
+    }
+
+    [Test]
+    public void GetTargetRightPanelWidth_UsesStoredSettings()
+    {
+        var vm = CreateVm(new AppSettings
+        {
+            RightPanelNormalWidth = 360,
+            RightPanelCompareWidth = 580,
+        });
+        Assert.That(vm.GetTargetRightPanelWidth(false), Is.EqualTo(360));
+        Assert.That(vm.GetTargetRightPanelWidth(true), Is.EqualTo(580));
+    }
+
+    [Test]
+    public void RememberRightPanelWidth_PersistsSeparately_AndSurvivesReload()
+    {
+        var vm = CreateVm();
+        vm.RememberRightPanelWidth(370, compareMode: false);
+        vm.RememberRightPanelWidth(550, compareMode: true);
+
+        var store = new JsonSettingsStore(Path.Combine(_tempDir, "settings.json"));
+        var loaded = store.Load();
+        Assert.That(loaded.RightPanelNormalWidth, Is.EqualTo(370));
+        Assert.That(loaded.RightPanelCompareWidth, Is.EqualTo(550));
+
+        var vm2 = CreateVm(); // same settings path via CreateVm without seed reloads file
+        // CreateVm without seed does NOT re-save; it loads whatever is on disk
+        Assert.That(vm2.GetTargetRightPanelWidth(false), Is.EqualTo(370));
+        Assert.That(vm2.GetTargetRightPanelWidth(true), Is.EqualTo(550));
+    }
+
+    [Test]
+    public void SelectRightTab_RaisesRightPanelModeChanged_WithPreviousTab()
+    {
+        var vm = CreateVm();
+        string? previous = null;
+        vm.RightPanelModeChanged += tab => previous = tab;
+
+        vm.SelectRightTabCommand.Execute("Compare");
+        Assert.That(previous, Is.EqualTo("Test"));
+        Assert.That(vm.IsCompareTab, Is.True);
+
+        previous = null;
+        vm.SelectRightTabCommand.Execute("Replace");
+        Assert.That(previous, Is.EqualTo("Compare"));
+        Assert.That(vm.IsCompareTab, Is.False);
+
+        // Same tab again should not raise
+        previous = "sentinel";
+        vm.SelectRightTabCommand.Execute("Replace");
+        Assert.That(previous, Is.EqualTo("sentinel"));
+    }
+
+    [Test]
     public void SelectLeftTab_SwitchesSidebar()
     {
         var vm = CreateVm();

@@ -48,7 +48,7 @@ public partial class App : Application
         else
         {
             var version = asm.GetName().Version;
-            versionText = version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
+            versionText = version is null ? "1.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
         }
 
         _logger.LogInformation("RegexCraft {Version} starting", versionText);

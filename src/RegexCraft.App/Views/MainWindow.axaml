@@ -420,8 +420,9 @@
       </Grid>
     </Border>
 
-    <!-- Body: left | splitter | center | splitter | right -->
-    <Grid ColumnDefinitions="280,5,*,5,400" Margin="0">
+    <!-- Body: left | splitter | center | splitter | right
+         Right column width is managed in code-behind (Normal vs Compare memory). -->
+    <Grid x:Name="MainBodyGrid" ColumnDefinitions="280,5,*,5,400" Margin="0">
 
       <!-- LEFT: Tokens / Library / History -->
       <Border Grid.Column="0"
@@ -770,11 +771,14 @@
         </Border>
       </Grid>
 
-      <GridSplitter Grid.Column="3" Classes="columnSplit"
+      <GridSplitter x:Name="RightColumnSplitter"
+                    Grid.Column="3"
+                    Classes="columnSplit"
                     ToolTip.Tip="Drag to resize right panel" />
 
       <!-- RIGHT: single host so every mode fills remaining space -->
-      <Border Grid.Column="4"
+      <Border x:Name="RightPanelHost"
+              Grid.Column="4"
               MinWidth="300"
               Background="{DynamicResource BackgroundSecondaryBrush}"
               BorderBrush="{DynamicResource BorderSubtleBrush}"

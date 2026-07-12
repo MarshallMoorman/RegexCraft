@@ -70,6 +70,6 @@ public static class LoggingBootstrap
         }
 
         var version = asm.GetName().Version;
-        return version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "1.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

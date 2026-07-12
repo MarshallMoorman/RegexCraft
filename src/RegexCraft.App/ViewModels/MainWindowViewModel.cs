@@ -154,6 +154,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public event Action? GrepPreviewChanged;
     /// <summary>Raised to request a folder picker; view sets GrepRootPath.</summary>
     public event Func<Task<string?>>? PickFolderRequested;
+    /// <summary>
+    /// Raised after a right-panel mode switch so the view can apply Normal vs Compare widths.
+    /// Argument is the previous tab name (before the switch).
+    /// </summary>
+    public event Action<string>? RightPanelModeChanged;
 
     public ObservableCollection<FlavorDefinition> Flavors { get; }
     public ObservableCollection<TokenCategoryViewModel> TokenCategories { get; } = new();
@@ -416,6 +421,9 @@ public partial class MainWindowViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(tab))
             return;
 
+        var previousTab = RightPanelTab;
+        var modeChanged = !string.Equals(previousTab, tab, StringComparison.Ordinal);
+
         RightPanelTab = tab!;
         IsTestTab = tab == "Test";
         IsReplaceTab = tab == "Replace";
@@ -442,6 +450,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
         UpdateWindowTitle();
 
+        // Notify the view so it can capture the previous mode's width and apply the new one.
+        // Only when Compare enters or leaves does the width typically change; the view still
+        // captures on every mode switch so manual resizes stay associated with Normal vs Compare.
+        if (modeChanged)
+            RightPanelModeChanged?.Invoke(previousTab);
+
         if (IsReplaceTab)
             RunReplaceCore(live: false);
         else if (IsSplitTab)
@@ -459,6 +473,34 @@ public partial class MainWindowViewModel : ViewModelBase
                 : $"GREP ready — {GrepRootPath}";
         else if (IsCompareTab)
             RunCompareCore(live: false);
+    }
+
+    /// <summary>
+    /// Target pixel width for the right panel given the current (or specified) mode.
+    /// </summary>
+    public double GetTargetRightPanelWidth(bool? compareMode = null)
+    {
+        var compare = compareMode ?? IsCompareTab;
+        return LayoutDefaults.ResolveRightPanelWidth(
+            compare,
+            _settings.RightPanelNormalWidth,
+            _settings.RightPanelCompareWidth);
+    }
+
+    /// <summary>
+    /// Remember the user-dragged (or programmatically measured) right-panel width for a mode.
+    /// </summary>
+    public void RememberRightPanelWidth(double width, bool compareMode)
+    {
+        if (width is <= 0 or double.NaN or double.PositiveInfinity)
+            return;
+
+        if (compareMode)
+            _settings.RightPanelCompareWidth = LayoutDefaults.ClampCompare(width);
+        else
+            _settings.RightPanelNormalWidth = LayoutDefaults.ClampNormal(width);
+
+        PersistSettings();
     }
 
     [RelayCommand]
@@ -918,6 +960,12 @@ public partial class MainWindowViewModel : ViewModelBase
         _settings.WindowY = y;
         PersistSettings();
     }
+
+    /// <summary>
+    /// Persist current in-memory panel widths (and other settings) — used when the window closes
+    /// after a final capture of the live column width.
+    /// </summary>
+    public void PersistRightPanelWidthsToStore() => PersistSettings();
 
     private async Task LoadGrepPreviewAsync(GrepHitViewModel hit)
     {
@@ -1526,6 +1574,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _settings.Singleline = Singleline;
             _settings.ExplicitCapture = ExplicitCapture;
             _settings.IgnorePatternWhitespace = IgnorePatternWhitespace;
+            // RightPanelNormalWidth / RightPanelCompareWidth are updated via RememberRightPanelWidth.
             _settingsStore.Save(_settings);
         }
         catch (Exception ex)
@@ -1744,6 +1793,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         var version = asm.GetName().Version;
-        return version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "1.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

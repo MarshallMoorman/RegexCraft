@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 9 complete (v1.0.0-rc1)  
+**Last updated**: 2026-07-11 — Phase 10 complete (**v1.0.0**)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -25,21 +25,24 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)  
 - **Branding**: App icon in `src/RegexCraft.App/Assets/regexcraft-icon.*`; About is custom (`AboutWindow`), menu **About RegexCraft**  
 - **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml) — must stay green without interactive secrets for basic CI  
+- **Releases**: Tag `v*` → Publish workflow tests, multi-RID publish, GitHub Release with zip artifacts (see packaging.md)  
+- **Layout**: Right-panel Normal vs Compare widths live in `AppSettings` + `LayoutDefaults` — no magic pixels in views  
 
 ## Architecture Quick Reference
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP**, built-in library |
+| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, tokens, analysis, highlight builders, token insertion, codegen, library/history/**settings + layout defaults**, **GREP**, built-in library |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
-| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel** |
+| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel**, **smart right-panel sizing** |
 | `RegexCraft.Tests` | NUnit unit + **Avalonia headless UI** + **screenshot capture** |
 
-### UI map (Phase 6–9)
+### UI map (Phase 6–10)
 
 - Left: Tokens / Library / History — Library shows **Built-in** badge; built-ins not deletable  
 - Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
 - Right: **single mode host** — Test / Replace / Split / Generate / GREP / **Compare**  
+- **Right-panel widths**: Normal (non-Compare modes) and Compare stored separately; switch to Compare expands; leave restores Normal; splitter drags update the active mode’s memory  
 - Toolbar: **expanded Flavor list**, modes (Ctrl+1–6), Options, Theme (persisted correctly)  
 - Fidelity **banner** when testing is High/Approximate  
 - Options: flavor-aware enable/disable (e.g. JS has no ExplicitCapture / free-spacing)  
@@ -49,14 +52,15 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Compare**: 2–4 flavors, live re-run, cards + cross-flavor notes + copy summary  
 - **Help → About RegexCraft** (native menu) opens custom About dialog  
 
-### Still relevant from Phase 3–8
+### Still relevant from Phase 3–9
 
 - `IGrepService` / GREP models, settings store, library favorites, resizable columns  
-- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**  
+- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**, **panel width memory**  
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines` + **`FlavorDefinition.IsTokenSupported`**  
 - `RegexAnalysisService`, highlight builders, codegen service  
 - `IRegexCompareService` / `RegexCompareService`  
 - Branding + headless UI + screenshots  
+- `LayoutDefaults` + `AppSettings.RightPanelNormalWidth` / `RightPanelCompareWidth`  
 
 ## Current Engines
 
@@ -85,6 +89,7 @@ Only flavors whose `EngineId` is registered are shown.
 - Core: `src/RegexCraft.Core/Compare/`  
 - UI: Compare tab in `MainWindow.axaml` + VM properties/commands  
 - Constraints: 2–4 flavors; parallel Match; no new engines  
+- Layout: Compare uses wider right panel (see `LayoutDefaults`)  
 
 ## How to Run
 
@@ -116,6 +121,16 @@ dotnet build -c Release
 dotnet test -c Release
 ```
 
+### Cut a release
+
+```bash
+# After version + CHANGELOG are on main:
+git tag -a v1.0.0 -m "RegexCraft 1.0.0"
+git push origin v1.0.0
+```
+
+See `docs/development/packaging.md`.
+
 ## Theme Colors
 
 `src/RegexCraft.App/Themes/Colors.axaml` — Light/Dark dictionaries.
@@ -128,7 +143,8 @@ Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `Edi
 
 - Theme must be restored from `settings.json` on startup.  
 - **Critical**: suppress settings saves while applying loaded settings in the VM constructor (setting `SelectedFlavor` must not overwrite theme with the default).  
-- Re-apply theme on window open via `ReapplyThemeFromSettings()` (uses in-memory `ThemeLabel`, not a disk re-read that would clobber cycles).
+- Re-apply theme on window open via `ReapplyThemeFromSettings()` (uses in-memory `ThemeLabel`, not a disk re-read that would clobber cycles).  
+- **Right panel**: `RightPanelNormalWidth` / `RightPanelCompareWidth` updated on splitter drag and mode switch; defaults in `LayoutDefaults`.  
 
 ## After Completing a Milestone
 
@@ -139,6 +155,7 @@ Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `Edi
 5. Update `docs/CHANGELOG.md` and user/dev docs  
 6. Commit on `main` with a clear message  
 7. Ensure GitHub Actions still apply (workflow YAML committed)  
+8. For public releases: tag `vX.Y.Z` and push so Publish creates the GitHub Release  
 
 ## Useful Commands
 
@@ -165,12 +182,13 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 ## Key Paths
 
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
-- Packaging: `docs/development/packaging.md`  
+- Packaging / Releases: `docs/development/packaging.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
 - About: `src/RegexCraft.App/Views/AboutWindow.axaml`  
 - Icon: `src/RegexCraft.App/Assets/regexcraft-icon.ico` (+ `.png`, `.icns`)  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
 - Compare: `src/RegexCraft.Core/Compare/`  
+- Layout: `src/RegexCraft.Core/Settings/LayoutDefaults.cs`, `AppSettings` panel width fields  
 - Flavors: `src/RegexCraft.Core/Flavors/` (`FlavorDefinition`, `FlavorService`, `FlavorTokenSets`)  
 - JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
 - Built-in library: `src/RegexCraft.Core/Library/BuiltInLibrary.cs`  
@@ -180,6 +198,7 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - Compare tests: `tests/RegexCraft.Tests/Compare/`  
 - Flavor tests: `tests/RegexCraft.Tests/Flavors/`  
 - Engine tests: `tests/RegexCraft.Tests/Engines/`  
+- Settings tests: `tests/RegexCraft.Tests/Settings/`  
 - Screenshots: `docs/screenshots/`  
 - User Compare doc: `docs/user/comparing.md`  
 - User flavors doc: `docs/user/flavors.md`  

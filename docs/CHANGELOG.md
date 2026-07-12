@@ -5,6 +5,29 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] — 2026-07-11
+
+First stable **1.0.0** release.
+
+### Added
+
+- **Smart right-panel sizing** — Compare expands the right panel to a usable width; leaving Compare restores the previous Normal width. Both widths are persisted and respect manual splitter drags (`LayoutDefaults`, `AppSettings.RightPanelNormalWidth` / `RightPanelCompareWidth`)
+- **GitHub Releases on version tags** — Publish workflow runs tests, publishes win-x64 / linux-x64 / osx-x64 / osx-arm64, attaches zip archives, and creates a Release with CHANGELOG-derived notes (`softprops/action-gh-release`)
+- Full **Compare** mode (from 1.0.0-rc1): 2–4 flavors, live re-run, cards, cross-flavor notes, **Copy summary**, Ctrl+6
+- **CI** on push/PR (Ubuntu, Windows, macOS) and documented packaging / release process
+
+### Changed
+
+- Version set to **1.0.0**
+- Publish workflow: pre-publish test job, robust Windows zip via PowerShell, refuse empty releases, pre-release detection for `rc`/`beta` tags
+- README, packaging docs, user Compare guide, AGENTS.md, and post-1.0 HANDOFF updated for the stable release
+
+### Notes
+
+- Portable self-contained zips are the supported download format for 1.0 (no MSI/DMG yet).
+- Debug / step-through matching is planned for **1.1** (see `HANDOFF.md`).
+- Approximate flavors still use closest real engines with fidelity banners and token matrices.
+
 ## [1.0.0-rc1] — 2026-07-11
 
 ### Added
@@ -27,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Notes
 
-- This is a **release candidate**, not the final 1.0.0. See `HANDOFF.md` for remaining path (website, optional Debug mode, installer polish, public beta feedback).
+- Release candidate preceding final **1.0.0**.
 - No new real engines; Compare reuses .NET / PCRE2 / JavaScript (Jint) via the flavor registry.
 
 ## [0.9.0] — 2026-07-11

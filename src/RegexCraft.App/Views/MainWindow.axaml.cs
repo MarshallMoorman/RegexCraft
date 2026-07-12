@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
@@ -10,6 +11,7 @@ using AvaloniaEdit.Document;
 using RegexCraft.App.Behaviors;
 using RegexCraft.App.Highlighting;
 using RegexCraft.App.ViewModels;
+using RegexCraft.Core.Settings;
 
 namespace RegexCraft.App.Views;
 
@@ -23,6 +25,8 @@ public partial class MainWindow : Window
     private bool _syncingSubject;
     private bool _syncingReplace;
     private bool _boundsApplied;
+    private bool _applyingRightPanelWidth;
+    private bool _rightSplitterWired;
 
     public MainWindow()
     {
@@ -46,6 +50,8 @@ public partial class MainWindow : Window
         ConfigureGrepPreviewEditor();
         ApplyThemeBrushes();
         ApplySavedBounds();
+        WireRightPanelSplitter();
+        ApplyRightPanelWidthFromSettings();
         SyncGenerateEditor();
         ActualThemeVariantChanged += (_, _) =>
         {
@@ -66,6 +72,7 @@ public partial class MainWindow : Window
         if (_vm is null) return;
         try
         {
+            CaptureCurrentRightPanelWidth(_vm.IsCompareTab);
             var pos = Position;
             _vm.PersistWindowBounds(Width, Height, pos.X, pos.Y);
         }
@@ -95,6 +102,84 @@ public partial class MainWindow : Window
                 // multi-monitor edge cases
             }
         }
+    }
+
+    /// <summary>
+    /// Subscribe to right-column splitter drag end so manual resizes update Normal or Compare memory.
+    /// </summary>
+    private void WireRightPanelSplitter()
+    {
+        if (_rightSplitterWired || RightColumnSplitter is null)
+            return;
+        _rightSplitterWired = true;
+        RightColumnSplitter.AddHandler(
+            Thumb.DragCompletedEvent,
+            OnRightSplitterDragCompleted,
+            handledEventsToo: true);
+    }
+
+    private void OnRightSplitterDragCompleted(object? sender, VectorEventArgs e)
+    {
+        if (_vm is null || _applyingRightPanelWidth)
+            return;
+        CaptureCurrentRightPanelWidth(_vm.IsCompareTab);
+    }
+
+    /// <summary>
+    /// Read the live right column width and store it for the given mode.
+    /// </summary>
+    private void CaptureCurrentRightPanelWidth(bool compareMode)
+    {
+        if (_vm is null)
+            return;
+
+        double width = 0;
+        if (RightPanelHost is not null && RightPanelHost.Bounds.Width > 0)
+            width = RightPanelHost.Bounds.Width;
+        else if (MainBodyGrid?.ColumnDefinitions is { Count: > 4 } cols
+                 && cols[4].Width.IsAbsolute)
+            width = cols[4].Width.Value;
+
+        if (width > LayoutDefaults.RightPanelMin * 0.5)
+            _vm.RememberRightPanelWidth(width, compareMode);
+    }
+
+    /// <summary>
+    /// Apply the remembered (or default) right-panel width for the current mode.
+    /// </summary>
+    private void ApplyRightPanelWidthFromSettings()
+    {
+        if (_vm is null || MainBodyGrid?.ColumnDefinitions is not { Count: > 4 } cols)
+            return;
+
+        var target = _vm.GetTargetRightPanelWidth();
+        _applyingRightPanelWidth = true;
+        try
+        {
+            cols[4].Width = new GridLength(target, GridUnitType.Pixel);
+            // Keep Compare cards usable: raise MinWidth when on Compare.
+            if (RightPanelHost is not null)
+            {
+                RightPanelHost.MinWidth = _vm.IsCompareTab
+                    ? LayoutDefaults.RightPanelCompareMin
+                    : LayoutDefaults.RightPanelMin;
+            }
+        }
+        finally
+        {
+            _applyingRightPanelWidth = false;
+        }
+    }
+
+    private void OnRightPanelModeChanged(string previousTab)
+    {
+        if (_vm is null)
+            return;
+
+        // Persist the width the user had on the tab they are leaving.
+        var previousWasCompare = string.Equals(previousTab, "Compare", StringComparison.Ordinal);
+        CaptureCurrentRightPanelWidth(previousWasCompare);
+        ApplyRightPanelWidthFromSettings();
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -162,6 +247,7 @@ public partial class MainWindow : Window
             _vm.CopyTextRequested -= OnCopyText;
             _vm.GrepPreviewChanged -= OnGrepPreviewChanged;
             _vm.PickFolderRequested -= OnPickFolderRequested;
+            _vm.RightPanelModeChanged -= OnRightPanelModeChanged;
             _vm.PropertyChanged -= OnVmPropertyChanged;
         }
 
@@ -177,6 +263,7 @@ public partial class MainWindow : Window
         _vm.CopyTextRequested += OnCopyText;
         _vm.GrepPreviewChanged += OnGrepPreviewChanged;
         _vm.PickFolderRequested += OnPickFolderRequested;
+        _vm.RightPanelModeChanged += OnRightPanelModeChanged;
         _vm.PropertyChanged += OnVmPropertyChanged;
 
         if (PatternEditor.Document is not null && PatternEditor.Document.Text != _vm.Pattern)

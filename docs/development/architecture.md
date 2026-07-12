@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 1.0.0-rc1
+**Version**: 1.0.0
 
 ## Overview
 
@@ -55,6 +55,8 @@ Status: Flavor (+ fidelity) | Engine | Counts | Time | Shortcuts
 
 Right modes share one DockPanel last-child **Grid host**. Only one mode is visible; each mode Grid uses `rightMode` + star rows so previews/lists stretch.
 
+**Right-panel width memory** (`LayoutDefaults` + `AppSettings`): Normal width for Test/Replace/Split/Generate/GREP, Compare width when Compare is active. Mode switches apply the target width; splitter drags update the active mode’s stored value.
+
 ### Modes
 
 | Mode | Behavior |
@@ -64,7 +66,7 @@ Right modes share one DockPanel last-child **Grid host**. Only one mode is visib
 | **Split** | Parts list, delimiter highlights on subject, remove-empty option |
 | **Generate** | Auto snippet for language + operation; Copy to clipboard |
 | **GREP** | Folder search/replace, globs, progress, cancel, dry-run, preview |
-| **Compare** | 2–4 flavors side-by-side; parallel Match; diffs + copy summary |
+| **Compare** | 2–4 flavors side-by-side; parallel Match; diffs + copy summary; wider right panel |
 
 ### Live updates
 

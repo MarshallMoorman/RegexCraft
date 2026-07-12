@@ -41,9 +41,21 @@ Compare uses the **toolbar option checkboxes** as the *requested* options, then 
 
 Approximate flavors (Python, Go, Rust, …) still run on the closest real engine (.NET or PCRE2). Cards show the fidelity badge and note so you never confuse approximate testing with native dialect behavior. See [Flavors & testing fidelity](flavors.md).
 
+## Layout (right panel width)
+
+Compare needs more horizontal space than Match or Replace. RegexCraft remembers **two** right-panel widths:
+
+| Mode | Behavior |
+|------|----------|
+| **Compare** | Expanding to a wider panel (default ~520 px, minimum ~480 px) so multi-flavor cards stay readable |
+| **Other modes** | Restores your previous Normal width (Test / Replace / Split / Generate / GREP) |
+
+Drag the splitter between the center editor and the right panel to resize. Your widths are saved with the rest of the app settings and restored on the next launch.
+
 ## Tips
 
 - Keep the subject short while exploring differences; Compare is optimized for interactive patterns, not multi-megabyte subjects.  
 - Use Test mode for deep highlighting of a single flavor; use Compare when you care about portability.  
 - If every selected flavor is invalid, fix the pattern syntax first (unclosed groups, etc.).  
 - Token palette dimming in the left sidebar remains driven by the **main** flavor dropdown; Compare cards call out unsupported constructs independently.  
+- If the panel feels tight after upgrading, open Compare once and drag the splitter — that width is remembered separately from Match mode.  

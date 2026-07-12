@@ -4,9 +4,13 @@
 
 RegexCraft is a modern, cross-platform regular expression workbench built for **multiple regex flavors**. Test patterns under **.NET**, **PCRE2**, and **JavaScript**, with approximate testing for Python, Java, PHP, and more — plus professional highlighting, replace/split previews, **GREP across files**, **multi-flavor Compare**, code generation, and a live analysis tree.
 
-**Current version**: 1.0.0-rc1
+**Current version**: 1.0.0
 
-## Requirements
+## Download (pre-built)
+
+Portable self-contained builds for Windows, Linux, and macOS are on **[GitHub Releases](https://github.com/MarshallMoorman/RegexCraft/releases)**. Unzip and run `RegexCraft.App` / `RegexCraft.App.exe`.
+
+## Requirements (from source)
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - macOS, Windows, or Linux (Avalonia desktop)

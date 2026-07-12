@@ -27,9 +27,48 @@ permissions:
   contents: write
 
 jobs:
+  # Fail fast on broken code before spending matrix minutes on publish.
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-pub-test-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-pub-test-
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore RegexCraft.sln
+
+      - name: Build (Release)
+        run: dotnet build RegexCraft.sln -c Release --no-restore
+
+      - name: Test
+        run: |
+          dotnet test RegexCraft.sln \
+            -c Release \
+            --no-build \
+            --filter "Category!=Screenshots" \
+            --verbosity normal \
+            -- NUnit.NumberOfTestWorkers=1
+
   publish:
     name: Publish ${{ matrix.rid }}
+    needs: test
     runs-on: ${{ matrix.os }}
+    # Soft-fail per RID: one platform failing does not cancel the others.
     strategy:
       fail-fast: false
       matrix:
@@ -92,11 +131,14 @@ jobs:
         shell: bash
         run: |
           cd artifacts
+          # Prefer zip on all platforms. Windows runners often lack zip(1).
           if command -v zip >/dev/null 2>&1; then
             zip -r "RegexCraft-${{ matrix.rid }}.zip" "RegexCraft-${{ matrix.rid }}"
+          elif command -v powershell >/dev/null 2>&1 || command -v pwsh >/dev/null 2>&1; then
+            PS=$(command -v pwsh || command -v powershell)
+            "$PS" -NoProfile -Command \
+              "Compress-Archive -Path 'RegexCraft-${{ matrix.rid }}' -DestinationPath 'RegexCraft-${{ matrix.rid }}.zip' -Force"
           else
-            # Windows runners may lack zip; use PowerShell compress as fallback via bash is hard —
-            # install zip via chocolatey is heavy; use tar.gz universally
             tar -czf "RegexCraft-${{ matrix.rid }}.tar.gz" "RegexCraft-${{ matrix.rid }}"
           fi
           ls -la
@@ -122,7 +164,13 @@ jobs:
   release:
     name: GitHub Release (on tag)
     needs: publish
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Create a release even if some RIDs failed, as long as at least one published.
+    # If every publish job failed, this job is skipped (no empty release).
+    if: >-
+      always() &&
+      startsWith(github.ref, 'refs/tags/v') &&
+      needs.test.result == 'success' &&
+      (needs.publish.result == 'success' || needs.publish.result == 'partialSuccess' || needs.publish.result == 'failure')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -132,29 +180,97 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release-assets
+        continue-on-error: true
 
       - name: Package archives for release
+        id: pack
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p release-upload
-          # Prefer zip archives if present; otherwise tar the published folders
-          find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' \) -exec cp {} release-upload/ \;
-          if [ -z "$(ls -A release-upload 2>/dev/null)" ]; then
+          # Prefer zip / tar.gz archives produced by the matrix jobs
+          find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' \) -print -exec cp {} release-upload/ \; || true
+
+          if [ -z "$(ls -A release-upload 2>/dev/null || true)" ]; then
             for dir in release-assets/RegexCraft-*; do
               [ -d "$dir" ] || continue
               base=$(basename "$dir")
               # Skip *-archive artifact dirs that only hold archives
+              if [[ "$base" == *-archive ]]; then
+                continue
+              fi
               if [ -f "$dir/RegexCraft.App.dll" ] || [ -f "$dir/RegexCraft.App" ] || [ -f "$dir/RegexCraft.App.exe" ]; then
                 tar -czf "release-upload/${base}.tar.gz" -C "$dir" .
               fi
             done
           fi
-          ls -la release-upload
+
+          echo "=== Release upload contents ==="
+          ls -la release-upload || true
+          count=$(find release-upload -type f \( -name '*.zip' -o -name '*.tar.gz' \) | wc -l | tr -d ' ')
+          echo "archive_count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No publish archives found. Refusing to create an empty GitHub Release."
+            exit 1
+          fi
+
+      - name: Extract CHANGELOG section for this version
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          # Strip leading v for version match (v1.0.0 → 1.0.0)
+          VER="${TAG#v}"
+          NOTES_FILE=release-notes.md
+          {
+            echo "## RegexCraft ${TAG}"
+            echo ""
+            echo "Portable self-contained builds for major desktop RIDs."
+            echo "Version is sourced from \`Directory.Build.props\`."
+            echo ""
+            echo "### Downloads"
+            echo ""
+            echo "| Archive | Platform |"
+            echo "|---------|----------|"
+            echo "| \`RegexCraft-win-x64.zip\` | Windows x64 |"
+            echo "| \`RegexCraft-linux-x64.zip\` | Linux x64 |"
+            echo "| \`RegexCraft-osx-x64.zip\` | macOS Intel |"
+            echo "| \`RegexCraft-osx-arm64.zip\` | macOS Apple Silicon |"
+            echo ""
+            echo "Unzip and run \`RegexCraft.App\` (or \`RegexCraft.App.exe\` on Windows) from the extracted folder."
+            echo ""
+            echo "### Changelog"
+            echo ""
+          } > "$NOTES_FILE"
+
+          if [ -f docs/CHANGELOG.md ]; then
+            # Extract ## [VER] section until next ## heading
+            awk -v ver="$VER" '
+              BEGIN { p=0 }
+              $0 ~ "^## \\[" ver "\\]" { p=1; print; next }
+              p && $0 ~ /^## / { exit }
+              p { print }
+            ' docs/CHANGELOG.md >> "$NOTES_FILE" || true
+          fi
+
+          if ! grep -q "## \\[${VER}\\]" "$NOTES_FILE" 2>/dev/null; then
+            echo "_No matching CHANGELOG section for ${VER}; see docs/CHANGELOG.md in the repository._" >> "$NOTES_FILE"
+          fi
+
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+          echo "=== Release notes preview ==="
+          head -80 "$NOTES_FILE"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: RegexCraft ${{ github.ref_name }}
+          body_path: ${{ steps.notes.outputs.notes_file }}
           generate_release_notes: true
           files: release-upload/*
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
