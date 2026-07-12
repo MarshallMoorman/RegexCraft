@@ -316,6 +316,9 @@ jobs:
       - name: Create release on public dist repo
         uses: softprops/action-gh-release@v2
         with:
+          # Must be explicit: action default is github.token (main repo only), which
+          # cannot create releases on the external dist repo (403).
+          token: ${{ secrets.DIST_REPO_TOKEN }}
           repository: ${{ env.DIST_REPO }}
           tag_name: ${{ steps.notes.outputs.tag_name }}
           name: RegexCraft ${{ steps.notes.outputs.tag_name }}
@@ -326,8 +329,6 @@ jobs:
           fail_on_unmatched_files: true
           draft: false
           prerelease: ${{ contains(steps.notes.outputs.tag_name, '-') || contains(steps.notes.outputs.tag_name, 'rc') || contains(steps.notes.outputs.tag_name, 'beta') || contains(steps.notes.outputs.tag_name, 'alpha') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
 
       - name: Ensure dist repo README
         env:

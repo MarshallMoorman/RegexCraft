@@ -76,7 +76,7 @@ public sealed class ExportViewModelTests
     }
 
     [Test]
-    public void ExportMatchesCsv_WritesFileViaSaveCallback()
+    public async Task ExportMatchesCsv_WritesFileViaSaveCallback()
     {
         _vm.Pattern = @"\w+";
         _vm.Subject = "hello world";
@@ -86,17 +86,18 @@ public sealed class ExportViewModelTests
         _vm.SaveFileRequested += (_, _, _) => Task.FromResult<string?>(outPath);
 
         Assert.That(_vm.ExportMatchesCsvCommand.CanExecute(null), Is.True);
-        _vm.ExportMatchesCsvCommand.Execute(null);
+        // Async RelayCommand — must await so StatusText is set before assertions (macOS CI race).
+        await _vm.ExportMatchesCsvCommand.ExecuteAsync(null);
 
         Assert.That(File.Exists(outPath), Is.True);
-        var text = File.ReadAllText(outPath);
+        var text = await File.ReadAllTextAsync(outPath);
         Assert.That(text, Does.Contain("hello"));
         Assert.That(text, Does.Contain("world"));
         Assert.That(_vm.StatusText, Does.Contain("CSV"));
     }
 
     [Test]
-    public void ExportMatchesJson_WritesFileViaSaveCallback()
+    public async Task ExportMatchesJson_WritesFileViaSaveCallback()
     {
         _vm.Pattern = @"\d+";
         _vm.Subject = "x9y";
@@ -105,10 +106,10 @@ public sealed class ExportViewModelTests
         var outPath = Path.Combine(_tempDir, "out.json");
         _vm.SaveFileRequested += (_, _, _) => Task.FromResult<string?>(outPath);
 
-        _vm.ExportMatchesJsonCommand.Execute(null);
+        await _vm.ExportMatchesJsonCommand.ExecuteAsync(null);
 
         Assert.That(File.Exists(outPath), Is.True);
-        var text = File.ReadAllText(outPath);
+        var text = await File.ReadAllTextAsync(outPath);
         Assert.That(text, Does.Contain("\"matches\""));
         Assert.That(text, Does.Contain("9"));
         Assert.That(_vm.StatusText, Does.Contain("JSON"));
@@ -131,14 +132,14 @@ public sealed class ExportViewModelTests
     }
 
     [Test]
-    public void Export_CancelledSave_SetsStatus()
+    public async Task Export_CancelledSave_SetsStatus()
     {
         _vm.Pattern = @"x";
         _vm.Subject = "x";
         _vm.RunTestCommand.Execute(null);
 
         _vm.SaveFileRequested += (_, _, _) => Task.FromResult<string?>(null);
-        _vm.ExportMatchesCsvCommand.Execute(null);
+        await _vm.ExportMatchesCsvCommand.ExecuteAsync(null);
 
         Assert.That(_vm.StatusText, Does.Contain("cancelled").IgnoreCase);
     }
