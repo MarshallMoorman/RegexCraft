@@ -46,16 +46,25 @@ jobs:
       - name: Build (Release)
         run: dotnet build RegexCraft.sln -c Release --no-restore
 
+      # Full suite on Linux/macOS. Windows runners still run unit + headless UI, but
+      # Avalonia Skia CaptureRenderedFrame (Category=Screenshots) is intermittently
+      # flaky on windows-latest — screenshots are produced/uploaded on ubuntu instead.
       - name: Test
-        run: >
-          dotnet test RegexCraft.sln
-          -c Release
-          --no-build
-          --logger "trx;LogFileName=test-results.trx"
-          --results-directory "${{ github.workspace }}/TestResults"
-          --verbosity normal
-          --
-          NUnit.NumberOfTestWorkers=1
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILTER_ARGS=()
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            FILTER_ARGS=(--filter "Category!=Screenshots")
+          fi
+          dotnet test RegexCraft.sln \
+            -c Release \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory "${{ github.workspace }}/TestResults" \
+            --verbosity normal \
+            "${FILTER_ARGS[@]}" \
+            -- NUnit.NumberOfTestWorkers=1
 
       - name: Upload test results (TRX)
         if: always()

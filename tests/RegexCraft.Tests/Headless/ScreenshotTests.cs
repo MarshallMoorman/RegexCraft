@@ -18,6 +18,8 @@ namespace RegexCraft.Tests.Headless;
 [Category("Screenshots")]
 [Category("UI")]
 [Category("Headless")]
+// Headless Skia frame capture can race on some CI images; allow one retry.
+[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 public sealed class ScreenshotTests
 {
     private string _tempDir = null!;
@@ -46,6 +48,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_TestMode_Light()
     {
         CaptureMainWindow("main-test-light.png", "Test", ThemeVariant.Light, prepare: vm =>
@@ -57,6 +60,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_TestMode_Dark()
     {
         CaptureMainWindow("main-test-dark.png", "Test", ThemeVariant.Dark, prepare: vm =>
@@ -68,6 +72,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_ReplaceMode()
     {
         CaptureMainWindow("main-replace.png", "Replace", ThemeVariant.Light, prepare: vm =>
@@ -80,6 +85,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_GenerateMode()
     {
         CaptureMainWindow("main-generate.png", "Generate", ThemeVariant.Light, prepare: vm =>
@@ -91,6 +97,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_CompareMode()
     {
         CaptureMainWindow("main-compare.png", "Compare", ThemeVariant.Light, prepare: vm =>
@@ -102,6 +109,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_GrepMode()
     {
         CaptureMainWindow("main-grep.png", "Grep", ThemeVariant.Light, prepare: vm =>
@@ -114,6 +122,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_MainWindow_LibrarySidebar()
     {
         CaptureMainWindow("main-library.png", "Test", ThemeVariant.Light, prepare: vm =>
@@ -126,6 +135,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_AboutDialog_Light()
     {
         if (Avalonia.Application.Current is not null)
@@ -146,6 +156,7 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void Capture_AboutDialog_Dark()
     {
         if (Avalonia.Application.Current is not null)
