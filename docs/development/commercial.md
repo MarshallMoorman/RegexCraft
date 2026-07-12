@@ -47,13 +47,13 @@ Actions on the main repo publish outward. You do **not** hand-edit the dist repo
 
 ### 3. Payment product + paste URL into site config
 
-1. Create a one-time product on **Gumroad**, **Lemon Squeezy**, or **Stripe Payment Link**
-2. Suggested price: **$49** (editable anytime)
-3. Update checkout URL in:
+1. ~~Create a one-time product~~ — **Stripe sandbox Payment Link is wired** (Phase 14):
+   `https://buy.stripe.com/test_00w5kFgOHc4ucQnc8u3oA00` ($49 one-time)
+2. After Stripe **live** account approval, replace the same URL in:
    - `website/site-config.js` → `buyUrl`
-   - `website/pricing.html` (button / `#buy` section)
+   - `website/pricing.html` Buy button fallback `href` / `data-buy-link`
    - `src/RegexCraft.Core/Commercial/CommercialLinks.cs` → `BuyLicenseUrl` (About dialog)
-4. Commit those URL changes on `main` (can be a tiny follow-up commit after 1.2.0)
+3. Brand color for Stripe Dashboard: `#0078D4` (hover `#106EBE`); logo `website/assets/logo.png`
 
 ### 4. Tag `v1.2.0` → verify Actions
 

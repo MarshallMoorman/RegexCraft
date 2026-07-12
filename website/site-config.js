@@ -14,8 +14,8 @@ window.RegexCraftSite = {
       ".zip"
     );
   },
-  /** Replace with Gumroad / Lemon Squeezy / Stripe Payment Link when ready. */
-  buyUrl: "https://regexcraft.com/pricing.html#buy",
+  /** Stripe sandbox Payment Link (replace with live link after Stripe account approval). */
+  buyUrl: "https://buy.stripe.com/test_00w5kFgOHc4ucQnc8u3oA00",
   businessPrice: "$49",
   eulaUrl: "eula.html",
   pricingUrl: "pricing.html",

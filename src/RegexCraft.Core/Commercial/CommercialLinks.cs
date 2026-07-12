@@ -1,8 +1,7 @@
 namespace RegexCraft.Core.Commercial;
 
 /// <summary>
-/// Public commercial URLs and placeholders. No license keys — honor system.
-/// Update <see cref="BuyLicenseUrl"/> when the payment product is live.
+/// Public commercial URLs. No license keys — honor system.
 /// </summary>
 public static class CommercialLinks
 {
@@ -22,10 +21,11 @@ public static class CommercialLinks
         "https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest";
 
     /// <summary>
-    /// Checkout / buy URL. Replace with Gumroad, Lemon Squeezy, or Stripe Payment Link
-    /// when Marshall creates the product (see docs/development/commercial.md).
+    /// Stripe sandbox Payment Link for the business license ($49 one-time).
+    /// Replace with the live Payment Link after Stripe account approval.
     /// </summary>
-    public const string BuyLicenseUrl = "https://regexcraft.com/pricing.html#buy";
+    public const string BuyLicenseUrl =
+        "https://buy.stripe.com/test_00w5kFgOHc4ucQnc8u3oA00";
 
     /// <summary>Suggested one-time business price shown in UI (display only).</summary>
     public const string SuggestedBusinessPrice = "$49";
