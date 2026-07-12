@@ -90,6 +90,17 @@ public sealed class ScreenshotTests
     }
 
     [AvaloniaTest]
+    public void Capture_MainWindow_CompareMode()
+    {
+        CaptureMainWindow("main-compare.png", "Compare", ThemeVariant.Light, prepare: vm =>
+        {
+            vm.Pattern = @"(?<user>\w+)@(?<domain>\w+\.\w+)";
+            vm.Subject = "Contact support@regexcraft.com or hello@example.org";
+            vm.SelectRightTabCommand.Execute("Compare");
+        });
+    }
+
+    [AvaloniaTest]
     public void Capture_MainWindow_GrepMode()
     {
         CaptureMainWindow("main-grep.png", "Grep", ThemeVariant.Light, prepare: vm =>

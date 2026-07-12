@@ -19,6 +19,7 @@ Requires Avalonia.Headless with Skia (`UseHeadlessDrawing = false`). See `tests/
 | `main-replace.png` | Replace mode |
 | `main-generate.png` | Generate mode |
 | `main-grep.png` | GREP mode |
+| `main-compare.png` | Compare mode (multi-flavor cards) |
 | `main-library.png` | Library sidebar |
 | `about-light.png` | About dialog (light) |
 | `about-dark.png` | About dialog (dark) |

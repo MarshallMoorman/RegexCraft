@@ -64,12 +64,38 @@ public sealed class MainWindowUiTests
                      ("Split", v => v.IsSplitTab),
                      ("Generate", v => v.IsGenerateTab),
                      ("Grep", v => v.IsGrepTab),
+                     ("Compare", v => v.IsCompareTab),
                  })
         {
             vm.SelectRightTabCommand.Execute(tab);
             Dispatcher.UIThread.RunJobs();
             Assert.That(check(vm), Is.True, tab);
         }
+
+        window.Close();
+    }
+
+    [AvaloniaTest]
+    public void CompareMode_ShowsCardsForSelectedFlavors()
+    {
+        var vm = HeadlessTestHelpers.CreateViewModel(_tempDir);
+        var window = HeadlessTestHelpers.CreateMainWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.Pattern = @"(?<user>\w+)@(?<domain>\w+\.\w+)";
+        vm.Subject = "a@b.com and c@d.org";
+        vm.SelectRightTabCommand.Execute("Compare");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.That(vm.IsCompareTab, Is.True);
+        Assert.That(vm.IsCompareMode, Is.True);
+        Assert.That(vm.WindowTitle, Does.Contain("Compare"));
+        Assert.That(vm.CompareFlavorChoices, Is.Not.Empty);
+        Assert.That(vm.CompareCards.Count, Is.InRange(2, 4));
+        Assert.That(vm.CompareCards.All(c => c.IsValid), Is.True, "all cards should be valid");
+        Assert.That(vm.CompareExportText, Does.Contain("Flavor Comparison"));
+        Assert.That(vm.CompareDifferenceNotes, Is.Not.Empty);
 
         window.Close();
     }
@@ -237,7 +263,7 @@ public sealed class MainWindowUiTests
         Assert.That(about.Title, Is.EqualTo("About RegexCraft"));
         Assert.That(about.FindControl<TextBlock>("VersionTextBlock")?.Text,
             Does.StartWith("Version "));
-        Assert.That(AboutWindow.GetAppVersion(), Does.Match(@"^\d+\.\d+\.\d+$"));
+        Assert.That(AboutWindow.GetAppVersion(), Does.Match(@"^\d+\.\d+\.\d+(-[A-Za-z0-9.]+)?$"));
 
         // Icon resource is set on the window
         Assert.That(about.Icon, Is.Not.Null);

@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 0.8.0
+**Version**: 1.0.0-rc1
 
 ## Overview
 
@@ -8,7 +8,7 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │ RegexCraft.App (Avalonia 12 + AvaloniaEdit)                      │
 │  Toolbar · Tokens/Library/History · Editor · Analysis            │
-│  Test / Replace / Split / Generate / GREP (single stretch host)  │
+│  Test / Replace / Split / Generate / GREP / Compare (one host)   │
 │  Fidelity banner · Column splitters · Status                     │
 │  About RegexCraft dialog · regexcraft-icon (ICO/ICNS/PNG)        │
 └───────────────────────────────┬──────────────────────────────────┘
@@ -20,6 +20,7 @@
  Result models            PcreRegexEngine         appsettings.json
  FlavorService            JavaScriptRegexEngine
   + TestingFidelity       EngineFactory
+ RegexCompareService
  TokenCatalog
  RegexAnalysisService
  MatchHighlightBuilder / ReplaceHighlightBuilder
@@ -41,11 +42,11 @@
 ## UI layout
 
 ```
-Toolbar: Flavor (many) | Match | Replace | Split | Generate | GREP | Options | Theme
+Toolbar: Flavor (many) | Match | Replace | Split | Generate | GREP | Compare | Options | Theme
 ┌──────────┬─┬────────────────────────────┬─┬────────────────────┐
 │ Tokens   │ │ Regex Editor (AvaloniaEdit)│ │ Test | Replace     │
 │ Library  │S│ high-contrast light/dark   │S│ Split | Generate   │
-│ History  │p│ syntax + Editor* brushes   │p│ GREP               │
+│ History  │p│ syntax + Editor* brushes   │p│ GREP | Compare     │
 │ built-in │l│ Analysis Tree (rich, live) │l│ Fidelity banner    │
 │ badges   │ │ click → select in editor   │ │ Single host fills  │
 └──────────┴─┴────────────────────────────┴─┴────────────────────┘
@@ -63,6 +64,7 @@ Right modes share one DockPanel last-child **Grid host**. Only one mode is visib
 | **Split** | Parts list, delimiter highlights on subject, remove-empty option |
 | **Generate** | Auto snippet for language + operation; Copy to clipboard |
 | **GREP** | Folder search/replace, globs, progress, cancel, dry-run, preview |
+| **Compare** | 2–4 flavors side-by-side; parallel Match; diffs + copy summary |
 
 ### Live updates
 
@@ -72,14 +74,20 @@ Right modes share one DockPanel last-child **Grid host**. Only one mode is visib
 2. Regenerates code snippets  
 3. Runs Match on the active engine (when not on GREP-only live path)  
 4. Rebuilds highlight spans and match list  
-5. Refreshes Replace or Split when that tab is active  
+5. Refreshes Replace, Split, or **Compare** when that tab is active  
 
-GREP work is **async**, reports progress, and supports **cancellation**.
+GREP work is **async**, reports progress, and supports **cancellation**.  
+Compare runs engine Matches in **parallel** via `RegexCompareService`.
+
+### CI / packaging
+
+- GitHub Actions: `.github/workflows/ci.yml`, `publish.yml`  
+- Packaging guide: `docs/development/packaging.md`  
 
 ### Keyboard
 
-- **Ctrl+Enter** — Run current mode (Search in GREP)  
-- **Ctrl+1…5** — Test / Replace / Split / Generate / GREP  
+- **Ctrl+Enter** — Run current mode (Search in GREP; Compare in Compare)  
+- **Ctrl+1…6** — Test / Replace / Split / Generate / GREP / Compare  
 
 ### Application identity
 
@@ -93,6 +101,7 @@ GREP work is **async**, reports progress, and supports **cancellation**.
 | `FlavorDefinition` / `FlavorService` | Flavor registry, engine map, fidelity, options, token matrix, codegen lang |
 | `FlavorTokenSets` | Shared unsupported-token sets (RE2, JS, Python, Java, .NET-only) |
 | `TestingFidelity` | Full / High / Approximate / CodegenOnly |
+| `IRegexCompareService` / `RegexCompareService` | Multi-flavor side-by-side Match + difference analysis |
 | `ITokenCatalog` / `TokenCatalog` | Text-only tokens + search + engine support hints |
 | `TokenInsertion` | Pure insert/replace-selection logic |
 | `IRegexAnalysisService` | Rich structural tree with offsets |

@@ -10,7 +10,8 @@ public sealed class AboutWindowInfoTests
     public void GetAppVersion_IsSemVerShape()
     {
         var v = AboutWindow.GetAppVersion();
-        Assert.That(v, Does.Match(@"^\d+\.\d+\.\d+$"));
+        // Accept stable (1.0.0) and pre-release (1.0.0-rc1) informational versions.
+        Assert.That(v, Does.Match(@"^\d+\.\d+\.\d+(-[A-Za-z0-9.]+)?$"));
     }
 
     [Test]

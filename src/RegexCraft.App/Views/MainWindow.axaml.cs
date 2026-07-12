@@ -111,6 +111,8 @@ public partial class MainWindow : Window
                 _vm.RunSplitCommand.Execute(null);
             else if (_vm.IsGrepTab)
                 _ = _vm.RunGrepSearchCommand.ExecuteAsync(null);
+            else if (_vm.IsCompareTab)
+                _vm.RunCompareCommand.Execute(null);
             else
                 _vm.RunTestCommand.Execute(null);
             e.Handled = true;
@@ -140,6 +142,11 @@ public partial class MainWindow : Window
         else if (ctrl && e.Key == Key.D5)
         {
             _vm.SelectRightTabCommand.Execute("Grep");
+            e.Handled = true;
+        }
+        else if (ctrl && e.Key == Key.D6)
+        {
+            _vm.SelectRightTabCommand.Execute("Compare");
             e.Handled = true;
         }
     }

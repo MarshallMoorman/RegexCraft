@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Codegen;
+using RegexCraft.Core.Compare;
 using RegexCraft.Core.Editing;
 using RegexCraft.Core.Engines;
 using RegexCraft.Core.Flavors;
@@ -30,11 +31,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ILibraryStore _libraryStore;
     private readonly IHistoryStore _historyStore;
     private readonly IGrepService _grepService;
+    private readonly IRegexCompareService _compareService;
     private readonly ISettingsStore _settingsStore;
     private readonly ILogger<MainWindowViewModel> _logger;
     private CancellationTokenSource? _debounceCts;
     private CancellationTokenSource? _grepCts;
     private const int DebounceMs = 200;
+    private const int CompareMinFlavors = RegexCompareService.MinFlavors;
+    private const int CompareMaxFlavors = RegexCompareService.MaxFlavors;
     private string? _lastHistoryPattern;
     private string? _lastHistorySubject;
     private string? _lastHistoryFlavor;
@@ -50,7 +54,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IHistoryStore historyStore,
         IGrepService grepService,
         ISettingsStore settingsStore,
-        ILogger<MainWindowViewModel> logger)
+        ILogger<MainWindowViewModel> logger,
+        IRegexCompareService? compareService = null)
     {
         _flavorService = flavorService;
         _tokenCatalog = tokenCatalog;
@@ -61,6 +66,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _grepService = grepService;
         _settingsStore = settingsStore;
         _logger = logger;
+        _compareService = compareService ?? new RegexCompareService(flavorService, tokenCatalog);
         _settings = _settingsStore.Load();
 
         // Suppress until all settings-backed properties are applied; otherwise
@@ -107,6 +113,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         VersionText = $"v{GetAppVersion()}";
         WindowTitle = "RegexCraft";
+        InitializeCompareFlavorChoices();
         RebuildTokenList();
         RefreshLibrary();
         RefreshHistory();
@@ -158,6 +165,9 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<CodeLanguageItem> CodeLanguages { get; } = new();
     public ObservableCollection<CodegenOperationItem> CodegenOperations { get; } = new();
     public ObservableCollection<GrepHitViewModel> GrepHits { get; } = new();
+    public ObservableCollection<CompareFlavorChoiceViewModel> CompareFlavorChoices { get; } = new();
+    public ObservableCollection<CompareCardViewModel> CompareCards { get; } = new();
+    public ObservableCollection<string> CompareDifferenceNotes { get; } = new();
     public string VersionText { get; }
 
     public IReadOnlyList<HighlightSpan> CurrentHighlights { get; private set; } = Array.Empty<HighlightSpan>();
@@ -197,6 +207,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isSplitTab;
     [ObservableProperty] private bool _isGenerateTab;
     [ObservableProperty] private bool _isGrepTab;
+    [ObservableProperty] private bool _isCompareTab;
     [ObservableProperty] private AnalysisNode? _analysisRoot;
     [ObservableProperty] private AnalysisNode? _selectedAnalysisNode;
     [ObservableProperty] private int _patternCaretOffset;
@@ -231,8 +242,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isSplitMode;
     [ObservableProperty] private bool _isGenerateMode;
     [ObservableProperty] private bool _isGrepMode;
+    [ObservableProperty] private bool _isCompareMode;
     [ObservableProperty] private string _optionsContextLabel = "Options apply to the current engine";
-    [ObservableProperty] private string _shortcutHints = "Ctrl+Enter run · Ctrl+1–5 modes";
+    [ObservableProperty] private string _shortcutHints = "Ctrl+Enter run · Ctrl+1–6 modes";
 
     // GREP
     [ObservableProperty] private string _grepRootPath = string.Empty;
@@ -250,6 +262,14 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _grepPreviewText = string.Empty;
     [ObservableProperty] private string _grepPreviewPath = string.Empty;
     [ObservableProperty] private string _grepReplaceSummary = string.Empty;
+
+    // Compare
+    [ObservableProperty] private bool _isCompareRunning;
+    [ObservableProperty] private string _compareSummary = "Select 2–4 flavors and run Compare.";
+    [ObservableProperty] private string _compareEmptyMessage = "Select 2–4 flavors below, then compare the current pattern and subject.";
+    [ObservableProperty] private string _compareSelectionHint = "Select 2–4 flavors";
+    [ObservableProperty] private string _compareExportText = string.Empty;
+    [ObservableProperty] private bool _compareShowCodeSnippets;
 
     partial void OnPatternChanged(string value)
     {
@@ -402,18 +422,21 @@ public partial class MainWindowViewModel : ViewModelBase
         IsSplitTab = tab == "Split";
         IsGenerateTab = tab == "Generate";
         IsGrepTab = tab == "Grep";
+        IsCompareTab = tab == "Compare";
 
         IsMatchMode = IsTestTab;
         IsReplaceMode = IsReplaceTab;
         IsSplitMode = IsSplitTab;
         IsGenerateMode = IsGenerateTab;
         IsGrepMode = IsGrepTab;
+        IsCompareMode = IsCompareTab;
         ModeLabel = tab switch
         {
             "Replace" => "Replace",
             "Split" => "Split",
             "Generate" => "Generate",
             "Grep" => "GREP",
+            "Compare" => "Compare",
             _ => "Match",
         };
 
@@ -434,6 +457,8 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusText = string.IsNullOrWhiteSpace(GrepRootPath)
                 ? "GREP — pick a folder to search"
                 : $"GREP ready — {GrepRootPath}";
+        else if (IsCompareTab)
+            RunCompareCore(live: false);
     }
 
     [RelayCommand]
@@ -957,6 +982,11 @@ public partial class MainWindowViewModel : ViewModelBase
                     RefreshGeneratedCode();
                     if (IsGrepTab)
                         return; // don't spam live match while grepping UI
+                    if (IsCompareTab)
+                    {
+                        RunCompareCore(live: true);
+                        return;
+                    }
                     RunTestCore(live: true);
                     if (IsReplaceTab)
                         RunReplaceCore(live: true);
@@ -1377,6 +1407,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Replace" => "RegexCraft — Replace",
             "Split" => "RegexCraft — Split",
             "Generate" => "RegexCraft — Generate",
+            "Compare" => "RegexCraft — Compare",
             _ => "RegexCraft",
         };
     }
@@ -1488,9 +1519,216 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private void InitializeCompareFlavorChoices()
+    {
+        CompareFlavorChoices.Clear();
+
+        // Prefer a diverse default set: selected flavor + other full engines.
+        var preferredIds = new List<string>();
+        if (SelectedFlavor is not null)
+            preferredIds.Add(SelectedFlavor.Id);
+
+        foreach (var id in new[] { "dotnet", "pcre2", "javascript", "python" })
+        {
+            if (preferredIds.Count >= CompareMaxFlavors)
+                break;
+            if (preferredIds.Contains(id, StringComparer.OrdinalIgnoreCase))
+                continue;
+            if (Flavors.Any(f => string.Equals(f.Id, id, StringComparison.OrdinalIgnoreCase)))
+                preferredIds.Add(id);
+        }
+
+        while (preferredIds.Count < CompareMinFlavors && preferredIds.Count < Flavors.Count)
+        {
+            var next = Flavors.FirstOrDefault(f =>
+                !preferredIds.Contains(f.Id, StringComparer.OrdinalIgnoreCase));
+            if (next is null) break;
+            preferredIds.Add(next.Id);
+        }
+
+        var selectedSet = preferredIds
+            .Take(CompareMaxFlavors)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var flavor in Flavors)
+        {
+            CompareFlavorChoices.Add(new CompareFlavorChoiceViewModel(
+                flavor,
+                selectedSet.Contains(flavor.Id)));
+        }
+
+        UpdateCompareSelectionHint();
+    }
+
+    private IReadOnlyList<string> GetSelectedCompareFlavorIds() =>
+        CompareFlavorChoices
+            .Where(c => c.IsSelected)
+            .Select(c => c.Flavor.Id)
+            .ToList();
+
+    private void UpdateCompareSelectionHint()
+    {
+        var n = CompareFlavorChoices.Count(c => c.IsSelected);
+        CompareSelectionHint = n switch
+        {
+            0 => "Select 2–4 flavors",
+            1 => "Select at least one more flavor (2–4)",
+            > CompareMaxFlavors => $"Too many selected ({n}) — max {CompareMaxFlavors}",
+            _ => $"{n} flavor(s) selected",
+        };
+    }
+
+    /// <summary>
+    /// Called after a Compare flavor checkbox toggles (two-way bound IsSelected).
+    /// Enforces the 2–4 selection cap and re-runs comparison when on the Compare tab.
+    /// </summary>
+    [RelayCommand]
+    private void CompareFlavorSelectionChanged(CompareFlavorChoiceViewModel? choice)
+    {
+        if (choice is null) return;
+
+        if (choice.IsSelected && CompareFlavorChoices.Count(c => c.IsSelected) > CompareMaxFlavors)
+        {
+            choice.IsSelected = false;
+            StatusText = $"Compare supports at most {CompareMaxFlavors} flavors";
+        }
+
+        UpdateCompareSelectionHint();
+        if (IsCompareTab)
+            RunCompareCore(live: true);
+    }
+
+    [RelayCommand]
+    private void RunCompare() => RunCompareCore(live: false);
+
+    [RelayCommand]
+    private void CopyCompareSummary()
+    {
+        if (string.IsNullOrWhiteSpace(CompareExportText))
+        {
+            StatusText = "Nothing to copy — run Compare first";
+            return;
+        }
+
+        CopyTextRequested?.Invoke(CompareExportText);
+        StatusText = "Compare summary copied to clipboard";
+        _logger.LogInformation("Compare summary copied");
+    }
+
+    private void RunCompareCore(bool live)
+    {
+        var selectedIds = GetSelectedCompareFlavorIds();
+        UpdateCompareSelectionHint();
+
+        if (selectedIds.Count < CompareMinFlavors)
+        {
+            CompareCards.Clear();
+            CompareDifferenceNotes.Clear();
+            CompareExportText = string.Empty;
+            CompareEmptyMessage = $"Select at least {CompareMinFlavors} flavors to compare.";
+            CompareSummary = CompareSelectionHint;
+            StatusText = live ? "Compare — select more flavors" : CompareEmptyMessage;
+            StatusMatches = "Compare: —";
+            StatusTime = "Time: —";
+            return;
+        }
+
+        if (selectedIds.Count > CompareMaxFlavors)
+        {
+            CompareEmptyMessage = $"Select at most {CompareMaxFlavors} flavors.";
+            CompareSummary = CompareEmptyMessage;
+            StatusText = CompareEmptyMessage;
+            return;
+        }
+
+        IsCompareRunning = true;
+        try
+        {
+            // Build options from UI toggles without filtering by the main selected flavor
+            // so Compare can show which options each flavor drops.
+            var options = RegexOptionsEx.None;
+            if (IgnoreCase) options |= RegexOptionsEx.IgnoreCase;
+            if (Multiline) options |= RegexOptionsEx.Multiline;
+            if (Singleline) options |= RegexOptionsEx.Singleline;
+            if (ExplicitCapture) options |= RegexOptionsEx.ExplicitCapture;
+            if (IgnorePatternWhitespace) options |= RegexOptionsEx.IgnorePatternWhitespace;
+
+            var result = _compareService.Compare(new CompareRequest
+            {
+                Pattern = Pattern ?? string.Empty,
+                Subject = Subject ?? string.Empty,
+                Options = options,
+                FlavorIds = selectedIds,
+                MaxMatchesToShow = 5,
+            });
+
+            CompareCards.Clear();
+            foreach (var f in result.Flavors)
+                CompareCards.Add(new CompareCardViewModel(f));
+
+            CompareDifferenceNotes.Clear();
+            foreach (var d in result.CrossFlavorDifferences)
+                CompareDifferenceNotes.Add(d);
+
+            CompareExportText = result.SummaryText;
+            CompareSummary = result.StatusLine;
+            CompareEmptyMessage = result.Flavors.Count == 0
+                ? "No comparison results."
+                : string.Empty;
+
+            StatusMatches = $"Compare: {result.Flavors.Count} flavors";
+            StatusTime = $"Time: {result.TotalDuration.TotalMilliseconds:F2} ms";
+            StatusText = live
+                ? $"Live compare — {result.StatusLine}"
+                : $"Compare OK — {result.StatusLine}";
+
+            // Surface a soft error banner only when every selected flavor failed.
+            if (result.Flavors.Count > 0 && result.Flavors.All(f => !f.IsValid))
+            {
+                HasError = true;
+                ErrorText = "Pattern is invalid on all selected compare flavors.";
+            }
+            else if (IsCompareTab)
+            {
+                HasError = false;
+                ErrorText = string.Empty;
+            }
+
+            if (!live)
+            {
+                _logger.LogInformation(
+                    "Compare: {Count} flavors, {Diffs} notes in {Ms:F2}ms",
+                    result.Flavors.Count,
+                    result.CrossFlavorDifferences.Count,
+                    result.TotalDuration.TotalMilliseconds);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Compare failed");
+            CompareCards.Clear();
+            CompareDifferenceNotes.Clear();
+            CompareEmptyMessage = "Compare failed: " + ex.Message;
+            CompareSummary = "Compare failed";
+            StatusText = CompareEmptyMessage;
+        }
+        finally
+        {
+            IsCompareRunning = false;
+        }
+    }
+
     private static string GetAppVersion()
     {
-        var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.9.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        var asm = Assembly.GetExecutingAssembly();
+        var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(info))
+        {
+            var plus = info.IndexOf('+');
+            return plus > 0 ? info[..plus] : info;
+        }
+
+        var version = asm.GetName().Version;
+        return version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

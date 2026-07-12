@@ -1,0 +1,160 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: "Build configuration"
+        required: true
+        default: Release
+        type: choice
+        options:
+          - Release
+          - Debug
+      self_contained:
+        description: "Self-contained publish (includes runtime)"
+        required: true
+        default: true
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+# Publish does not require secrets for artifact upload.
+# Creating a GitHub Release uses the default GITHUB_TOKEN.
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: linux-x64
+            os: ubuntu-latest
+          - rid: osx-x64
+            os: macos-latest
+          - rid: osx-arm64
+            os: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-pub-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-pub-
+
+      - name: Resolve configuration
+        id: cfg
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "configuration=${{ inputs.configuration }}" >> "$GITHUB_OUTPUT"
+            echo "self_contained=${{ inputs.self_contained }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "configuration=Release" >> "$GITHUB_OUTPUT"
+            echo "self_contained=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        shell: bash
+        run: |
+          OUT="artifacts/RegexCraft-${{ matrix.rid }}"
+          mkdir -p "$OUT"
+          SC_FLAG="--self-contained ${{ steps.cfg.outputs.self_contained }}"
+          dotnet publish src/RegexCraft.App/RegexCraft.App.csproj \
+            -c "${{ steps.cfg.outputs.configuration }}" \
+            -r "${{ matrix.rid }}" \
+            $SC_FLAG \
+            -o "$OUT" \
+            /p:PublishSingleFile=false \
+            /p:IncludeNativeLibrariesForSelfExtract=true
+          echo "Published to $OUT"
+          ls -la "$OUT" | head -40
+
+      - name: Zip artifact
+        shell: bash
+        run: |
+          cd artifacts
+          if command -v zip >/dev/null 2>&1; then
+            zip -r "RegexCraft-${{ matrix.rid }}.zip" "RegexCraft-${{ matrix.rid }}"
+          else
+            # Windows runners may lack zip; use PowerShell compress as fallback via bash is hard —
+            # install zip via chocolatey is heavy; use tar.gz universally
+            tar -czf "RegexCraft-${{ matrix.rid }}.tar.gz" "RegexCraft-${{ matrix.rid }}"
+          fi
+          ls -la
+
+      - name: Upload published folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: RegexCraft-${{ matrix.rid }}
+          path: artifacts/RegexCraft-${{ matrix.rid }}/**
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: RegexCraft-${{ matrix.rid }}-archive
+          path: |
+            artifacts/RegexCraft-${{ matrix.rid }}.zip
+            artifacts/RegexCraft-${{ matrix.rid }}.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+
+  release:
+    name: GitHub Release (on tag)
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Package archives for release
+        shell: bash
+        run: |
+          mkdir -p release-upload
+          # Prefer zip archives if present; otherwise tar the published folders
+          find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' \) -exec cp {} release-upload/ \;
+          if [ -z "$(ls -A release-upload 2>/dev/null)" ]; then
+            for dir in release-assets/RegexCraft-*; do
+              [ -d "$dir" ] || continue
+              base=$(basename "$dir")
+              # Skip *-archive artifact dirs that only hold archives
+              if [ -f "$dir/RegexCraft.App.dll" ] || [ -f "$dir/RegexCraft.App" ] || [ -f "$dir/RegexCraft.App.exe" ]; then
+                tar -czf "release-upload/${base}.tar.gz" -C "$dir" .
+              fi
+            done
+          fi
+          ls -la release-upload
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release-upload/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

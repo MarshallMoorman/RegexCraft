@@ -61,7 +61,15 @@ public static class LoggingBootstrap
 
     private static string GetAppVersion()
     {
-        var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.1.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        var asm = Assembly.GetExecutingAssembly();
+        var info = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(info))
+        {
+            var plus = info.IndexOf('+');
+            return plus > 0 ? info[..plus] : info;
+        }
+
+        var version = asm.GetName().Version;
+        return version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

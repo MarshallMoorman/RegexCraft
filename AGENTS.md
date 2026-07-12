@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 8 complete (v0.9.0)  
+**Last updated**: 2026-07-11 — Phase 9 complete (v1.0.0-rc1)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -10,10 +10,10 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit + Jint  
 - **UI Pattern**: MVVM (CommunityToolkit.Mvvm)  
 - **Testing**: NUnit only. All new code must have tests. `dotnet test`  
-  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, ViewModels, Flavors, Branding  
+  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, **Compare**, ViewModels, Flavors, Branding  
   - UI / headless: `Category=UI`, `Category=Headless` (Avalonia.Headless.NUnit + Skia)  
   - Screenshots: `Category=Screenshots` → `docs/screenshots/` via `CaptureRenderedFrame()`  
-  - **Phase 8 quality bar**: significant tests for every real engine (deep) and every selectable flavor (mapping + fidelity + tokens + codegen)  
+  - **Quality bar**: significant tests for every real engine (deep) and every selectable flavor (mapping + fidelity + tokens + codegen); Compare has dedicated service + VM + headless tests  
 - **Logging**: Microsoft.Extensions.Logging + Serilog file sink. No `Console.WriteLine` for real logging  
 - **Theme**: Named resources only from `Themes/Colors.axaml`. No hard-coded UI colors  
 - **Tokens**: Text-only palette — **no icons for individual tokens**; support is **flavor-aware** (not only engine-aware)  
@@ -23,36 +23,39 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Planning docs**: Phase requirements live under `docs/development/`; root keeps AGENTS/HANDOFF/README only  
 - **Persistence**: Library/History/Settings JSON under OS ApplicationData `RegexCraft/`  
 - **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)  
-- **Branding**: App icon in `src/RegexCraft.App/Assets/regexcraft-icon.*`; About is custom (`AboutWindow`), menu **About RegexCraft**
+- **Branding**: App icon in `src/RegexCraft.App/Assets/regexcraft-icon.*`; About is custom (`AboutWindow`), menu **About RegexCraft**  
+- **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml) — must stay green without interactive secrets for basic CI  
 
 ## Architecture Quick Reference
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP**, built-in library |
+| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, tokens, analysis, highlight builders, token insertion, codegen, library/history/settings, **GREP**, built-in library |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
-| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon** |
+| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel** |
 | `RegexCraft.Tests` | NUnit unit + **Avalonia headless UI** + **screenshot capture** |
 
-### UI map (Phase 6–8)
+### UI map (Phase 6–9)
 
 - Left: Tokens / Library / History — Library shows **Built-in** badge; built-ins not deletable  
 - Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
-- Right: **single mode host** — Test / Replace / Split / Generate / GREP  
-- Toolbar: **expanded Flavor list**, modes, Options, Theme (persisted correctly)  
+- Right: **single mode host** — Test / Replace / Split / Generate / GREP / **Compare**  
+- Toolbar: **expanded Flavor list**, modes (Ctrl+1–6), Options, Theme (persisted correctly)  
 - Fidelity **banner** when testing is High/Approximate  
 - Options: flavor-aware enable/disable (e.g. JS has no ExplicitCapture / free-spacing)  
 - Tokens: dimmed when unsupported for the selected flavor (engine + flavor matrices)  
 - Status: flavor (+ fidelity) / engine, counts, timing, shortcuts  
 - Generate: auto-runs; **preferred language follows selected flavor**  
+- **Compare**: 2–4 flavors, live re-run, cards + cross-flavor notes + copy summary  
 - **Help → About RegexCraft** (native menu) opens custom About dialog  
 
-### Still relevant from Phase 3–7
+### Still relevant from Phase 3–8
 
 - `IGrepService` / GREP models, settings store, library favorites, resizable columns  
-- `MainWindowViewModel` live test/replace/split, GREP async, settings  
+- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**  
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines` + **`FlavorDefinition.IsTokenSupported`**  
 - `RegexAnalysisService`, highlight builders, codegen service  
+- `IRegexCompareService` / `RegexCompareService`  
 - Branding + headless UI + screenshots  
 
 ## Current Engines
@@ -77,6 +80,12 @@ Defined in `FlavorService.BuildDefaultFlavors()` with:
 
 Only flavors whose `EngineId` is registered are shown.
 
+### Compare
+
+- Core: `src/RegexCraft.Core/Compare/`  
+- UI: Compare tab in `MainWindow.axaml` + VM properties/commands  
+- Constraints: 2–4 flavors; parallel Match; no new engines  
+
 ## How to Run
 
 ```bash
@@ -90,12 +99,22 @@ dotnet run --project src/RegexCraft.App
 ```bash
 dotnet test --filter Category=Engines
 dotnet test --filter Category=Flavors
-dotnet test --filter "Category=Engines|Category=Flavors"
+dotnet test --filter Category=Compare
+dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare"
 dotnet test --filter Category=UI
 dotnet test --filter Category=Screenshots   # writes docs/screenshots/*.png
 ```
 
 Do not commit temporary or bad screenshots; only keep final good captures under `docs/screenshots/`.
+
+### CI locally (mirrors GitHub Actions)
+
+```bash
+dotnet restore
+dotnet build -c Debug
+dotnet build -c Release
+dotnet test -c Release
+```
 
 ## Theme Colors
 
@@ -119,6 +138,7 @@ Use brushes: `{DynamicResource PrimaryBlueBrush}`, `EditorForegroundBrush`, `Edi
 4. Bump version in `Directory.Build.props`  
 5. Update `docs/CHANGELOG.md` and user/dev docs  
 6. Commit on `main` with a clear message  
+7. Ensure GitHub Actions still apply (workflow YAML committed)  
 
 ## Useful Commands
 
@@ -130,6 +150,7 @@ dotnet test --filter Category=Tokens
 dotnet test --filter Category=Codegen
 dotnet test --filter Category=Library
 dotnet test --filter Category=Grep
+dotnet test --filter Category=Compare
 dotnet test --filter Category=ViewModels
 dotnet test --filter Category=Flavors
 dotnet test --filter Category=UI
@@ -144,16 +165,21 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 ## Key Paths
 
 - Requirements: `docs/development/PHASE-*-REQUIREMENTS.md`  
+- Packaging: `docs/development/packaging.md`  
 - Shell: `src/RegexCraft.App/Views/MainWindow.axaml`  
 - About: `src/RegexCraft.App/Views/AboutWindow.axaml`  
 - Icon: `src/RegexCraft.App/Assets/regexcraft-icon.ico` (+ `.png`, `.icns`)  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
+- Compare: `src/RegexCraft.Core/Compare/`  
 - Flavors: `src/RegexCraft.Core/Flavors/` (`FlavorDefinition`, `FlavorService`, `FlavorTokenSets`)  
 - JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
 - Built-in library: `src/RegexCraft.Core/Library/BuiltInLibrary.cs`  
 - Theme: `src/RegexCraft.App/Themes/Colors.axaml`  
+- CI: `.github/workflows/ci.yml`, `.github/workflows/publish.yml`  
 - Headless tests: `tests/RegexCraft.Tests/Headless/`  
+- Compare tests: `tests/RegexCraft.Tests/Compare/`  
 - Flavor tests: `tests/RegexCraft.Tests/Flavors/`  
 - Engine tests: `tests/RegexCraft.Tests/Engines/`  
 - Screenshots: `docs/screenshots/`  
+- User Compare doc: `docs/user/comparing.md`  
 - User flavors doc: `docs/user/flavors.md`  

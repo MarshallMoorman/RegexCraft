@@ -306,6 +306,12 @@
                   Command="{Binding SelectRightTabCommand}"
                   CommandParameter="Grep"
                   ToolTip.Tip="Search &amp; replace across files/folders (Ctrl+5)" />
+          <Button Content="Compare"
+                  Classes="modeTab"
+                  Classes.active="{Binding IsCompareMode}"
+                  Command="{Binding SelectRightTabCommand}"
+                  CommandParameter="Compare"
+                  ToolTip.Tip="Compare the same pattern across flavors (Ctrl+6)" />
 
           <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="6,0" />
 
@@ -812,6 +818,13 @@
                     CommandParameter="Grep"
                     ToolTip.Tip="Search &amp; replace across files"
                     AutomationProperties.Name="GREP mode tab" />
+            <Button Content="Compare"
+                    Classes="panelTab"
+                    Classes.active="{Binding IsCompareTab}"
+                    Command="{Binding SelectRightTabCommand}"
+                    CommandParameter="Compare"
+                    ToolTip.Tip="Side-by-side multi-flavor comparison"
+                    AutomationProperties.Name="Compare mode tab" />
           </StackPanel>
 
           <Border DockPanel.Dock="Top"
@@ -1305,6 +1318,219 @@
                                HorizontalScrollBarVisibility="Auto"
                                VerticalScrollBarVisibility="Auto" />
               </Border>
+            </Grid>
+
+            <!-- COMPARE -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsCompareTab}"
+                  RowDefinitions="Auto,Auto,Auto,*,Auto"
+                  AutomationProperties.Name="Compare panel">
+              <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,8">
+                <TextBlock Text="Compare flavors"
+                           Classes="sectionLabel"
+                           FontSize="13" />
+                <TextBlock Classes="mutedHint"
+                           Text="Run the same pattern and subject on 2–4 flavors side-by-side. Results update as you type." />
+              </StackPanel>
+
+              <Border Grid.Row="1"
+                      Background="{DynamicResource BackgroundTertiaryBrush}"
+                      BorderBrush="{DynamicResource BorderSubtleBrush}"
+                      BorderThickness="1"
+                      CornerRadius="6"
+                      Padding="10,8"
+                      Margin="0,0,0,8">
+                <StackPanel Spacing="6">
+                  <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Text="{Binding CompareSelectionHint}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                    <Button Grid.Column="1"
+                            Content="Run compare"
+                            Classes="primaryAction"
+                            Command="{Binding RunCompareCommand}"
+                            IsEnabled="{Binding !IsCompareRunning}"
+                            Margin="6,0,0,0"
+                            ToolTip.Tip="Compare now (Ctrl+Enter)"
+                            AutomationProperties.Name="Run compare" />
+                    <Button Grid.Column="2"
+                            Content="Copy summary"
+                            Classes="ghost"
+                            Command="{Binding CopyCompareSummaryCommand}"
+                            Margin="6,0,0,0"
+                            ToolTip.Tip="Copy full comparison text to clipboard"
+                            AutomationProperties.Name="Copy compare summary" />
+                  </Grid>
+                  <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                VerticalScrollBarVisibility="Disabled"
+                                MaxHeight="72">
+                    <ItemsControl ItemsSource="{Binding CompareFlavorChoices}"
+                                  AutomationProperties.Name="Compare flavor selection">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CompareFlavorChoiceViewModel">
+                          <CheckBox Content="{Binding DisplayName}"
+                                    IsChecked="{Binding IsSelected}"
+                                    Margin="0,2,12,2"
+                                    FontSize="12"
+                                    ToolTip.Tip="{Binding Subtitle}"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CompareFlavorSelectionChangedCommand}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+                </StackPanel>
+              </Border>
+
+              <StackPanel Grid.Row="2" Spacing="3" Margin="0,0,0,8">
+                <TextBlock Text="{Binding CompareSummary}"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           AutomationProperties.Name="Compare summary" />
+                <ItemsControl ItemsSource="{Binding CompareDifferenceNotes}"
+                              IsVisible="{Binding CompareDifferenceNotes.Count}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding}"
+                                 FontSize="11"
+                                 TextWrapping="Wrap"
+                                 Margin="0,1"
+                                 Foreground="{DynamicResource PrimaryBlueBrush}" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <Panel Grid.Row="3">
+                <Border Classes="listFrame" IsVisible="{Binding !CompareCards.Count}">
+                  <TextBlock Text="{Binding CompareEmptyMessage}" Classes="emptyState" />
+                </Border>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              IsVisible="{Binding CompareCards.Count}">
+                  <ItemsControl ItemsSource="{Binding CompareCards}"
+                                AutomationProperties.Name="Compare result cards">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="10" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:CompareCardViewModel">
+                        <Border Width="260"
+                                MinHeight="200"
+                                Background="{DynamicResource BackgroundSecondaryBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12,10"
+                                Margin="0,0,2,4">
+                          <DockPanel>
+                            <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
+                              <TextBlock Text="{Binding Header}"
+                                         FontWeight="SemiBold"
+                                         FontSize="12"
+                                         TextWrapping="Wrap"
+                                         Foreground="{DynamicResource TextPrimaryBrush}" />
+                              <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Background="{DynamicResource AccentBlueSoftBrush}"
+                                        CornerRadius="3"
+                                        Padding="6,2">
+                                  <TextBlock Text="{Binding FidelityBadge}"
+                                             FontSize="10"
+                                             FontWeight="SemiBold"
+                                             Foreground="{DynamicResource PrimaryBlueBrush}" />
+                                </Border>
+                                <TextBlock Text="{Binding ValidityLabel}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding MatchCountLabel}"
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding DurationLabel}"
+                                           FontSize="10"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextMutedBrush}" />
+                              </StackPanel>
+                              <TextBlock Text="{Binding ErrorText}"
+                                         IsVisible="{Binding !IsValid}"
+                                         FontSize="11"
+                                         TextWrapping="Wrap"
+                                         Foreground="{DynamicResource ErrorBrush}" />
+                              <TextBlock Text="{Binding FidelityNote}"
+                                         IsVisible="{Binding ShowFidelityNote}"
+                                         FontSize="10"
+                                         TextWrapping="Wrap"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+
+                            <StackPanel DockPanel.Dock="Bottom" Spacing="2" Margin="0,8,0,0"
+                                        IsVisible="{Binding HasNotes}">
+                              <TextBlock Text="Key notes"
+                                         FontSize="10"
+                                         FontWeight="SemiBold"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                              <ItemsControl ItemsSource="{Binding KeyNotes}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate>
+                                    <TextBlock Text="{Binding}"
+                                               FontSize="10"
+                                               TextWrapping="Wrap"
+                                               Margin="0,1"
+                                               Foreground="{DynamicResource TextMutedBrush}" />
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Spacing="2">
+                              <TextBlock Text="Matches"
+                                         FontSize="10"
+                                         FontWeight="SemiBold"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                              <TextBlock Text="{Binding EmptyMatchesMessage}"
+                                         IsVisible="{Binding !HasMatches}"
+                                         FontSize="11"
+                                         Foreground="{DynamicResource TextMutedBrush}" />
+                              <ItemsControl ItemsSource="{Binding MatchLines}"
+                                            IsVisible="{Binding HasMatches}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate>
+                                    <TextBlock Text="{Binding}"
+                                               FontFamily="Menlo, Consolas, monospace"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"
+                                               Margin="0,1"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                            </StackPanel>
+                          </DockPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </Panel>
+
+              <TextBlock Grid.Row="4"
+                         Classes="mutedHint"
+                         Margin="0,8,0,0"
+                         Text="Tip: differences highlight validity, match counts, first-match offsets, dropped options, and unsupported tokens." />
             </Grid>
           </Grid>
         </DockPanel>

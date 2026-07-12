@@ -5,6 +5,31 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-rc1] — 2026-07-11
+
+### Added
+
+- **Compare panel** — side-by-side multi-flavor comparison (2–4 flavors): validity, match samples/groups, engine + fidelity badges, dropped options, unsupported tokens in pattern, known differences, cross-flavor notes, and **Copy summary**
+- **`IRegexCompareService` / `RegexCompareService`** — parallel per-flavor Match using existing engines and flavor matrices (`Category=Compare` tests)
+- **GitHub Actions CI** (`.github/workflows/ci.yml`) — Debug + Release build and full NUnit suite on push/PR (Ubuntu, Windows, macOS); TRX + screenshot artifacts
+- **Publish workflow** (`.github/workflows/publish.yml`) — `dotnet publish` for win-x64, linux-x64, osx-x64, osx-arm64; manual or tag `v*`; GitHub Release on tag
+- **Packaging documentation** — `docs/development/packaging.md` (publish commands, icons, portable zips, release process)
+- User guide: `docs/user/comparing.md`
+- Headless UI coverage for Compare mode; screenshot capture `main-compare.png`
+- Keyboard: **Ctrl+6** for Compare; Ctrl+Enter runs compare when that tab is active
+
+### Changed
+
+- Version bumped to **1.0.0-rc1** (release candidate)
+- README updated for 1.0-rc readiness (features, CI badge, Compare, packaging links)
+- App version display prefers assembly informational version (supports `rc` suffix)
+- Mode shortcuts documented as Ctrl+1–6
+
+### Notes
+
+- This is a **release candidate**, not the final 1.0.0. See `HANDOFF.md` for remaining path (website, optional Debug mode, installer polish, public beta feedback).
+- No new real engines; Compare reuses .NET / PCRE2 / JavaScript (Jint) via the flavor registry.
+
 ## [0.9.0] — 2026-07-11
 
 ### Added

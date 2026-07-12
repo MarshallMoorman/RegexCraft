@@ -1,89 +1,85 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: 0.9.0 (Phase 8 complete — multi-flavor hardening + significant per-flavor tests)  
+**Current Version**: **1.0.0-rc1** (Phase 9 complete — Compare + GitHub Actions + polish)  
 **Date**: 2026-07-11  
-**Next**: Path to **1.0** (Debug, Compare, packaging, website — do not rush 1.0)
+**Next**: Ship final **1.0.0** after RC validation (website, feedback, optional polish)
 
 ---
 
-## What Was Completed in Phase 8
+## What Was Completed in Phase 9
 
-1. **Hardened multi-flavor definitions**  
-   - Every flavor: engine map, fidelity, `SupportedOptions`, `UnsupportedTokenIds`, `CodegenLanguageId`, `KnownDifferences`  
-   - Shared matrices in `FlavorTokenSets` (RE2, JS, Python, Java, .NET-only)
+1. **Compare panel**  
+   - Mode tab + toolbar + **Ctrl+6**  
+   - Select **2–4** flavors; live re-run on pattern/subject/options  
+   - Cards: engine, fidelity badge, validity, match samples/groups, timing, key notes  
+   - Cross-flavor difference list + **Copy summary**  
+   - Core service: `IRegexCompareService` / `RegexCompareService` (parallel Match)
 
-2. **Token & option awareness**  
-   - Palette dims unsupported tokens per flavor (not only per engine)  
-   - Option checkboxes disabled when unsupported; `BuildOptions()` filters via `FilterOptions`  
-   - Switching flavor selects preferred Generate language  
+2. **GitHub Actions**  
+   - `.github/workflows/ci.yml` — push/PR: restore, Debug + Release build, full tests, TRX, optional screenshots  
+   - `.github/workflows/publish.yml` — manual or tag `v*`: publish win-x64 / linux-x64 / osx-x64 / osx-arm64; artifacts; Release on tag  
 
-3. **Significant automated tests**  
-   - Deep engine suite: `EngineDeepTests` + existing base/edge cases (`Category=Engines`)  
-   - Per-flavor: completeness, mapping/execution, tokens/options, codegen, behavioral differences, ViewModel/GREP (`Category=Flavors`)  
-   - Headless UI: fidelity banners, JS option disable, Go lookbehind dimming  
+3. **Packaging & docs**  
+   - `docs/development/packaging.md`  
+   - User: `docs/user/comparing.md`  
+   - README 1.0-rc ready (CI badge, Compare, packaging links)  
+   - CHANGELOG **1.0.0-rc1** entry  
 
-4. **Engine evaluation (honest)**  
-   - **Jint** kept; tests strengthen confidence  
-   - **Python.NET** not integrated (CPython embed)  
-   - **RE2.Managed** not integrated (maintenance); Go/Rust RE2 limits modeled in flavor layer  
+4. **Tests**  
+   - `Category=Compare` service + ViewModel tests  
+   - Headless Compare mode test; screenshot `main-compare.png` capture  
 
-5. **Library & docs**  
-   - Built-in patterns note recommended flavors / RE2 safety  
-   - `docs/user/flavors.md`, README, architecture, CHANGELOG updated  
-
-- Version **0.9.0**; all tests green  
-
-## Versioning recommendation
-
-Stay on **0.9.x** for remaining depth features. Ship **1.0.0** only after:
-
-1. At least one of **Debug** or **Compare** feels production-ready  
-2. Packaging / install story is documented  
-3. Website (regexcraft.com) has a real landing page + download path  
-4. A short public beta or RC cycle with no P0 layout/engine bugs  
-
-Optional tags: `0.9.x` patches, `1.0.0-rc1`, then `1.0.0`.
+5. **Version**  
+   - `Directory.Build.props` → **1.0.0-rc1**  
 
 ---
 
-## Path to 1.0
+## Path from 1.0.0-rc1 → final 1.0.0
 
-### Priority A — Product depth (choose one major track)
+Work these in order unless a P0 bug forces a hot patch on the RC.
 
-1. **Debug / step-through**  
-   - Step match engine (start with .NET): current position, captures, next match  
-   - Backtrack visualization if feasible without a full custom NFA  
-   - Mode must fit the right-panel host pattern  
+### 1. Validate the RC (required)
 
-2. **Compare mode**  
-   - Side-by-side flavors/engines for the same pattern/subject  
-   - Diff match counts, first divergence offset, option differences  
-   - Builds naturally on Phase 8 flavor/engine test confidence  
+- [ ] Confirm **GitHub Actions CI is green** on `main` after the Phase 9 commit/push  
+- [ ] Smoke-test Compare on macOS / Windows / Linux if possible  
+- [ ] Regenerate docs screenshots if UI polish lands after RC (`dotnet test --filter Category=Screenshots`)  
+- [ ] Fix any P0 layout, engine crash, or CI flakiness  
 
-3. **Export**  
-   - Matches/groups → CSV / JSON  
-   - GREP results export  
-   - Library export/import  
+Optional RC tags: `1.0.0-rc2` only if needed; otherwise jump to `1.0.0`.
 
-### Priority B — Engine fidelity (optional)
+### 2. Website (regexcraft.com) — strong 1.0 expectation
 
-4. True Python / Java interop only if packaging story is clear  
-5. True RE2 if a maintained wrapper appears for modern .NET  
-6. Performance: virtualization for huge match lists / GREP; cancel in-flight Test  
+- [ ] Landing page: value prop, feature list, screenshots from `docs/screenshots/`  
+- [ ] Download path: link GitHub Releases (artifacts from Publish workflow)  
+- [ ] Link to user docs (`docs/user/` or published mirror)  
+- [ ] Domain DNS / HTTPS already assumed; flesh out content  
 
-### Priority C — Editor & UX
+### 3. Public release packaging
 
-7. Editor upgrades — find-in-pattern, word-wrap, error underlines, match navigation (F3)  
-8. GREP UX — open hit externally, multi-select replace, optional `.gitignore`  
-9. Layout persistence — column widths / analysis height  
+- [ ] Final version bump: `Directory.Build.props` → **1.0.0**  
+- [ ] CHANGELOG **1.0.0** section (promote RC notes + any fixes)  
+- [ ] Tag `v1.0.0` and push → Publish workflow creates GitHub Release  
+- [ ] Attach / verify win-x64, linux-x64, osx-x64, osx-arm64 archives  
+- [ ] Optional: short release blog / social post  
 
-### Priority D — 1.0 & presence
+### 4. Optional product depth (not blocking 1.0 if RC is solid)
 
-10. **Packaging** — documented `dotnet publish` per OS; optional installers; use `.icns`/`.ico` in bundles  
-11. **Website (regexcraft.com)** — feature list, screenshots from `docs/screenshots/`, download, docs  
-12. **1.0 release** — CHANGELOG, tag, GitHub Release assets, RC cycle  
+These improve 1.0 *quality* but Phase 9 already met the “one major track (Compare)” bar:
 
-**Out of scope unless requested**: cloud library sync, plugin system, full visual regex builder, perfect RegexBuddy parity on every obscure dialect.
+| Track | Notes |
+|-------|--------|
+| **Debug / step-through** | Match position, captures, next match; start with .NET |
+| **Export** | Matches/groups → CSV/JSON; GREP export; library import/export |
+| **Editor polish** | Find-in-pattern, word-wrap toggle, error underlines, F3 match nav |
+| **GREP UX** | Open hit externally, multi-select replace, optional `.gitignore` |
+| **Layout persistence** | Column widths / analysis height in settings |
+| **Installers** | MSI / DMG / AppImage — packaging.md already documents portable zips |
+
+### 5. Engine fidelity (optional post-1.0)
+
+- True Python / Java interop only with a clear packaging story  
+- True RE2 if a maintained .NET wrapper appears  
+- Virtualization for huge match lists / GREP; cancel in-flight Test  
 
 ---
 
@@ -97,32 +93,36 @@ Optional tags: `0.9.x` patches, `1.0.0-rc1`, then `1.0.0`.
 - JS named replacements map `${name}` → `$<name>` for Jint testing.  
 - GREP does not parse `.gitignore`; use exclude globs.  
 - GREP preview caps very large files (~200k chars).  
-- Large multi-MB subjects still not stress-tested.  
+- Large multi-MB subjects still not stress-tested (including Compare).  
 - Avalonia.AvaloniaEdit is 12.0.0 while Avalonia is 12.1.0.  
 - Free-spacing `# …` comments not syntax-highlighted (avoids `#hex` false positives).  
 - Built-in library patterns refresh body on upgrade; only favorite flag is user-owned on built-ins.  
 - Switching flavor auto-selects preferred codegen language (may override a manual language pick).  
+- Compare token detection is insert-text heuristic (not a full parser); still useful for common constructs.  
+- CI badge URL assumes GitHub repo `MarshallMoorman/RegexCraft` — adjust if the remote path differs.  
 - Screenshot dark-mode pattern editor may need an extra highlight refresh if theme is forced only after first paint.  
 
 ## How to Continue in a New Conversation
 
-1. Open latest `main` at **v0.9.0**.  
+1. Open latest `main` at **v1.0.0-rc1**.  
 2. Read this `HANDOFF.md` and `AGENTS.md`.  
-3. Pick a 1.0 track (recommend **Debug** or **Compare**).  
-4. Author `docs/development/PHASE-9-REQUIREMENTS.md` if doing a full phase.  
-5. Do not re-build Phase 0–8 foundations unless blocked.  
-6. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating a baseline.  
-7. Regenerate docs screenshots with `dotnet test --filter Category=Screenshots` when UI changes.  
-8. Keep flavor/engine tests green: `dotnet test --filter "Category=Engines|Category=Flavors"`.
+3. Prefer **RC validation + website + 1.0.0 tag** over new features unless blocked.  
+4. Do not re-build Phase 0–9 foundations unless fixing bugs.  
+5. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating a baseline.  
+6. Keep CI green: `dotnet test` and watch Actions on push.  
+7. Publish: see `docs/development/packaging.md`.  
+8. Flavor/engine/compare tests:  
+   `dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare"`  
 
 ## Key Files to Review First
 
 | Path | Why |
 |------|-----|
-| `src/RegexCraft.Core/Flavors/` | Definitions, token sets, fidelity |
-| `tests/RegexCraft.Tests/Flavors/` | Per-flavor test suites |
-| `tests/RegexCraft.Tests/Engines/` | Deep engine tests |
-| `docs/user/flavors.md` | User-facing fidelity / options / tokens |
-| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Flavor UI, options, codegen language |
-| `src/RegexCraft.Engines/JavaScript/` | Jint engine |
-| `Directory.Build.props` | Version 0.9.0 |
+| `src/RegexCraft.Core/Compare/` | Compare service + models |
+| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Compare mode + all modes |
+| `src/RegexCraft.App/Views/MainWindow.axaml` | Compare panel UI |
+| `.github/workflows/` | CI + Publish |
+| `docs/development/packaging.md` | Release / publish how-to |
+| `docs/user/comparing.md` | User-facing Compare guide |
+| `Directory.Build.props` | Version **1.0.0-rc1** |
+| `docs/CHANGELOG.md` | RC entry |

@@ -10,6 +10,7 @@ using RegexCraft.App.ViewModels;
 using RegexCraft.App.Views;
 using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Codegen;
+using RegexCraft.Core.Compare;
 using RegexCraft.Core.Flavors;
 using RegexCraft.Core.Grep;
 using RegexCraft.Core.Library;
@@ -36,8 +37,19 @@ public partial class App : Application
         _loggerFactory = LoggingBootstrap.CreateLoggerFactory(out IConfiguration configuration);
         _logger = _loggerFactory.CreateLogger<App>();
 
-        var version = Assembly.GetExecutingAssembly().GetName().Version;
-        var versionText = version is null ? "0.8.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        var asm = Assembly.GetExecutingAssembly();
+        var infoVersion = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        string versionText;
+        if (!string.IsNullOrWhiteSpace(infoVersion))
+        {
+            var plus = infoVersion.IndexOf('+');
+            versionText = plus > 0 ? infoVersion[..plus] : infoVersion;
+        }
+        else
+        {
+            var version = asm.GetName().Version;
+            versionText = version is null ? "1.0.0-rc1" : $"{version.Major}.{version.Minor}.{version.Build}";
+        }
 
         _logger.LogInformation("RegexCraft {Version} starting", versionText);
         _logger.LogDebug("Configuration loaded. Serilog section present: {HasSerilog}",
@@ -51,6 +63,8 @@ public partial class App : Application
         var libraryStore = new JsonLibraryStore(logger: _loggerFactory.CreateLogger<JsonLibraryStore>());
         var historyStore = new JsonHistoryStore(logger: _loggerFactory.CreateLogger<JsonHistoryStore>());
         var grepService = new GrepService(_loggerFactory.CreateLogger<GrepService>());
+        var compareService = new RegexCompareService(
+            flavorService, tokenCatalog, _loggerFactory.CreateLogger<RegexCompareService>());
         var settingsStore = new JsonSettingsStore(logger: _loggerFactory.CreateLogger<JsonSettingsStore>());
 
         _logger.LogInformation(
@@ -73,7 +87,8 @@ public partial class App : Application
                     historyStore,
                     grepService,
                     settingsStore,
-                    _loggerFactory.CreateLogger<MainWindowViewModel>()),
+                    _loggerFactory.CreateLogger<MainWindowViewModel>(),
+                    compareService),
             };
 
             desktop.Exit += (_, _) =>
