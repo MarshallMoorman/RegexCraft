@@ -80,17 +80,13 @@ public sealed class RegexCompareService : IRegexCompareService
             };
         }
 
-        // Run engines in parallel.
-        var bag = new FlavorCompareResult[resolved.Count];
-        Parallel.For(0, resolved.Count, i =>
-        {
-            var (flavor, engine) = resolved[i];
-            bag[i] = EvaluateFlavor(flavor, engine, pattern, subject, request.Options, maxMatches);
-        });
+        // Evaluate each flavor. Keep sequential for predictable UI/test threading
+        // (2–4 flavors is fast enough without Parallel.For side effects on Avalonia headless).
+        var flavors = new List<FlavorCompareResult>(resolved.Count);
+        foreach (var (flavor, engine) in resolved)
+            flavors.Add(EvaluateFlavor(flavor, engine, pattern, subject, request.Options, maxMatches));
 
         totalSw.Stop();
-
-        var flavors = bag.ToList();
         var cross = BuildCrossFlavorDifferences(flavors);
         var summary = BuildSummaryText(pattern, subject, request.Options, flavors, cross);
 

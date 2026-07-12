@@ -969,6 +969,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _debounceCts = new CancellationTokenSource();
         var token = _debounceCts.Token;
 
+        // Unit tests (no Avalonia Application) must not touch Dispatcher.UIThread —
+        // doing so races headless Avalonia init and fails CI with thread-affinity errors.
+        if (Application.Current is null)
+        {
+            if (token.IsCancellationRequested) return;
+            RunLiveUpdateCore(token);
+            return;
+        }
+
         _ = Task.Run(async () =>
         {
             try
@@ -978,20 +987,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     if (token.IsCancellationRequested) return;
-                    RefreshAnalysis();
-                    RefreshGeneratedCode();
-                    if (IsGrepTab)
-                        return; // don't spam live match while grepping UI
-                    if (IsCompareTab)
-                    {
-                        RunCompareCore(live: true);
-                        return;
-                    }
-                    RunTestCore(live: true);
-                    if (IsReplaceTab)
-                        RunReplaceCore(live: true);
-                    if (IsSplitTab)
-                        RunSplitCore(live: true);
+                    RunLiveUpdateCore(token);
                 });
             }
             catch (TaskCanceledException)
@@ -999,6 +995,25 @@ public partial class MainWindowViewModel : ViewModelBase
                 // expected
             }
         }, token);
+    }
+
+    private void RunLiveUpdateCore(CancellationToken token)
+    {
+        if (token.IsCancellationRequested) return;
+        RefreshAnalysis();
+        RefreshGeneratedCode();
+        if (IsGrepTab)
+            return; // don't spam live match while grepping UI
+        if (IsCompareTab)
+        {
+            RunCompareCore(live: true);
+            return;
+        }
+        RunTestCore(live: true);
+        if (IsReplaceTab)
+            RunReplaceCore(live: true);
+        if (IsSplitTab)
+            RunSplitCore(live: true);
     }
 
     private void RebuildTokenList()

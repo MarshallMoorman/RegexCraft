@@ -54,6 +54,8 @@ jobs:
           --logger "trx;LogFileName=test-results.trx"
           --results-directory "${{ github.workspace }}/TestResults"
           --verbosity normal
+          --
+          NUnit.NumberOfTestWorkers=1
 
       - name: Upload test results (TRX)
         if: always()

@@ -14,6 +14,7 @@ namespace RegexCraft.Tests.Headless;
 /// Output: docs/screenshots/*.png
 /// </summary>
 [TestFixture]
+[NonParallelizable]
 [Category("Screenshots")]
 [Category("UI")]
 [Category("Headless")]

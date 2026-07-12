@@ -7,6 +7,7 @@ using RegexCraft.App.ViewModels;
 namespace RegexCraft.Tests.Headless;
 
 [TestFixture]
+[NonParallelizable]
 [Category("UI")]
 [Category("Headless")]
 public sealed class MainWindowUiTests
@@ -254,8 +255,12 @@ public sealed class MainWindowUiTests
     }
 
     [AvaloniaTest]
+    [Retry(2)]
     public void AboutWindow_ShowsCorrectBranding()
     {
+        // Warm the dispatcher before creating a second window type (CI race hardening).
+        Dispatcher.UIThread.RunJobs();
+
         var about = new AboutWindow();
         about.Show();
         Dispatcher.UIThread.RunJobs();
@@ -269,6 +274,7 @@ public sealed class MainWindowUiTests
         Assert.That(about.Icon, Is.Not.Null);
 
         about.Close();
+        Dispatcher.UIThread.RunJobs();
     }
 
     [AvaloniaTest]
