@@ -52,19 +52,26 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          set -euo pipefail
-          FILTER_ARGS=()
+          set -eo pipefail
+          # Avoid empty-array expansion under older bash (macOS runners).
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            FILTER_ARGS=(--filter "Category!=Screenshots")
+            dotnet test RegexCraft.sln \
+              -c Release \
+              --no-build \
+              --filter "Category!=Screenshots" \
+              --logger "trx;LogFileName=test-results.trx" \
+              --results-directory "${{ github.workspace }}/TestResults" \
+              --verbosity normal \
+              -- NUnit.NumberOfTestWorkers=1
+          else
+            dotnet test RegexCraft.sln \
+              -c Release \
+              --no-build \
+              --logger "trx;LogFileName=test-results.trx" \
+              --results-directory "${{ github.workspace }}/TestResults" \
+              --verbosity normal \
+              -- NUnit.NumberOfTestWorkers=1
           fi
-          dotnet test RegexCraft.sln \
-            -c Release \
-            --no-build \
-            --logger "trx;LogFileName=test-results.trx" \
-            --results-directory "${{ github.workspace }}/TestResults" \
-            --verbosity normal \
-            "${FILTER_ARGS[@]}" \
-            -- NUnit.NumberOfTestWorkers=1
 
       - name: Upload test results (TRX)
         if: always()
