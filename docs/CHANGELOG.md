@@ -5,6 +5,29 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] — 2026-07-11
+
+### Added
+
+- **Hardened multi-flavor definitions** — every selectable flavor declares supported options, unsupported token ids, preferred codegen language, and known behavioral differences
+- **Flavor-aware token palette** — tokens dimmed per flavor (e.g. RE2 lookaround/backref limits for Go/Rust; JS free-spacing / possessive gaps)
+- **Flavor-aware options** — unsupported option checkboxes disabled; options filtered before engine execution
+- **Preferred codegen language** auto-selected when switching flavors
+- **Significant automated tests** — deep engine suite (`Category=Engines`) and per-flavor mapping / fidelity / token / codegen / GREP / ViewModel coverage (`Category=Flavors`)
+- Built-in library entries note recommended flavors / RE2 safety where useful
+
+### Changed
+
+- Fidelity banners and option context labels clearer for High and Approximate flavors
+- `docs/user/flavors.md` expanded with option matrix, token awareness, and engine-evaluation notes
+- README flavor section and test-filter docs updated
+- Version bumped to **0.9.0**
+
+### Notes
+
+- Python.NET and RE2.Managed evaluated and **not** integrated (embedding / maintenance); RE2 limits modeled in flavor layer for Go/Rust
+- Three real engines remain: .NET, PCRE2, JavaScript (Jint)
+
 ## [0.8.0] — 2026-07-11
 
 ### Added

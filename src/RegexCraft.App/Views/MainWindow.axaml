@@ -345,17 +345,21 @@
                      VerticalAlignment="Center"
                      FontSize="12"
                      Margin="0,0,4,0" />
-          <CheckBox Content="Ignore case" IsChecked="{Binding IgnoreCase}" FontSize="12"
-                    ToolTip.Tip="Case-insensitive matching (both engines)" />
-          <CheckBox Content="Multiline" IsChecked="{Binding Multiline}" FontSize="12"
-                    ToolTip.Tip="^ and $ match line start/end (both engines)" />
-          <CheckBox Content="Singleline" IsChecked="{Binding Singleline}" FontSize="12"
-                    ToolTip.Tip="Dot (.) matches newline — .NET Singleline / PCRE DOTALL" />
+          <CheckBox Content="Ignore case" IsChecked="{Binding IgnoreCase}"
+                    IsEnabled="{Binding IgnoreCaseEnabled}" FontSize="12"
+                    ToolTip.Tip="Case-insensitive matching (flavor-dependent)" />
+          <CheckBox Content="Multiline" IsChecked="{Binding Multiline}"
+                    IsEnabled="{Binding MultilineEnabled}" FontSize="12"
+                    ToolTip.Tip="^ and $ match line start/end (flavor-dependent)" />
+          <CheckBox Content="Singleline" IsChecked="{Binding Singleline}"
+                    IsEnabled="{Binding SinglelineEnabled}" FontSize="12"
+                    ToolTip.Tip="Dot (.) matches newline — .NET Singleline / PCRE DOTALL / JS s flag" />
           <CheckBox Content="Explicit capture" IsChecked="{Binding ExplicitCapture}"
                     IsEnabled="{Binding ExplicitCaptureEnabled}" FontSize="12"
-                    ToolTip.Tip=".NET: only named groups capture. PCRE2: approximated via engine options." />
-          <CheckBox Content="Ignore pattern whitespace" IsChecked="{Binding IgnorePatternWhitespace}" FontSize="12"
-                    ToolTip.Tip="Ignore unescaped whitespace and enable # comments (.NET / PCRE extended)" />
+                    ToolTip.Tip=".NET: only named groups capture. PCRE2: approximate. Not available in JavaScript." />
+          <CheckBox Content="Ignore pattern whitespace" IsChecked="{Binding IgnorePatternWhitespace}"
+                    IsEnabled="{Binding IgnorePatternWhitespaceEnabled}" FontSize="12"
+                    ToolTip.Tip="Ignore unescaped whitespace and enable # comments (.NET / PCRE extended). Not available in JavaScript." />
         </StackPanel>
         <TextBlock Grid.Column="2"
                    Text="{Binding OptionsContextLabel}"

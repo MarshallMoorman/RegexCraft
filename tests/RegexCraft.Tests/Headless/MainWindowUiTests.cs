@@ -93,11 +93,45 @@ public sealed class MainWindowUiTests
         Assert.That(vm.Matches.Count, Is.EqualTo(1));
         Assert.That(vm.Matches[0].Value, Is.EqualTo("12"));
         Assert.That(vm.StatusEngine, Does.Contain("JavaScript").IgnoreCase);
+        Assert.That(vm.ShowFidelityBanner, Is.True);
+        Assert.That(vm.ExplicitCaptureEnabled, Is.False);
+        Assert.That(vm.IgnorePatternWhitespaceEnabled, Is.False);
 
         var python = vm.Flavors.First(f => f.Id == "python");
         vm.SelectedFlavor = python;
         Dispatcher.UIThread.RunJobs();
         Assert.That(vm.ShowFidelityBanner, Is.True);
+        Assert.That(vm.FidelityBannerText, Does.Contain("Python").IgnoreCase);
+
+        var go = vm.Flavors.First(f => f.Id == "go");
+        vm.SelectedFlavor = go;
+        Dispatcher.UIThread.RunJobs();
+        Assert.That(vm.ShowFidelityBanner, Is.True);
+        var lookbehind = vm.TokenCategories.SelectMany(c => c.Tokens)
+            .FirstOrDefault(t => t.Token.Id == "pos-lookbehind");
+        Assert.That(lookbehind, Is.Not.Null);
+        Assert.That(lookbehind!.IsSupported, Is.False);
+
+        window.Close();
+    }
+
+    [AvaloniaTest]
+    public void ApproximateFlavors_ShowFidelityBanner_InUi()
+    {
+        var vm = HeadlessTestHelpers.CreateViewModel(_tempDir);
+        var window = HeadlessTestHelpers.CreateMainWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        foreach (var flavor in vm.Flavors.Where(f =>
+                     f.Fidelity is RegexCraft.Core.Flavors.TestingFidelity.Approximate
+                         or RegexCraft.Core.Flavors.TestingFidelity.High))
+        {
+            vm.SelectedFlavor = flavor;
+            Dispatcher.UIThread.RunJobs();
+            Assert.That(vm.ShowFidelityBanner, Is.True, flavor.Id);
+            Assert.That(vm.FidelityBannerText, Is.Not.Empty, flavor.Id);
+        }
 
         window.Close();
     }

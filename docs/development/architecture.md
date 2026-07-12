@@ -90,7 +90,8 @@ GREP work is **async**, reports progress, and supports **cancellation**.
 
 | Type | Role |
 |------|------|
-| `FlavorDefinition` / `FlavorService` | Flavor registry, engine map, fidelity notes |
+| `FlavorDefinition` / `FlavorService` | Flavor registry, engine map, fidelity, options, token matrix, codegen lang |
+| `FlavorTokenSets` | Shared unsupported-token sets (RE2, JS, Python, Java, .NET-only) |
 | `TestingFidelity` | Full / High / Approximate / CodegenOnly |
 | `ITokenCatalog` / `TokenCatalog` | Text-only tokens + search + engine support hints |
 | `TokenInsertion` | Pure insert/replace-selection logic |
@@ -113,20 +114,27 @@ GREP work is **async**, reports progress, and supports **cancellation**.
 | `pcre2` | PCRE2 | Yes | Yes (manual `$n`/`${name}` + spans) | Yes | Yes |
 | `javascript` | JavaScript (Jint) | Yes | Yes (`${name}`→`$<name>`) | Yes | Yes |
 
-Flavors map onto these engines. Approximate flavors show a banner; see `docs/user/flavors.md`.
+Flavors map onto these engines with **SupportedOptions**, **UnsupportedTokenIds**, **CodegenLanguageId**, and **KnownDifferences**. Approximate flavors show a banner; see `docs/user/flavors.md`.
 
 ### Flavor → engine (summary)
 
-| Flavor | Engine | Fidelity |
-|--------|--------|----------|
-| .NET | dotnet | Full |
-| PCRE2 | pcre2 | Full |
-| JavaScript / TypeScript | javascript | High |
-| PHP | pcre2 | High |
-| Python, Java, Go, Rust, Kotlin, Swift | dotnet | Approximate |
-| Ruby, Perl | pcre2 | Approximate |
+| Flavor | Engine | Fidelity | Notes |
+|--------|--------|----------|-------|
+| .NET | dotnet | Full | Balancing groups, ExplicitCapture |
+| PCRE2 | pcre2 | Full | Possessive / atomic; ExplicitCapture ~ |
+| JavaScript / TypeScript | javascript | High | No free-spacing / ExplicitCapture |
+| PHP | pcre2 | High | Same family as preg |
+| Python, Java, Kotlin, Swift | dotnet | Approximate | Token/option matrices differ |
+| Go, Rust | dotnet | Approximate | RE2 limits in token matrix |
+| Ruby, Perl | pcre2 | Approximate | Onigmo / full Perl differ |
 
-Adding a flavor: define `FlavorDefinition` in `FlavorService.BuildDefaultFlavors()` and ensure `EngineId` is registered in `EngineFactory`. Optional: new `IRegexEngine` implementation.
+Adding a flavor: define `FlavorDefinition` in `FlavorService.BuildDefaultFlavors()` (options, tokens, codegen, differences) and ensure `EngineId` is registered in `EngineFactory`. Optional: new `IRegexEngine` implementation.
+
+### Engine evaluation (Phase 8)
+
+- **Python.NET**: not integrated (requires CPython embed).  
+- **RE2 wrappers** (e.g. RE2.Managed): not integrated (maintenance risk); RE2 constraints modeled on Go/Rust flavors.  
+- **Jint**: retained; deep tests cover lookbehind, named groups, Unicode, replace/split.
 
 ## GREP pipeline
 

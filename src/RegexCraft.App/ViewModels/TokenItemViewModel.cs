@@ -1,24 +1,30 @@
+using RegexCraft.Core.Flavors;
 using RegexCraft.Core.Tokens;
 
 namespace RegexCraft.App.ViewModels;
 
 public sealed class TokenItemViewModel
 {
-    public TokenItemViewModel(RegexToken token, string? currentEngineId = null)
+    public TokenItemViewModel(RegexToken token, FlavorDefinition? flavor = null, string? currentEngineId = null)
     {
         Token = token;
         Label = token.Label;
         InsertText = token.InsertText;
         Category = token.Category;
-        IsSupported = token.IsSupportedBy(currentEngineId);
+
+        var engineId = flavor?.EngineId ?? currentEngineId;
+        IsSupported = flavor is not null
+            ? flavor.IsTokenSupported(token)
+            : token.IsSupportedBy(engineId);
+
         var supportNote = IsSupported
             ? string.Empty
-            : "\n⚠ Limited / engine-specific support for the current flavor.";
+            : "\n⚠ Limited or unsupported for the current flavor.";
         Tooltip = string.IsNullOrEmpty(token.Example)
             ? $"{token.Description}\nInserts: {token.InsertText}{supportNote}"
             : $"{token.Description}\nExample: {token.Example}\nInserts: {token.InsertText}{supportNote}";
         DisplayLine = $"{token.Label}    {token.InsertText}";
-        Opacity = IsSupported ? 1.0 : 0.55;
+        Opacity = IsSupported ? 1.0 : 0.45;
     }
 
     public RegexToken Token { get; }

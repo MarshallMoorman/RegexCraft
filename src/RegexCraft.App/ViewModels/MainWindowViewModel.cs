@@ -185,6 +185,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _explicitCapture;
     [ObservableProperty] private bool _ignorePatternWhitespace;
     [ObservableProperty] private bool _explicitCaptureEnabled = true;
+    [ObservableProperty] private bool _ignorePatternWhitespaceEnabled = true;
+    [ObservableProperty] private bool _ignoreCaseEnabled = true;
+    [ObservableProperty] private bool _multilineEnabled = true;
+    [ObservableProperty] private bool _singlelineEnabled = true;
     [ObservableProperty] private string _themeLabel = "System";
     [ObservableProperty] private string _tokenSearch = string.Empty;
     [ObservableProperty] private string _rightPanelTab = "Test";
@@ -313,6 +317,7 @@ public partial class MainWindowViewModel : ViewModelBase
             value.Id, value.EngineId, value.Fidelity);
         UpdateFlavorUiState();
         UpdateOptionsEnabledState();
+        ApplyPreferredCodegenLanguage(value);
         RebuildTokenList();
         ScheduleLiveUpdate();
         RefreshGeneratedCode(force: true);
@@ -969,13 +974,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private void RebuildTokenList()
     {
         TokenCategories.Clear();
-        var engineId = SelectedFlavor?.EngineId;
+        var flavor = SelectedFlavor;
+        var engineId = flavor?.EngineId;
         var found = _tokenCatalog.Search(TokenSearch);
         foreach (var group in found.GroupBy(t => t.Category))
         {
             TokenCategories.Add(new TokenCategoryViewModel(
                 group.Key,
-                group.Select(t => new TokenItemViewModel(t, engineId))));
+                group.Select(t => new TokenItemViewModel(t, flavor, engineId))));
         }
     }
 
@@ -1317,13 +1323,50 @@ public partial class MainWindowViewModel : ViewModelBase
         if (Singleline) o |= RegexOptionsEx.Singleline;
         if (ExplicitCapture) o |= RegexOptionsEx.ExplicitCapture;
         if (IgnorePatternWhitespace) o |= RegexOptionsEx.IgnorePatternWhitespace;
+
+        // Drop options the current flavor does not support (e.g. free-spacing on JS).
+        if (SelectedFlavor is not null)
+            o = SelectedFlavor.FilterOptions(o);
+
         return o;
     }
 
     private void UpdateOptionsEnabledState()
     {
-        // Both engines support the common option set; keep Explicit capture always enabled with clearer context.
-        ExplicitCaptureEnabled = true;
+        var flavor = SelectedFlavor;
+        if (flavor is null)
+        {
+            IgnoreCaseEnabled = true;
+            MultilineEnabled = true;
+            SinglelineEnabled = true;
+            ExplicitCaptureEnabled = true;
+            IgnorePatternWhitespaceEnabled = true;
+            return;
+        }
+
+        IgnoreCaseEnabled = flavor.SupportsOption(RegexOptionsEx.IgnoreCase);
+        MultilineEnabled = flavor.SupportsOption(RegexOptionsEx.Multiline);
+        SinglelineEnabled = flavor.SupportsOption(RegexOptionsEx.Singleline);
+        ExplicitCaptureEnabled = flavor.SupportsOption(RegexOptionsEx.ExplicitCapture);
+        IgnorePatternWhitespaceEnabled = flavor.SupportsOption(RegexOptionsEx.IgnorePatternWhitespace);
+
+        // Clear toggles that are no longer applicable so UI state matches engine input.
+        if (!IgnoreCaseEnabled) IgnoreCase = false;
+        if (!MultilineEnabled) Multiline = false;
+        if (!SinglelineEnabled) Singleline = false;
+        if (!ExplicitCaptureEnabled) ExplicitCapture = false;
+        if (!IgnorePatternWhitespaceEnabled) IgnorePatternWhitespace = false;
+    }
+
+    private void ApplyPreferredCodegenLanguage(FlavorDefinition flavor)
+    {
+        if (string.IsNullOrWhiteSpace(flavor.CodegenLanguageId))
+            return;
+
+        var match = CodeLanguages.FirstOrDefault(l =>
+            string.Equals(l.Id, flavor.CodegenLanguageId, StringComparison.OrdinalIgnoreCase));
+        if (match is not null && !ReferenceEquals(SelectedCodeLanguage, match))
+            SelectedCodeLanguage = match;
     }
 
     private void UpdateWindowTitle()
@@ -1388,10 +1431,19 @@ public partial class MainWindowViewModel : ViewModelBase
             ? $"{flavor.DisplayName} — testing: {flavor.Fidelity.DisplayName()} via {engineName}"
             : $"{flavor.DisplayName} — {flavor.Notes}";
 
+        var unsupported = new List<string>();
+        if (!flavor.SupportsOption(RegexOptionsEx.ExplicitCapture))
+            unsupported.Add("Explicit capture");
+        if (!flavor.SupportsOption(RegexOptionsEx.IgnorePatternWhitespace))
+            unsupported.Add("Ignore whitespace");
+
         OptionsContextLabel = flavor.EngineId switch
         {
-            "pcre2" => $"Options apply to {engineName} (PCRE2) — Explicit capture maps approximately",
-            "javascript" => $"Options apply to {engineName} — i/m/s flags map; ExplicitCapture / IgnorePatternWhitespace are N/A in JS",
+            "javascript" => unsupported.Count > 0
+                ? $"Options: i/m/s for {engineName}. N/A: {string.Join(", ", unsupported)}"
+                : $"Options apply to {engineName}",
+            "pcre2" when flavor.IsOptionApproximate(RegexOptionsEx.ExplicitCapture) =>
+                $"Options apply to {engineName} — Explicit capture is approximate",
             _ when flavor.Fidelity.IsApproximateOrWeaker() =>
                 $"Options apply to approximate engine ({engineName}) for {flavor.DisplayName}",
             _ => $"Options apply to {engineName}",
@@ -1439,6 +1491,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private static string GetAppVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.8.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        return version is null ? "0.9.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 }

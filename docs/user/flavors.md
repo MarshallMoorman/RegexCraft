@@ -7,10 +7,11 @@ RegexCraft is built around a **flavor registry**: each flavor maps to a concrete
 Use the **Flavor** dropdown in the toolbar. Switching flavors:
 
 - Switches the testing engine  
-- Rebuilds the token palette (engine-specific tokens dim or drop)  
+- Rebuilds the token palette (unsupported tokens are dimmed)  
+- Enables / disables options that the flavor does not support  
 - Re-runs live Test / Replace / Split  
-- Regenerates code snippets  
-- May show a **fidelity banner** when testing is approximate  
+- Selects the preferred **Generate** language for that flavor  
+- May show a **fidelity banner** when testing is not full fidelity  
 
 The status bar shows **Flavor** (with fidelity when not full) and **Engine**.
 
@@ -24,6 +25,14 @@ The status bar shows **Flavor** (with fidelity when not full) and **Engine**.
 
 \* Approximate testing — see fidelity table below.
 
+### Engine evaluation notes (Phase 8)
+
+| Candidate | Decision | Reason |
+|-----------|----------|--------|
+| **Jint (JS)** | Kept & strengthened | High fidelity for modern ES; lookbehind, named groups, `s`/`u` flags covered by tests |
+| **Python.NET** | Not integrated | Requires embedding CPython; poor fit for portable Avalonia packaging |
+| **RE2.Managed** | Not integrated | Last meaningful NuGet activity ~2023; RE2 limits expressed via flavor token/option matrices + notes for Go/Rust instead |
+
 ## Fidelity levels
 
 | Level | Meaning |
@@ -33,33 +42,68 @@ The status bar shows **Flavor** (with fidelity when not full) and **Engine**.
 | **Approximate** | Closest available engine; results may differ from production |
 | **Codegen only** | Reserved for future flavors without a test path |
 
-When fidelity is not **Full**, a blue info banner explains which engine is used.
+When fidelity is not **Full**, a blue info banner explains which engine is used and what may differ.
 
-## Flavor catalog (v0.7)
+## Flavor catalog (v0.9)
 
-| Flavor | Engine | Fidelity | Notes |
-|--------|--------|----------|-------|
-| **.NET** | dotnet | Full | Balancing groups, ExplicitCapture, timeouts |
-| **PCRE2** | pcre2 | Full | Possessive quantifiers, rich Perl-like set |
-| **JavaScript** | javascript | High | Jint ES engine; modern lookbehind / named groups |
-| **TypeScript** | javascript | High | Same RegExp semantics as JS |
-| **PHP** | pcre2 | High | PHP `preg_*` is PCRE-based |
-| **Python** | dotnet | Approximate | Real `re` is not full PCRE; codegen targets `re` |
-| **Java** | dotnet | Approximate | Close for common patterns; dialect still differs |
-| **Ruby** | pcre2 | Approximate | Real Ruby uses Onigmo |
-| **Go** | dotnet | Approximate | Real RE2 has **no** lookbehind / backrefs |
-| **Rust** | dotnet | Approximate | `regex` crate is RE2-like; use `fancy-regex` for lookaround |
-| **Perl** | pcre2 | Approximate | PCRE covers much of everyday Perl |
-| **Kotlin** | dotnet | Approximate | JVM `Regex` / `java.util.regex` |
-| **Swift** | dotnet | Approximate | ICU / Swift Regex differ from .NET |
+| Flavor | Engine | Fidelity | Preferred codegen | Key notes |
+|--------|--------|----------|-------------------|-----------|
+| **.NET** | dotnet | Full | C# | Balancing groups, ExplicitCapture, timeouts |
+| **PCRE2** | pcre2 | Full | C# | Possessive quantifiers, atomic groups; ExplicitCapture approximate |
+| **JavaScript** | javascript | High | JavaScript | Jint ES; no free-spacing / ExplicitCapture / possessive |
+| **TypeScript** | javascript | High | TypeScript | Same RegExp semantics as JS |
+| **PHP** | pcre2 | High | PHP | `preg_*` is PCRE-based; delimiter packaging may differ |
+| **Python** | dotnet | Approximate | Python | Real `re` is not full PCRE; codegen targets `re` |
+| **Java** | dotnet | Approximate | Java | Close for common patterns; real Java has possessive |
+| **Ruby** | pcre2 | Approximate | Ruby | Real Ruby uses Onigmo |
+| **Go** | dotnet | Approximate | Go | Real RE2: **no** lookaround / backrefs — tokens dimmed |
+| **Rust** | dotnet | Approximate | Rust | `regex` crate is RE2-like; use `fancy-regex` for lookaround |
+| **Perl** | pcre2 | Approximate | Perl | PCRE covers everyday Perl |
+| **Kotlin** | dotnet | Approximate | Kotlin | JVM `Regex` / `java.util.regex` |
+| **Swift** | dotnet | Approximate | Swift | ICU / Swift Regex differ from .NET |
+
+## Options per flavor
+
+| Option | .NET | PCRE2 | JS/TS | PHP | Python | Java | Go/Rust | Ruby/Perl | Kotlin | Swift |
+|--------|------|-------|-------|-----|--------|------|---------|-----------|--------|-------|
+| Ignore case | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Multiline | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Singleline | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Explicit capture | ✓ | ~ | — | ~ | — | — | — | ~ / ~ | — | — |
+| Ignore pattern whitespace | ✓ | ✓ | — | ✓ | ✓ | ✓ | — | ✓ | ✓ | — |
+
+✓ supported · ~ approximate · — not available (checkbox disabled)
+
+## Token palette awareness
+
+Tokens are **dimmed** when unsupported for the selected flavor:
+
+- **Go / Rust (RE2-like)**: lookaround, backreferences, possessive, atomic, conditionals, balancing  
+- **JavaScript / TypeScript**: possessive, atomic, conditionals, balancing, free-spacing `(?x)`, `\A`/`\z`/`\Z`/`\G`  
+- **Python**: possessive, atomic, balancing, .NET-only constructs  
+- **.NET-only** tokens (balancing, ExplicitCapture inline): dimmed on non-.NET engines  
+
+Common constructs (`\d`, groups, anchors, basic quantifiers) remain available on every flavor.
 
 ## Practical guidance
 
 1. Author and debug against the flavor closest to production.  
-2. For **Go** / **Rust**, avoid lookbehind and backreferences if you need portable RE2 patterns.  
-3. For **Python**, prefer simple `re` features; use the third-party `regex` package in Python when you need PCRE-like power.  
-4. Use **Generate** for host-language snippets — they always target the real language API, with comments naming the RegexCraft source engine.  
-5. **GREP** uses the same engine as the selected flavor.
+2. For **Go** / **Rust**, avoid lookaround and backreferences if you need portable RE2 patterns — the palette dims these for you.  
+3. For **Python**, prefer simple `re` features; use the third-party `regex` package when you need PCRE-like power.  
+4. Use **Generate** for host-language snippets — switching flavor auto-selects the preferred language.  
+5. **GREP** uses the same engine as the selected flavor.  
+6. Trust **Full** and **High** results most; treat **Approximate** as guidance and re-test in the real runtime when correctness matters.
+
+## Running flavor / engine tests
+
+```bash
+# Deep tests for every real engine + significant per-flavor coverage
+dotnet test --filter Category=Engines
+dotnet test --filter Category=Flavors
+
+# Combined
+dotnet test --filter "Category=Engines|Category=Flavors"
+```
 
 ## Related
 
