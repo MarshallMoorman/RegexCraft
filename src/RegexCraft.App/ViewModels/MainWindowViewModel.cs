@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Codegen;
 using RegexCraft.Core.Compare;
+using RegexCraft.Core.Debug;
 using RegexCraft.Core.Editing;
 using RegexCraft.Core.Engines;
 using RegexCraft.Core.Flavors;
@@ -32,6 +33,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IHistoryStore _historyStore;
     private readonly IGrepService _grepService;
     private readonly IRegexCompareService _compareService;
+    private readonly IRegexDebugService _debugService;
     private readonly ISettingsStore _settingsStore;
     private readonly ILogger<MainWindowViewModel> _logger;
     private CancellationTokenSource? _debounceCts;
@@ -55,7 +57,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IGrepService grepService,
         ISettingsStore settingsStore,
         ILogger<MainWindowViewModel> logger,
-        IRegexCompareService? compareService = null)
+        IRegexCompareService? compareService = null,
+        IRegexDebugService? debugService = null)
     {
         _flavorService = flavorService;
         _tokenCatalog = tokenCatalog;
@@ -67,6 +70,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _settingsStore = settingsStore;
         _logger = logger;
         _compareService = compareService ?? new RegexCompareService(flavorService, tokenCatalog);
+        _debugService = debugService ?? new RegexDebugService(analysisService);
         _settings = _settingsStore.Load();
 
         // Suppress until all settings-backed properties are applied; otherwise
@@ -173,6 +177,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<CompareFlavorChoiceViewModel> CompareFlavorChoices { get; } = new();
     public ObservableCollection<CompareCardViewModel> CompareCards { get; } = new();
     public ObservableCollection<string> CompareDifferenceNotes { get; } = new();
+    public ObservableCollection<DebugStepViewModel> DebugSteps { get; } = new();
     public string VersionText { get; }
 
     public IReadOnlyList<HighlightSpan> CurrentHighlights { get; private set; } = Array.Empty<HighlightSpan>();
@@ -213,6 +218,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isGenerateTab;
     [ObservableProperty] private bool _isGrepTab;
     [ObservableProperty] private bool _isCompareTab;
+    [ObservableProperty] private bool _isDebugTab;
     [ObservableProperty] private AnalysisNode? _analysisRoot;
     [ObservableProperty] private AnalysisNode? _selectedAnalysisNode;
     [ObservableProperty] private int _patternCaretOffset;
@@ -248,8 +254,24 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private bool _isGenerateMode;
     [ObservableProperty] private bool _isGrepMode;
     [ObservableProperty] private bool _isCompareMode;
+    [ObservableProperty] private bool _isDebugMode;
     [ObservableProperty] private string _optionsContextLabel = "Options apply to the current engine";
-    [ObservableProperty] private string _shortcutHints = "Ctrl+Enter run · Ctrl+1–6 modes";
+    [ObservableProperty] private string _shortcutHints = "Ctrl+Enter run · Ctrl+1–7 modes · F10 step";
+
+    // Debug
+    [ObservableProperty] private bool _isDebugAvailable;
+    [ObservableProperty] private string _debugUnavailableMessage = string.Empty;
+    [ObservableProperty] private string _debugApproachNote = string.Empty;
+    [ObservableProperty] private string _debugStepCounter = "Step —";
+    [ObservableProperty] private string _debugExplanation = "Open Debug to step through matching.";
+    [ObservableProperty] private string _debugStatusLabel = "Info";
+    [ObservableProperty] private string _debugKindLabel = "—";
+    [ObservableProperty] private string _debugPatternSnippet = string.Empty;
+    [ObservableProperty] private string _debugSubjectSnippet = string.Empty;
+    [ObservableProperty] private int _debugStepIndex;
+    [ObservableProperty] private bool _canDebugStepBack;
+    [ObservableProperty] private bool _canDebugStepForward;
+    [ObservableProperty] private DebugStepViewModel? _selectedDebugStep;
 
     // GREP
     [ObservableProperty] private string _grepRootPath = string.Empty;
@@ -431,6 +453,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsGenerateTab = tab == "Generate";
         IsGrepTab = tab == "Grep";
         IsCompareTab = tab == "Compare";
+        IsDebugTab = tab == "Debug";
 
         IsMatchMode = IsTestTab;
         IsReplaceMode = IsReplaceTab;
@@ -438,6 +461,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsGenerateMode = IsGenerateTab;
         IsGrepMode = IsGrepTab;
         IsCompareMode = IsCompareTab;
+        IsDebugMode = IsDebugTab;
         ModeLabel = tab switch
         {
             "Replace" => "Replace",
@@ -445,6 +469,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Generate" => "Generate",
             "Grep" => "GREP",
             "Compare" => "Compare",
+            "Debug" => "Debug",
             _ => "Match",
         };
 
@@ -473,6 +498,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 : $"GREP ready — {GrepRootPath}";
         else if (IsCompareTab)
             RunCompareCore(live: false);
+        else if (IsDebugTab)
+            RebuildDebugSession(resetIndex: true);
     }
 
     /// <summary>
@@ -1068,6 +1095,11 @@ public partial class MainWindowViewModel : ViewModelBase
             RunCompareCore(live: true);
             return;
         }
+        if (IsDebugTab)
+        {
+            RebuildDebugSession(resetIndex: false);
+            return;
+        }
         RunTestCore(live: true);
         if (IsReplaceTab)
             RunReplaceCore(live: true);
@@ -1482,6 +1514,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Split" => "RegexCraft — Split",
             "Generate" => "RegexCraft — Generate",
             "Compare" => "RegexCraft — Compare",
+            "Debug" => "RegexCraft — Debug",
             _ => "RegexCraft",
         };
     }
@@ -1675,6 +1708,242 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private void RunCompare() => RunCompareCore(live: false);
+
+    [RelayCommand]
+    private void DebugStepForward()
+    {
+        if (!IsDebugAvailable || DebugSteps.Count == 0) return;
+        if (DebugStepIndex < DebugSteps.Count - 1)
+            ApplyDebugStepIndex(DebugStepIndex + 1);
+    }
+
+    [RelayCommand]
+    private void DebugStepBackward()
+    {
+        if (!IsDebugAvailable || DebugSteps.Count == 0) return;
+        if (DebugStepIndex > 0)
+            ApplyDebugStepIndex(DebugStepIndex - 1);
+    }
+
+    [RelayCommand]
+    private void DebugReset()
+    {
+        if (!IsDebugAvailable || DebugSteps.Count == 0) return;
+        ApplyDebugStepIndex(0);
+    }
+
+    [RelayCommand]
+    private void DebugGoToEnd()
+    {
+        if (!IsDebugAvailable || DebugSteps.Count == 0) return;
+        ApplyDebugStepIndex(DebugSteps.Count - 1);
+    }
+
+    [RelayCommand]
+    private void RefreshDebug() => RebuildDebugSession(resetIndex: true);
+
+    partial void OnSelectedDebugStepChanged(DebugStepViewModel? value)
+    {
+        if (value is null || !IsDebugTab) return;
+        if (value.Index != DebugStepIndex && value.Index >= 0 && value.Index < DebugSteps.Count)
+            ApplyDebugStepIndex(value.Index);
+    }
+
+    private void RebuildDebugSession(bool resetIndex)
+    {
+        var engine = ResolveEngine();
+        var engineId = engine?.Id ?? SelectedFlavor?.EngineId ?? string.Empty;
+        var engineName = engine?.DisplayName ?? engineId;
+
+        if (engine is null)
+        {
+            ClearDebugUi(
+                available: false,
+                unavailable: "No engine available for the selected flavor.",
+                explanation: "Select a flavor with a working engine.");
+            return;
+        }
+
+        if (!_debugService.SupportsEngine(engine.Id))
+        {
+            ClearDebugUi(
+                available: false,
+                unavailable:
+                    $"Step-through Debug is currently available only for the .NET engine. " +
+                    $"Selected: {SelectedFlavor?.DisplayName ?? "?"} via {engineName}.",
+                explanation: "Switch the flavor to .NET (or another flavor backed by the .NET engine) to use Debug.");
+            StatusText = "Debug — not available for this engine";
+            StatusEngine = $"Flavor: {SelectedFlavor?.StatusLabel ?? "—"} | Engine: {engineName}";
+            return;
+        }
+
+        var options = BuildOptions();
+        var matchResult = engine.Match(Pattern ?? string.Empty, Subject ?? string.Empty, options);
+
+        // Keep Matches list in sync so Test results stay consistent when returning.
+        if (matchResult.Success)
+        {
+            HasError = false;
+            ErrorText = string.Empty;
+            Matches.Clear();
+            for (var i = 0; i < matchResult.Matches.Count; i++)
+            {
+                Matches.Add(new MatchItemViewModel(
+                    i,
+                    matchResult.Matches[i],
+                    text => CopyTextRequested?.Invoke(text),
+                    (start, len) => SelectSubjectRangeRequested?.Invoke(start, len)));
+            }
+            StatusMatches = $"Matches: {matchResult.Matches.Count}";
+        }
+        else
+        {
+            HasError = true;
+            ErrorText = matchResult.ErrorMessage ?? "Invalid pattern";
+            Matches.Clear();
+            StatusMatches = "Matches: error";
+        }
+
+        StatusTime = $"Time: {matchResult.Duration.TotalMilliseconds:F2} ms";
+        UpdateStatusEngine(engine);
+
+        var session = _debugService.BuildSession(
+            Pattern ?? string.Empty,
+            Subject ?? string.Empty,
+            options,
+            engine.Id,
+            engineName,
+            matchResult);
+
+        IsDebugAvailable = session.IsAvailable;
+        DebugUnavailableMessage = session.UnavailableReason ?? string.Empty;
+        DebugApproachNote = session.ApproachNote;
+
+        var previousIndex = DebugStepIndex;
+        DebugSteps.Clear();
+        foreach (var step in session.Steps)
+            DebugSteps.Add(new DebugStepViewModel(step));
+
+        if (!session.IsAvailable || session.Steps.Count == 0)
+        {
+            DebugStepCounter = "Step —";
+            DebugExplanation = session.UnavailableReason ?? "No debug steps.";
+            DebugStatusLabel = "—";
+            DebugKindLabel = "—";
+            DebugPatternSnippet = string.Empty;
+            DebugSubjectSnippet = string.Empty;
+            CanDebugStepBack = false;
+            CanDebugStepForward = false;
+            CurrentHighlights = Array.Empty<HighlightSpan>();
+            HighlightsChanged?.Invoke();
+            return;
+        }
+
+        var nextIndex = resetIndex
+            ? 0
+            : Math.Clamp(previousIndex, 0, session.Steps.Count - 1);
+        ApplyDebugStepIndex(nextIndex);
+        StatusText = $"Debug — step {nextIndex + 1}/{session.Steps.Count} · {session.MatchCount} match(es)";
+        _logger.LogDebug("Debug session ready: {Steps} steps for {Engine}", session.Steps.Count, engine.Id);
+    }
+
+    private void ClearDebugUi(bool available, string unavailable, string explanation)
+    {
+        IsDebugAvailable = available;
+        DebugUnavailableMessage = unavailable;
+        DebugApproachNote = string.Empty;
+        DebugSteps.Clear();
+        DebugStepIndex = 0;
+        DebugStepCounter = "Step —";
+        DebugExplanation = explanation;
+        DebugStatusLabel = "—";
+        DebugKindLabel = "—";
+        DebugPatternSnippet = string.Empty;
+        DebugSubjectSnippet = string.Empty;
+        CanDebugStepBack = false;
+        CanDebugStepForward = false;
+        SelectedDebugStep = null;
+        CurrentHighlights = Array.Empty<HighlightSpan>();
+        if (IsDebugTab)
+            HighlightsChanged?.Invoke();
+    }
+
+    private void ApplyDebugStepIndex(int index)
+    {
+        if (DebugSteps.Count == 0)
+            return;
+
+        index = Math.Clamp(index, 0, DebugSteps.Count - 1);
+        DebugStepIndex = index;
+        var vm = DebugSteps[index];
+        SelectedDebugStep = vm;
+
+        DebugStepCounter = $"Step {index + 1} / {DebugSteps.Count}";
+        DebugExplanation = vm.Explanation;
+        DebugStatusLabel = vm.StatusLabel;
+        DebugKindLabel = vm.KindLabel;
+        CanDebugStepBack = index > 0;
+        CanDebugStepForward = index < DebugSteps.Count - 1;
+
+        var pattern = Pattern ?? string.Empty;
+        var subject = Subject ?? string.Empty;
+        if (vm.HasPatternRange && vm.PatternStart < pattern.Length)
+        {
+            var len = Math.Min(vm.PatternLength, pattern.Length - vm.PatternStart);
+            DebugPatternSnippet = len > 0 ? pattern.Substring(vm.PatternStart, len) : "(zero-width)";
+            SelectPatternRangeRequested?.Invoke(vm.PatternStart, Math.Max(0, len));
+        }
+        else
+        {
+            DebugPatternSnippet = string.Empty;
+        }
+
+        if (vm.HasSubjectRange && vm.SubjectStart < subject.Length)
+        {
+            var len = Math.Min(vm.SubjectLength, subject.Length - vm.SubjectStart);
+            DebugSubjectSnippet = len > 0
+                ? subject.Substring(vm.SubjectStart, len)
+                : "(zero-width)";
+            SelectSubjectRangeRequested?.Invoke(vm.SubjectStart, Math.Max(0, len));
+        }
+        else if (vm.HasSubjectRange && vm.SubjectLength == 0 && vm.SubjectStart >= 0)
+        {
+            DebugSubjectSnippet = "(zero-width)";
+            SelectSubjectRangeRequested?.Invoke(Math.Min(vm.SubjectStart, subject.Length), 0);
+        }
+        else
+        {
+            DebugSubjectSnippet = string.Empty;
+        }
+
+        // Highlight current subject range in the subject editor (Test highlighter reuses CurrentHighlights).
+        if (vm.HasSubjectRange && vm.SubjectStart >= 0 && vm.SubjectLength > 0)
+        {
+            var kind = vm.GroupNumber is > 0
+                ? MatchHighlightBuilder.KindForGroup(vm.GroupNumber.Value)
+                : HighlightKind.Match;
+            CurrentHighlights = new[]
+            {
+                new HighlightSpan
+                {
+                    Range = new TextRange(vm.SubjectStart, vm.SubjectLength),
+                    Kind = kind,
+                    MatchIndex = vm.MatchIndex ?? 0,
+                    GroupNumber = vm.GroupNumber ?? 0,
+                    Label = "Debug",
+                },
+            };
+        }
+        else
+        {
+            CurrentHighlights = Array.Empty<HighlightSpan>();
+        }
+
+        if (IsDebugTab)
+            HighlightsChanged?.Invoke();
+
+        StatusText = $"Debug — {DebugStepCounter}: {vm.KindLabel}";
+    }
 
     [RelayCommand]
     private void CopyCompareSummary()

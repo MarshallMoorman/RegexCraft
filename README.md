@@ -1,17 +1,17 @@
 # RegexCraft
 
-**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, comparing, and generating code across many regex flavors.
+**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, comparing, debugging, and generating code across many regex flavors.
 
 [![CI](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml/badge.svg)](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/MarshallMoorman/RegexCraft)](https://github.com/MarshallMoorman/RegexCraft/releases)
 
 | | |
 |---|---|
-| **Version** | **1.0.1** |
+| **Version** | **1.1.0** |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
 | **License** | MIT |
-| **Status** | Stable 1.0 |
+| **Status** | Stable 1.1 |
 
 ![RegexCraft Match mode (light)](docs/screenshots/main-test-light.png)
 
@@ -49,11 +49,12 @@ See [docs/development/packaging.md](docs/development/packaging.md) for how relea
 
 - **Multi-flavor testing** — .NET, PCRE2, **JavaScript** (Jint), TypeScript, Python, Java, PHP, Ruby, Go, Rust, Perl, Kotlin, Swift  
 - **Compare mode** — side-by-side results for 2–4 flavors (validity, matches, groups, fidelity, key differences, copyable summary); **smart right-panel width** expands for cards and restores when you leave  
+- **Debug step-through** — educational walk-through for the **.NET** engine (F10/F11, pattern + subject focus, captures); clear “not available” for other engines ([guide](docs/user/debugging.md))  
 - **Hardened flavor definitions** — supported options, token support matrices, known differences, preferred codegen language  
 - **Clear fidelity** — Full / High / Approximate banners; token palette dims unsupported constructs (e.g. RE2 limits for Go/Rust)  
-- **Significant automated tests** — deep coverage per real engine; core + mapping + banner + token + codegen + Compare tests  
+- **Significant automated tests** — deep coverage per real engine; core + mapping + banner + token + codegen + Compare + **Debug** tests  
 - **Professional editor** — AvaloniaEdit with high-contrast light/dark regex syntax highlighting, line numbers, and live analysis  
-- **Live Match mode** — subject highlighting for matches and capture groups, expandable match list with Copy / Go  
+- **Live Match mode** — subject highlighting for matches and capture groups, **equal-width** expandable match cards with Copy / Go  
 - **Replace & Split** — live preview that fills the panel cleanly, substitution highlighting, backreferences (`$1`, `${name}`, …)  
 - **GREP** — search and replace across folders with include/exclude globs, async progress, cancellation, dry-run, and backups  
 - **Code generation** — C#, JavaScript, TypeScript, Python, PHP, Java, Go, Rust, Ruby, Perl, Kotlin, Swift  
@@ -63,17 +64,17 @@ See [docs/development/packaging.md](docs/development/packaging.md) for how relea
 - **Light / Dark / System themes** — preference **persisted and restored** correctly across restarts  
 - **Custom About dialog** + **RegexCraft application icon** (no Avalonia defaults)  
 - **GitHub Actions** — CI on every push/PR; tagged releases attach multi-RID portable zips  
-- **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–6 for modes  
+- **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–7 for modes; F10/F11 for Debug step  
 
 ## Engines & flavors
 
 ### Real engines
 
-| Id | Display | Match | Replace | Split | GREP | Compare | Notes |
-|----|---------|-------|---------|-------|------|---------|-------|
-| `dotnet` | .NET | Yes | Yes | Yes | Yes | Yes | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | Yes | PCRE.NET |
-| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | Yes | ECMAScript for JS / TypeScript flavors |
+| Id | Display | Match | Replace | Split | GREP | Compare | Debug | Notes |
+|----|---------|-------|---------|-------|------|---------|-------|-------|
+| `dotnet` | .NET | Yes | Yes | Yes | Yes | Yes | **Yes** | `System.Text.RegularExpressions` |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | Yes | — | PCRE.NET |
+| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | Yes | — | ECMAScript for JS / TypeScript flavors |
 
 ### Selectable flavors (fidelity)
 

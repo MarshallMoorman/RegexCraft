@@ -17,11 +17,13 @@ The status bar shows **Flavor** (with fidelity when not full) and **Engine**.
 
 ## Engines
 
-| Engine id | Implementation | Used by |
-|-----------|----------------|---------|
-| `dotnet` | `System.Text.RegularExpressions` | .NET, Python*, Java*, Go*, Rust*, Kotlin*, Swift* |
-| `pcre2` | PCRE.NET (PCRE2) | PCRE2, PHP, Ruby*, Perl* |
-| `javascript` | Jint (ECMAScript) | JavaScript, TypeScript |
+| Engine id | Implementation | Used by | Debug step-through |
+|-----------|----------------|---------|--------------------|
+| `dotnet` | `System.Text.RegularExpressions` | .NET, Python*, Java*, Go*, Rust*, Kotlin*, Swift* | **Yes** (1.1+) |
+| `pcre2` | PCRE.NET (PCRE2) | PCRE2, PHP, Ruby*, Perl* | Not yet |
+| `javascript` | Jint (ECMAScript) | JavaScript, TypeScript | Not yet |
+
+**Debug** is engine-based: any flavor whose testing engine is `.NET` can use the Debug tab. PCRE2 and JavaScript show a clear “not available” message. See [Debugging matches](debugging.md).
 
 \* Approximate testing — see fidelity table below.
 

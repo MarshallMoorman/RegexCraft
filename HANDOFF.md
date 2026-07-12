@@ -1,97 +1,56 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: **1.0.1** (Phase 10 + layout/publish hotfixes)  
-**Date**: 2026-07-12  
-**Next**: Post-1.0 roadmap — **Debug / step-through for 1.1**, website, fidelity, installers  
+**Current Version**: **1.1.0** (Phase 11 — Debug + equal-width match cards)  
+**Date**: 2026-07-11  
+**Next**: Website, Debug for more engines, export, fidelity, installers  
 
 ---
 
-## 1.0.1 hotfixes (after 1.0.0)
+## What Shipped in 1.1.0 (Phase 11)
 
-1. **Compare takes most of the editor area**  
-   - Center column collapses to ~280 px; right panel is `*` (majority of body)  
-   - Cards wrap in a multi-row grid  
-   - Leaving Compare restores Normal absolute right width  
-   - Stale ~520 px Compare widths from 1.0.0 are ignored  
+1. **Debug / step-through (.NET)**  
+   - New **Debug** tab (Ctrl+7); F10 forward / F11 back; Reset / End / Refresh  
+   - Hybrid **educational** session: real .NET `Match` results + Analysis Tree walk  
+   - Pattern selection + subject highlight + step list + capture explanations  
+   - Clear unavailable message for PCRE2 / JavaScript engines  
+   - Core: `IRegexDebugService` / `RegexDebugService` under `src/RegexCraft.Core/Debug/`  
+   - User doc: `docs/user/debugging.md`  
 
-2. **Publish workflow**  
-   - win-x64: `-p:` properties (not `/p:`) so Git Bash does not mangle MSBuild args  
-   - linux-x64: no `ls | head` under `pipefail`  
-   - Tag **`v1.0.1`** for a full four-RID release (v1.0.0 only got osx zips)
+2. **Matches & Groups equal width**  
+   - `ListBox.matchList` styles force stretch so cards share one consistent width  
 
----
+3. **Tests**  
+   - `Category=Debug` unit + ViewModel tests  
+   - Headless: Debug step + match card width assertions  
+   - Full suite green (653+ tests at ship)  
 
-## What Was Completed in Phase 10 (1.0.0)
+4. **Release**  
+   - Version **1.1.0** in `Directory.Build.props`  
+   - Tag `v1.1.0` → Publish workflow multi-RID zips  
 
-1. **Smart right-panel sizing** (refined in 1.0.1 to majority-of-body Compare layout)  
-   - Normal width (Test / Replace / Split / Generate / GREP) vs Compare layout  
-   - Switch **to** Compare → expand aggressively; **away** → restore Normal  
-   - Splitter drags update the active mode’s stored width  
-   - Persisted in `AppSettings` via `JsonSettingsStore`  
-   - Constants in `LayoutDefaults` (no magic numbers in the view)
+### Debug approach (for future agents)
 
-2. **GitHub Releases**  
-   - `.github/workflows/publish.yml`: test job → multi-RID publish → Release on `v*` tags  
-   - Artifacts: `RegexCraft-{win-x64,linux-x64,osx-x64,osx-arm64}.zip`  
-   - CHANGELOG-derived notes + auto-generated release notes  
-   - Soft-fail per RID (`fail-fast: false`); refuse empty releases  
-
-3. **Docs & polish**  
-   - README 1.0-ready (download table, flavors/fidelity, screenshots, CI badge)  
-   - `docs/CHANGELOG.md` **1.0.0** entry  
-   - `docs/development/packaging.md` full release process  
-   - User Compare guide: layout / width memory notes  
-   - Version **1.0.0** in `Directory.Build.props`  
-
-4. **Tests**  
-   - `LayoutDefaults` + settings round-trip  
-   - ViewModel: target width, remember/persist, `RightPanelModeChanged` on tab switch  
+Do **not** try to re-implement the full .NET NFA. Extend `RegexDebugService` (or add engine-specific builders behind `IRegexDebugService`) so UI stays engine-agnostic. Prefer real Match overlays + structural walk-throughs over cycle-accurate simulation.
 
 ---
 
-## How to ship v1.0.1 (recommended after 1.0.0 osx-only release)
+## Post-1.1 Roadmap
 
-```bash
-git checkout main
-git pull origin main
-grep '<Version>' Directory.Build.props   # 1.0.1
-git log -1 --oneline
-
-git tag -a v1.0.1 -m "RegexCraft 1.0.1"
-git push origin main
-git push origin v1.0.1
-```
-
-Then verify on GitHub: **Actions → Publish** — all four RIDs green, **Releases → v1.0.1** has win/linux/osx zips.
-
-Optional: leave `v1.0.0` as-is (macOS-only assets) or edit the release notes to point users at 1.0.1.
-
----
-
-## Post-1.0 Roadmap
-
-Work these as separate minor/major tracks after 1.0.0 is tagged and CI/Release are green.
-
-### 1.1 — Debug / step-through (primary candidate)
-
-**Goal**: Interactive match debugger for understanding *why* a pattern matches (or fails).
-
-Suggested scope:
-
-- Step through match engine progress (start with **.NET** engine)  
-- Show current position in subject, active groups/captures, next match  
-- UI mode tab or overlay (e.g. **Debug** as Ctrl+7 or under Test)  
-- Clear empty/error states; do not block live Test  
-- Tests: unit for step model + headless smoke  
-
-Out of 1.1 unless easy: full PCRE/JS step engines (can show “debug available for .NET only” first).
+Work these as separate tracks on `main` (or short-lived branches if needed). Prefer small, shippable increments.
 
 ### Website (regexcraft.com)
 
 - Landing: value prop, feature list, screenshots from `docs/screenshots/`  
 - Download: link to GitHub Releases  
 - Docs mirror or deep links into `docs/user/`  
+- **GitHub Pages** is fine: `gh-pages` or `/docs`, CNAME `regexcraft.com`, registrar CNAME → Pages host  
 - Not blocking for binary distribution (Releases already work)
+
+### Debug expansion
+
+- PCRE2 / JavaScript educational steppers (same UI, new engine builders)  
+- Optional play/pause auto-step  
+- Richer backtracking narratives where cheap  
 
 ### Higher engine fidelity
 
@@ -122,6 +81,8 @@ Out of 1.1 unless easy: full PCRE/JS step engines (can show “debug available f
 ## Known Issues / Limitations (carry-forward)
 
 - Analysis tree is structural/heuristic — not a full flavor-faithful AST.  
+- Debug is educational (Match + analysis overlay), not cycle-accurate .NET NFA.  
+- Debug not available for PCRE2 / JavaScript yet.  
 - Approximate flavors intentionally use closest engines; banners + token matrices communicate gaps.  
 - Go/Rust testing still runs on .NET (may accept patterns real RE2 rejects); palette/docs warn.  
 - Go/Rust codegen notes RE2 limits but still emits the pattern as-is.  
@@ -138,28 +99,31 @@ Out of 1.1 unless easy: full PCRE/JS step engines (can show “debug available f
 - CI badge URL assumes GitHub repo `MarshallMoorman/RegexCraft` — adjust if the remote path differs.  
 - Screenshot dark-mode pattern editor may need an extra highlight refresh if theme is forced only after first paint.  
 - Right-panel Compare minimum (~480 px) can feel large on very small windows (window min width is 1000).  
+- Local NuGet: solution `NuGet.config` pins nuget.org (avoids private-feed NUnit resolution issues).  
 
 ## How to Continue in a New Conversation
 
-1. Open latest `main` at **v1.0.0** (or after the Phase 10 commit).  
+1. Open latest `main` at **v1.1.0** (or after the Phase 11 commit).  
 2. Read this `HANDOFF.md` and `AGENTS.md`.  
-3. Prefer **1.1 Debug** or website/fidelity work — do not re-litigate Phases 0–10.  
+3. Prefer **website**, **export**, or **Debug for PCRE2/JS** — do not re-litigate Phases 0–11.  
 4. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating a baseline.  
 5. Keep CI green: `dotnet test` and watch Actions on push.  
 6. Releases: see `docs/development/packaging.md`.  
-7. Flavor/engine/compare tests:  
-   `dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare"`  
+7. Flavor/engine/compare/debug tests:  
+   `dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare|Category=Debug"`  
 
-## Key Files for Post-1.0 Work
+## Key Files for Post-1.1 Work
 
 | Path | Why |
 |------|-----|
 | `HANDOFF.md` / `AGENTS.md` | Process + conventions |
-| `src/RegexCraft.Core/Compare/` | Compare service (model for future Debug architecture) |
-| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Modes, settings, panel widths |
+| `src/RegexCraft.Core/Debug/` | Debug service — extend for more engines |
+| `src/RegexCraft.Core/Compare/` | Compare service (parallel multi-flavor) |
+| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Modes, Debug commands, panel widths |
 | `src/RegexCraft.Core/Settings/` | `AppSettings`, `LayoutDefaults`, `JsonSettingsStore` |
-| `src/RegexCraft.Engines/` | Real engines — Debug likely starts in DotNet |
+| `src/RegexCraft.Engines/` | Real engines |
 | `.github/workflows/publish.yml` | Release pipeline |
 | `docs/development/packaging.md` | How to cut releases |
+| `docs/user/debugging.md` | User-facing Debug guide |
 | `Directory.Build.props` | Version only |
 | `docs/CHANGELOG.md` | User-facing history |

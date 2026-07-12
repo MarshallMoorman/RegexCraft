@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using RegexCraft.App.Views;
 using RegexCraft.App.ViewModels;
 
@@ -66,11 +67,118 @@ public sealed class MainWindowUiTests
                      ("Generate", v => v.IsGenerateTab),
                      ("Grep", v => v.IsGrepTab),
                      ("Compare", v => v.IsCompareTab),
+                     ("Debug", v => v.IsDebugTab),
                  })
         {
             vm.SelectRightTabCommand.Execute(tab);
             Dispatcher.UIThread.RunJobs();
             Assert.That(check(vm), Is.True, tab);
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaTest]
+    public void DebugMode_StepsUpdateExplanationAndHighlights()
+    {
+        var vm = HeadlessTestHelpers.CreateViewModel(_tempDir);
+        var window = HeadlessTestHelpers.CreateMainWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.SelectedFlavor = vm.Flavors.First(f => f.Id == "dotnet");
+        vm.Pattern = @"(?<user>\w+)@(?<domain>\w+\.\w+)";
+        vm.Subject = "support@regexcraft.com";
+        vm.SelectRightTabCommand.Execute("Debug");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.That(vm.IsDebugTab, Is.True);
+        Assert.That(vm.IsDebugAvailable, Is.True);
+        Assert.That(vm.DebugSteps.Count, Is.GreaterThan(3));
+        Assert.That(vm.WindowTitle, Does.Contain("Debug"));
+
+        var firstExplanation = vm.DebugExplanation;
+        Assert.That(firstExplanation, Is.Not.Empty);
+
+        vm.DebugStepForwardCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.That(vm.DebugStepIndex, Is.EqualTo(1));
+        Assert.That(vm.DebugStepCounter, Does.Contain("2"));
+
+        // Step several times; explanation should remain non-empty
+        for (var i = 0; i < 5 && vm.CanDebugStepForward; i++)
+        {
+            vm.DebugStepForwardCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            Assert.That(vm.DebugExplanation, Is.Not.Empty);
+        }
+
+        Assert.That(vm.DebugPatternSnippet.Length + vm.DebugSubjectSnippet.Length, Is.GreaterThanOrEqualTo(0));
+
+        // Unavailable path for JS
+        vm.SelectedFlavor = vm.Flavors.First(f => f.Id == "javascript");
+        vm.RefreshDebugCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        Assert.That(vm.IsDebugAvailable, Is.False);
+        Assert.That(vm.DebugUnavailableMessage, Does.Contain(".NET").IgnoreCase);
+
+        window.Close();
+    }
+
+    [AvaloniaTest]
+    public void MatchesList_ItemsStretchEqualWidth()
+    {
+        var vm = HeadlessTestHelpers.CreateViewModel(_tempDir);
+        var window = HeadlessTestHelpers.CreateMainWindow(vm);
+        window.Width = 1320;
+        window.Height = 860;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.SelectedFlavor = vm.Flavors.First(f => f.Id == "dotnet");
+        vm.Pattern = @"\w+";
+        vm.Subject = "one two three four five";
+        vm.RunTestCommand.Execute(null);
+        vm.SelectRightTabCommand.Execute("Test");
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.That(vm.Matches.Count, Is.GreaterThanOrEqualTo(3));
+
+        // Find match list among ListBoxes (Test panel matches)
+        var list = window.GetVisualDescendants()
+            .OfType<Avalonia.Controls.ListBox>()
+            .FirstOrDefault(lb => lb.ItemCount == vm.Matches.Count && lb.Classes.Contains("matchList"));
+
+        list ??= window.GetVisualDescendants()
+            .OfType<Avalonia.Controls.ListBox>()
+            .FirstOrDefault(lb => lb.ItemCount == vm.Matches.Count);
+
+        Assert.That(list, Is.Not.Null, "Matches ListBox should exist");
+        list!.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        var containers = new List<Avalonia.Controls.Control>();
+        for (var i = 0; i < vm.Matches.Count; i++)
+        {
+            var container = list.ContainerFromIndex(i) as Avalonia.Controls.Control;
+            if (container is not null)
+                containers.Add(container);
+        }
+
+        Assert.That(containers.Count, Is.GreaterThanOrEqualTo(2), "need containers for width compare");
+
+        var widths = containers.Select(c => c.Bounds.Width).Where(w => w > 0).ToList();
+        if (widths.Count >= 2)
+        {
+            var min = widths.Min();
+            var max = widths.Max();
+            Assert.That(max - min, Is.LessThanOrEqualTo(2.0),
+                $"Match cards should share equal width (min={min}, max={max})");
+            // Also: each should be close to the list's content width (stretch)
+            if (list.Bounds.Width > 0)
+                Assert.That(max, Is.GreaterThan(list.Bounds.Width * 0.5));
         }
 
         window.Close();

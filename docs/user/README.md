@@ -8,6 +8,7 @@
 | [Flavors & testing fidelity](flavors.md) | Engines, flavor list, Full/High/Approximate |
 | [Testing regular expressions](testing-regexes.md) | Test panel, highlighting, groups, engines |
 | [Comparing flavors](comparing.md) | Side-by-side multi-flavor Compare mode |
+| [Debugging matches](debugging.md) | Step-through Debug for .NET (educational walk-through) |
 | [Replacing](replacing.md) | Replace mode, backreferences, preview highlighting |
 | [GREP (file search & replace)](grepping.md) | Search and replace across folders |
 | [Generating code](generating-code.md) | Multi-language code snippets (auto-generate) |
@@ -16,7 +17,7 @@
 
 ## Coming later (see root HANDOFF.md)
 
-- Debug stepping  
+- Debug for more engines (PCRE2, JavaScript)  
 - Export  
 - Higher-fidelity native engines for more flavors  
-- Website content + final 1.0.0 after RC  
+- Website (regexcraft.com)  

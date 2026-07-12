@@ -18,11 +18,13 @@ namespace RegexCraft.App.Views;
 public partial class MainWindow : Window
 {
     private readonly MatchHighlightTransformer _subjectHighlighter = new();
+    private readonly MatchHighlightTransformer _debugSubjectHighlighter = new();
     private readonly MatchHighlightTransformer _replaceHighlighter = new();
     private readonly MatchHighlightTransformer _grepHighlighter = new();
     private MainWindowViewModel? _vm;
     private bool _syncingPattern;
     private bool _syncingSubject;
+    private bool _syncingDebugSubject;
     private bool _syncingReplace;
     private bool _boundsApplied;
     private bool _applyingRightPanelWidth;
@@ -45,6 +47,7 @@ public partial class MainWindow : Window
         _vm?.ReapplyThemeFromSettings();
         ConfigurePatternEditor();
         ConfigureSubjectEditor();
+        ConfigureDebugSubjectEditor();
         ConfigureReplaceEditor();
         ConfigureGenerateEditor();
         ConfigureGrepPreviewEditor();
@@ -58,6 +61,7 @@ public partial class MainWindow : Window
             ApplyThemeBrushes();
             ApplyRegexHighlighting();
             RefreshSubjectHighlights();
+            RefreshDebugSubjectHighlights();
             RefreshReplaceHighlights();
             RefreshGrepHighlights();
         };
@@ -250,8 +254,29 @@ public partial class MainWindow : Window
                 _ = _vm.RunGrepSearchCommand.ExecuteAsync(null);
             else if (_vm.IsCompareTab)
                 _vm.RunCompareCommand.Execute(null);
+            else if (_vm.IsDebugTab)
+                _vm.RefreshDebugCommand.Execute(null);
             else
                 _vm.RunTestCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        // Debug stepping (F10 / F11 work from any tab when Debug is active, or always)
+        if (e.Key == Key.F10 || (ctrl && e.Key == Key.Right))
+        {
+            if (!_vm.IsDebugTab)
+                _vm.SelectRightTabCommand.Execute("Debug");
+            _vm.DebugStepForwardCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.F11 || (ctrl && e.Key == Key.Left))
+        {
+            if (!_vm.IsDebugTab)
+                _vm.SelectRightTabCommand.Execute("Debug");
+            _vm.DebugStepBackwardCommand.Execute(null);
             e.Handled = true;
             return;
         }
@@ -284,6 +309,11 @@ public partial class MainWindow : Window
         else if (ctrl && e.Key == Key.D6)
         {
             _vm.SelectRightTabCommand.Execute("Compare");
+            e.Handled = true;
+        }
+        else if (ctrl && e.Key == Key.D7)
+        {
+            _vm.SelectRightTabCommand.Execute("Debug");
             e.Handled = true;
         }
     }
@@ -332,6 +362,8 @@ public partial class MainWindow : Window
             _syncingSubject = false;
         }
 
+        SyncDebugSubjectEditor();
+
         if (ReplacePreviewEditor is not null
             && ReplacePreviewEditor.Document is not null
             && ReplacePreviewEditor.Document.Text != _vm.ReplacePreview)
@@ -342,6 +374,7 @@ public partial class MainWindow : Window
         }
 
         RefreshSubjectHighlights();
+        RefreshDebugSubjectHighlights();
         RefreshReplaceHighlights();
         ExpandAnalysisTree();
     }
@@ -406,6 +439,53 @@ public partial class MainWindow : Window
                 _syncingSubject = false;
             }
         };
+    }
+
+    private void ConfigureDebugSubjectEditor()
+    {
+        if (DebugSubjectEditor is null)
+            return;
+
+        DebugSubjectEditor.Document ??= new TextDocument();
+        DebugSubjectEditor.Options.EnableHyperlinks = false;
+        DebugSubjectEditor.Options.EnableEmailHyperlinks = false;
+        DebugSubjectEditor.TextArea.TextView.LineTransformers.Add(_debugSubjectHighlighter);
+        ApplyEditorTheme(DebugSubjectEditor);
+
+        DebugSubjectEditor.TextChanged += (_, _) =>
+        {
+            if (_syncingDebugSubject || _syncingSubject || _vm is null)
+                return;
+            _syncingDebugSubject = true;
+            try
+            {
+                _vm.Subject = DebugSubjectEditor.Document?.Text ?? string.Empty;
+            }
+            finally
+            {
+                _syncingDebugSubject = false;
+            }
+        };
+    }
+
+    private void SyncDebugSubjectEditor()
+    {
+        if (_vm is null || DebugSubjectEditor?.Document is null)
+            return;
+
+        var text = _vm.Subject ?? string.Empty;
+        if (DebugSubjectEditor.Document.Text == text)
+            return;
+
+        _syncingDebugSubject = true;
+        try
+        {
+            DebugSubjectEditor.Document.Text = text;
+        }
+        finally
+        {
+            _syncingDebugSubject = false;
+        }
     }
 
     private void ConfigureReplaceEditor()
@@ -490,11 +570,14 @@ public partial class MainWindow : Window
         var g3 = TryBrush("GroupHighlight3Brush") ?? new SolidColorBrush(Color.Parse("#E0C3FC"));
 
         _subjectHighlighter.SetBrushes(match, g0, g1, g2, g3);
+        _debugSubjectHighlighter.SetBrushes(match, g0, g1, g2, g3);
         _replaceHighlighter.SetBrushes(match, g0, g1, g2, g3);
         _grepHighlighter.SetBrushes(match, g0, g1, g2, g3);
 
         ApplyEditorTheme(PatternEditor, patternEditor: true);
         ApplyEditorTheme(SubjectEditor);
+        if (DebugSubjectEditor is not null)
+            ApplyEditorTheme(DebugSubjectEditor);
         if (ReplacePreviewEditor is not null)
             ApplyEditorTheme(ReplacePreviewEditor);
         if (GenerateCodeEditor is not null)
@@ -670,12 +753,23 @@ public partial class MainWindow : Window
 
     private void OnSelectSubjectRange(int start, int length)
     {
+        // Prefer Debug subject editor when Debug tab is active so the user sees the caret.
+        if (_vm?.IsDebugTab == true && DebugSubjectEditor?.Document is not null)
+        {
+            var dlen = DebugSubjectEditor.Document.TextLength;
+            var dstart = Math.Clamp(start, 0, dlen);
+            var dlength = Math.Clamp(length, 0, dlen - dstart);
+            DebugSubjectEditor.Select(dstart, dlength);
+            DebugSubjectEditor.TextArea.Caret.BringCaretToView();
+        }
+
         if (SubjectEditor.Document is null) return;
         var len = SubjectEditor.Document.TextLength;
         start = Math.Clamp(start, 0, len);
         length = Math.Clamp(length, 0, len - start);
         SubjectEditor.Select(start, length);
-        SubjectEditor.TextArea.Focus();
+        if (_vm?.IsDebugTab != true)
+            SubjectEditor.TextArea.Focus();
     }
 
     private async void OnCopyText(string text)
@@ -714,7 +808,7 @@ public partial class MainWindow : Window
             ExpandAnalysisTree();
         }
 
-        if (e.PropertyName == nameof(MainWindowViewModel.Subject) && !_syncingSubject)
+        if (e.PropertyName == nameof(MainWindowViewModel.Subject) && !_syncingSubject && !_syncingDebugSubject)
         {
             if (SubjectEditor.Document is not null && SubjectEditor.Document.Text != _vm.Subject)
             {
@@ -722,6 +816,14 @@ public partial class MainWindow : Window
                 SubjectEditor.Document.Text = _vm.Subject ?? string.Empty;
                 _syncingSubject = false;
             }
+
+            SyncDebugSubjectEditor();
+        }
+
+        if (e.PropertyName == nameof(MainWindowViewModel.IsDebugTab) && _vm.IsDebugTab)
+        {
+            SyncDebugSubjectEditor();
+            RefreshDebugSubjectHighlights();
         }
 
         if (e.PropertyName == nameof(MainWindowViewModel.ReplacePreview) && !_syncingReplace)
@@ -760,6 +862,15 @@ public partial class MainWindow : Window
             return;
         _subjectHighlighter.SetSpans(_vm.CurrentHighlights);
         SubjectEditor.TextArea.TextView.Redraw();
+        RefreshDebugSubjectHighlights();
+    }
+
+    private void RefreshDebugSubjectHighlights()
+    {
+        if (_vm is null || DebugSubjectEditor is null)
+            return;
+        _debugSubjectHighlighter.SetSpans(_vm.CurrentHighlights);
+        DebugSubjectEditor.TextArea.TextView.Redraw();
     }
 
     private void RefreshReplaceHighlights()

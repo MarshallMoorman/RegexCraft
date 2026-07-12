@@ -11,6 +11,7 @@ using RegexCraft.App.Views;
 using RegexCraft.Core.Analysis;
 using RegexCraft.Core.Codegen;
 using RegexCraft.Core.Compare;
+using RegexCraft.Core.Debug;
 using RegexCraft.Core.Flavors;
 using RegexCraft.Core.Grep;
 using RegexCraft.Core.Library;
@@ -65,6 +66,8 @@ public partial class App : Application
         var grepService = new GrepService(_loggerFactory.CreateLogger<GrepService>());
         var compareService = new RegexCompareService(
             flavorService, tokenCatalog, _loggerFactory.CreateLogger<RegexCompareService>());
+        var debugService = new RegexDebugService(
+            analysisService, _loggerFactory.CreateLogger<RegexDebugService>());
         var settingsStore = new JsonSettingsStore(logger: _loggerFactory.CreateLogger<JsonSettingsStore>());
 
         _logger.LogInformation(
@@ -88,7 +91,8 @@ public partial class App : Application
                     grepService,
                     settingsStore,
                     _loggerFactory.CreateLogger<MainWindowViewModel>(),
-                    compareService),
+                    compareService,
+                    debugService),
             };
 
             desktop.Exit += (_, _) =>

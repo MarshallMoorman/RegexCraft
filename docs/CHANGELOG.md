@@ -5,6 +5,31 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-07-11
+
+### Added
+
+- **Debug step-through** — new **Debug** mode (Ctrl+7) for the **.NET** engine: step forward/back, jump to start/end, human-readable explanations, pattern + subject focus, step list, F10/F11 shortcuts
+- **`IRegexDebugService` / `RegexDebugService`** — hybrid educational walk-through (real Match results + Analysis Tree); architecture ready for more engines later
+- Clear **“Debug not available”** messaging for PCRE2 / JavaScript engines
+- User guide: [`docs/user/debugging.md`](user/debugging.md)
+- Tests: `Category=Debug` (service + ViewModel) and headless UI coverage for Debug + equal-width match cards
+
+### Fixed
+
+- **Matches & Groups cards** — list items stretch to equal full width (no ragged right edges) when the right panel is resized
+
+### Changed
+
+- Version set to **1.1.0**
+- Mode shortcuts documented as Ctrl+1–7; shortcut strip includes F10 step
+- README, flavors doc, AGENTS.md, and HANDOFF updated for Debug / post-1.1 roadmap
+
+### Notes
+
+- Debug is an **educational** overlay on real .NET Match results — not a cycle-accurate NFA simulator.
+- Approximate flavors that still use the `dotnet` engine can use Debug; results reflect .NET behavior.
+
 ## [1.0.1] — 2026-07-12
 
 ### Fixed

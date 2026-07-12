@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-12 — **v1.0.1** (Compare majority layout + publish workflow fixes)  
+**Last updated**: 2026-07-11 — **v1.1.0** (Debug step-through + equal-width Matches cards)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -10,10 +10,10 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit + Jint  
 - **UI Pattern**: MVVM (CommunityToolkit.Mvvm)  
 - **Testing**: NUnit only. All new code must have tests. `dotnet test`  
-  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, **Compare**, ViewModels, Flavors, Branding  
+  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, Compare, **Debug**, ViewModels, Flavors, Branding  
   - UI / headless: `Category=UI`, `Category=Headless` (Avalonia.Headless.NUnit + Skia)  
   - Screenshots: `Category=Screenshots` → `docs/screenshots/` via `CaptureRenderedFrame()`  
-  - **Quality bar**: significant tests for every real engine (deep) and every selectable flavor (mapping + fidelity + tokens + codegen); Compare has dedicated service + VM + headless tests  
+  - **Quality bar**: significant tests for every real engine (deep) and every selectable flavor (mapping + fidelity + tokens + codegen); Compare + Debug have dedicated service + VM + headless tests  
 - **Logging**: Microsoft.Extensions.Logging + Serilog file sink. No `Console.WriteLine` for real logging  
 - **Theme**: Named resources only from `Themes/Colors.axaml`. No hard-coded UI colors  
 - **Tokens**: Text-only palette — **no icons for individual tokens**; support is **flavor-aware** (not only engine-aware)  
@@ -27,48 +27,52 @@ Living guide for AI agents and humans working on RegexCraft.
 - **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml) — must stay green without interactive secrets for basic CI  
 - **Releases**: Tag `v*` → Publish workflow tests, multi-RID publish, GitHub Release with zip artifacts (see packaging.md)  
 - **Layout**: Right-panel Normal vs Compare widths live in `AppSettings` + `LayoutDefaults` — no magic pixels in views  
+- **NuGet**: Solution `NuGet.config` uses nuget.org (public packages)  
 
 ## Architecture Quick Reference
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, tokens, analysis, highlight builders, token insertion, codegen, library/history/**settings + layout defaults**, **GREP**, built-in library |
+| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, **Debug**, tokens, analysis, highlight builders, token insertion, codegen, library/history/**settings + layout defaults**, **GREP**, built-in library |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
-| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel**, **smart right-panel sizing** |
+| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel**, **Debug panel**, **smart right-panel sizing** |
 | `RegexCraft.Tests` | NUnit unit + **Avalonia headless UI** + **screenshot capture** |
 
-### UI map (Phase 6–10)
+### UI map (Phase 6–11)
 
 - Left: Tokens / Library / History — Library shows **Built-in** badge; built-ins not deletable  
 - Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
-- Right: **single mode host** — Test / Replace / Split / Generate / GREP / **Compare**  
-- **Right-panel widths**: Normal absolute width for non-Compare modes; **Compare collapses the center editor to ~280px and gives the right panel star/majority space**; leave restores Normal; splitter drags update memory; stale narrow Compare widths ignored  
-- Toolbar: **expanded Flavor list**, modes (Ctrl+1–6), Options, Theme (persisted correctly)  
+- Right: **single mode host** — Test / Replace / Split / Generate / GREP / Compare / **Debug**  
+- **Right-panel widths**: Normal absolute width for non-Compare modes (including Debug); **Compare collapses the center editor to ~280px and gives the right panel star/majority space**; leave restores Normal; splitter drags update memory; stale narrow Compare widths ignored  
+- Toolbar: **expanded Flavor list**, modes (Ctrl+1–7), Options, Theme (persisted correctly)  
 - Fidelity **banner** when testing is High/Approximate  
 - Options: flavor-aware enable/disable (e.g. JS has no ExplicitCapture / free-spacing)  
 - Tokens: dimmed when unsupported for the selected flavor (engine + flavor matrices)  
 - Status: flavor (+ fidelity) / engine, counts, timing, shortcuts  
 - Generate: auto-runs; **preferred language follows selected flavor**  
 - **Compare**: 2–4 flavors, live re-run, cards + cross-flavor notes + copy summary  
+- **Debug**: educational step-through for **.NET** engine; F10/F11; unavailable message for other engines  
+- **Matches & Groups**: equal-width stretched cards (`ListBox.matchList`)  
 - **Help → About RegexCraft** (native menu) opens custom About dialog  
 
-### Still relevant from Phase 3–9
+### Still relevant from Phase 3–10
 
 - `IGrepService` / GREP models, settings store, library favorites, resizable columns  
-- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**, **panel width memory**  
+- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**, **Debug**, **panel width memory**  
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines` + **`FlavorDefinition.IsTokenSupported`**  
 - `RegexAnalysisService`, highlight builders, codegen service  
 - `IRegexCompareService` / `RegexCompareService`  
+- `IRegexDebugService` / `RegexDebugService`  
 - Branding + headless UI + screenshots  
 - `LayoutDefaults` + `AppSettings.RightPanelNormalWidth` / `RightPanelCompareWidth`  
 
 ## Current Engines
 
-| Id | Display | Full Testing | Replace | Split | GREP | Notes |
-|----|---------|--------------|---------|-------|------|-------|
-| `dotnet` | .NET | Yes | Yes | Yes | Yes | Also backs approximate Python/Java/Go/Rust/Kotlin/Swift |
-| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | Also backs PHP (High) / Ruby / Perl (Approximate) |
-| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | JS + TypeScript flavors |
+| Id | Display | Full Testing | Replace | Split | GREP | Debug | Notes |
+|----|---------|--------------|---------|-------|------|-------|-------|
+| `dotnet` | .NET | Yes | Yes | Yes | Yes | **Yes** | Also backs approximate Python/Java/Go/Rust/Kotlin/Swift |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | No | Also backs PHP (High) / Ruby / Perl (Approximate) |
+| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | No | JS + TypeScript flavors |
 
 **Not integrated (evaluated Phase 8):** Python.NET (CPython embed), RE2.Managed (maintenance). Go/Rust RE2 limits are modeled via `UnsupportedTokenIds` + fidelity notes.
 
@@ -91,6 +95,14 @@ Only flavors whose `EngineId` is registered are shown.
 - Constraints: 2–4 flavors; parallel Match; no new engines  
 - Layout: Compare uses wider right panel (see `LayoutDefaults`)  
 
+### Debug
+
+- Core: `src/RegexCraft.Core/Debug/` (`IRegexDebugService`, `RegexDebugService`, models)  
+- UI: Debug tab + subject editor + step list; pattern range selection via existing events  
+- Approach: **hybrid educational** — real Match results + Analysis Tree walk (not full NFA re-implementation)  
+- Primary engine: `dotnet`; others show unavailable reason  
+- Shortcuts: Ctrl+7, F10 / F11, Ctrl+← / Ctrl+→  
+
 ## How to Run
 
 ```bash
@@ -105,7 +117,8 @@ dotnet run --project src/RegexCraft.App
 dotnet test --filter Category=Engines
 dotnet test --filter Category=Flavors
 dotnet test --filter Category=Compare
-dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare"
+dotnet test --filter Category=Debug
+dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare|Category=Debug"
 dotnet test --filter Category=UI
 dotnet test --filter Category=Screenshots   # writes docs/screenshots/*.png
 ```
@@ -125,8 +138,8 @@ dotnet test -c Release
 
 ```bash
 # After version + CHANGELOG are on main:
-git tag -a v1.0.0 -m "RegexCraft 1.0.0"
-git push origin v1.0.0
+git tag -a v1.1.0 -m "RegexCraft 1.1.0"
+git push origin v1.1.0
 ```
 
 See `docs/development/packaging.md`.
@@ -168,6 +181,7 @@ dotnet test --filter Category=Codegen
 dotnet test --filter Category=Library
 dotnet test --filter Category=Grep
 dotnet test --filter Category=Compare
+dotnet test --filter Category=Debug
 dotnet test --filter Category=ViewModels
 dotnet test --filter Category=Flavors
 dotnet test --filter Category=UI
@@ -188,6 +202,7 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - Icon: `src/RegexCraft.App/Assets/regexcraft-icon.ico` (+ `.png`, `.icns`)  
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
 - Compare: `src/RegexCraft.Core/Compare/`  
+- Debug: `src/RegexCraft.Core/Debug/`  
 - Layout: `src/RegexCraft.Core/Settings/LayoutDefaults.cs`, `AppSettings` panel width fields  
 - Flavors: `src/RegexCraft.Core/Flavors/` (`FlavorDefinition`, `FlavorService`, `FlavorTokenSets`)  
 - JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
@@ -196,9 +211,11 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - CI: `.github/workflows/ci.yml`, `.github/workflows/publish.yml`  
 - Headless tests: `tests/RegexCraft.Tests/Headless/`  
 - Compare tests: `tests/RegexCraft.Tests/Compare/`  
+- Debug tests: `tests/RegexCraft.Tests/Debug/`  
 - Flavor tests: `tests/RegexCraft.Tests/Flavors/`  
 - Engine tests: `tests/RegexCraft.Tests/Engines/`  
 - Settings tests: `tests/RegexCraft.Tests/Settings/`  
 - Screenshots: `docs/screenshots/`  
 - User Compare doc: `docs/user/comparing.md`  
+- User Debug doc: `docs/user/debugging.md`  
 - User flavors doc: `docs/user/flavors.md`  

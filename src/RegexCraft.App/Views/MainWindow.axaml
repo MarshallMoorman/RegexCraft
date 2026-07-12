@@ -220,6 +220,18 @@
       <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
       <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
+    <!-- Match cards: force equal full-width rows (no ragged right edges) -->
+    <Style Selector="ListBox.matchList ListBoxItem">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="4,2" />
+      <Setter Property="Margin" Value="0" />
+    </Style>
+    <Style Selector="ListBox.matchList Expander">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+
     <Style Selector="TextBlock.emptyState">
       <Setter Property="FontSize" Value="12" />
       <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
@@ -316,6 +328,12 @@
                   Command="{Binding SelectRightTabCommand}"
                   CommandParameter="Compare"
                   ToolTip.Tip="Compare the same pattern across flavors (Ctrl+6)" />
+          <Button Content="Debug"
+                  Classes="modeTab"
+                  Classes.active="{Binding IsDebugMode}"
+                  Command="{Binding SelectRightTabCommand}"
+                  CommandParameter="Debug"
+                  ToolTip.Tip="Step-through match debugger (Ctrl+7). F10 forward · F11 back" />
 
           <Border Width="1" Height="20" Background="{DynamicResource TextOnPrimaryBrush}" Opacity="0.3" Margin="6,0" />
 
@@ -844,6 +862,13 @@
                       CommandParameter="Compare"
                       ToolTip.Tip="Side-by-side multi-flavor comparison"
                       AutomationProperties.Name="Compare mode tab" />
+              <Button Content="Debug"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsDebugTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Debug"
+                      ToolTip.Tip="Step-through match debugger"
+                      AutomationProperties.Name="Debug mode tab" />
             </StackPanel>
           </ScrollViewer>
 
@@ -911,18 +936,24 @@
                   <TextBlock Text="{Binding EmptyMatchesMessage}" Classes="emptyState" />
                 </Border>
                 <ListBox ItemsSource="{Binding Matches}"
+                         Classes="matchList"
                          IsVisible="{Binding Matches.Count}"
                          Background="{DynamicResource BackgroundTertiaryBrush}"
                          BorderBrush="{DynamicResource BorderSubtleBrush}"
                          BorderThickness="1"
                          CornerRadius="4"
                          HorizontalAlignment="Stretch"
-                         VerticalAlignment="Stretch">
+                         VerticalAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         AutomationProperties.Name="Matches and groups list">
                   <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="vm:MatchItemViewModel">
-                      <Expander IsExpanded="{Binding IsExpanded}" Margin="2">
+                      <Expander IsExpanded="{Binding IsExpanded}"
+                                Margin="0,2"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch">
                         <Expander.Header>
-                          <Grid ColumnDefinitions="*,Auto">
+                          <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Stretch">
                             <TextBlock Text="{Binding Summary}"
                                        FontFamily="Menlo, Consolas, monospace"
                                        FontSize="12"
@@ -1556,6 +1587,205 @@
                          Classes="mutedHint"
                          Margin="0,8,0,0"
                          Text="Tip: differences highlight validity, match counts, first-match offsets, dropped options, and unsupported tokens." />
+            </Grid>
+
+            <!-- DEBUG -->
+            <Grid Classes="rightMode"
+                  IsVisible="{Binding IsDebugTab}"
+                  RowDefinitions="Auto,Auto,Auto,Auto,*,Auto"
+                  AutomationProperties.Name="Debug panel">
+              <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="Debug"
+                           Classes="sectionLabel"
+                           DockPanel.Dock="Left"
+                           VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                  <Button Content="↺"
+                          Classes="ghost"
+                          Command="{Binding DebugResetCommand}"
+                          IsEnabled="{Binding IsDebugAvailable}"
+                          ToolTip.Tip="Jump to first step"
+                          AutomationProperties.Name="Debug reset" />
+                  <Button Content="◀"
+                          Classes="ghost"
+                          Command="{Binding DebugStepBackwardCommand}"
+                          IsEnabled="{Binding CanDebugStepBack}"
+                          ToolTip.Tip="Step backward (F11)"
+                          AutomationProperties.Name="Debug step back" />
+                  <Button Content="▶"
+                          Classes="primaryAction"
+                          Command="{Binding DebugStepForwardCommand}"
+                          IsEnabled="{Binding CanDebugStepForward}"
+                          ToolTip.Tip="Step forward (F10)"
+                          AutomationProperties.Name="Debug step forward" />
+                  <Button Content="⇥"
+                          Classes="ghost"
+                          Command="{Binding DebugGoToEndCommand}"
+                          IsEnabled="{Binding IsDebugAvailable}"
+                          ToolTip.Tip="Jump to last step"
+                          AutomationProperties.Name="Debug go to end" />
+                  <Button Content="Refresh"
+                          Classes="ghost"
+                          Command="{Binding RefreshDebugCommand}"
+                          ToolTip.Tip="Rebuild debug session from current pattern/subject" />
+                </StackPanel>
+              </DockPanel>
+
+              <Border Grid.Row="1"
+                      IsVisible="{Binding !IsDebugAvailable}"
+                      Background="{DynamicResource AccentBlueSoftBrush}"
+                      BorderBrush="{DynamicResource PrimaryBlueBrush}"
+                      BorderThickness="1"
+                      CornerRadius="4"
+                      Padding="10,8"
+                      Margin="0,0,0,8">
+                <TextBlock Text="{Binding DebugUnavailableMessage}"
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           AutomationProperties.Name="Debug unavailable message" />
+              </Border>
+
+              <StackPanel Grid.Row="2"
+                          IsVisible="{Binding IsDebugAvailable}"
+                          Spacing="6"
+                          Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                  <TextBlock Text="{Binding DebugStepCounter}"
+                             FontWeight="SemiBold"
+                             FontSize="13"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             VerticalAlignment="Center"
+                             AutomationProperties.Name="Debug step counter" />
+                  <Border Grid.Column="1"
+                          Background="{DynamicResource BackgroundTertiaryBrush}"
+                          CornerRadius="3"
+                          Padding="8,2"
+                          Margin="8,0,4,0">
+                    <TextBlock Text="{Binding DebugKindLabel}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryBlueBrush}" />
+                  </Border>
+                  <Border Grid.Column="2"
+                          Background="{DynamicResource AccentBlueSoftBrush}"
+                          CornerRadius="3"
+                          Padding="8,2">
+                    <TextBlock Text="{Binding DebugStatusLabel}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                  </Border>
+                </Grid>
+
+                <TextBlock Text="{Binding DebugExplanation}"
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           AutomationProperties.Name="Debug explanation" />
+
+                <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                  <StackPanel Margin="0,0,6,0" Spacing="2">
+                    <TextBlock Text="Pattern focus" Classes="mutedHint" FontSize="10" />
+                    <Border Background="{DynamicResource BackgroundTertiaryBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="8,6"
+                            MinHeight="36">
+                      <TextBlock Text="{Binding DebugPatternSnippet}"
+                                 FontFamily="Menlo, Consolas, monospace"
+                                 FontSize="12"
+                                 TextWrapping="Wrap"
+                                 Foreground="{DynamicResource PrimaryBlueBrush}" />
+                    </Border>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="2">
+                    <TextBlock Text="Subject focus" Classes="mutedHint" FontSize="10" />
+                    <Border Background="{DynamicResource MatchHighlightBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="8,6"
+                            MinHeight="36">
+                      <TextBlock Text="{Binding DebugSubjectSnippet}"
+                                 FontFamily="Menlo, Consolas, monospace"
+                                 FontSize="12"
+                                 TextWrapping="Wrap"
+                                 Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                  </StackPanel>
+                </Grid>
+
+                <TextBlock Text="Subject"
+                           Classes="sectionLabel"
+                           Margin="0,6,0,0" />
+                <Border Classes="editorFrame" Height="120">
+                  <ae:TextEditor x:Name="DebugSubjectEditor"
+                                 FontFamily="Menlo, Consolas, monospace"
+                                 FontSize="13"
+                                 WordWrap="True"
+                                 Background="{DynamicResource EditorBackgroundBrush}"
+                                 Foreground="{DynamicResource EditorForegroundBrush}"
+                                 HorizontalScrollBarVisibility="Disabled"
+                                 VerticalScrollBarVisibility="Auto" />
+                </Border>
+              </StackPanel>
+
+              <TextBlock Grid.Row="3"
+                         IsVisible="{Binding IsDebugAvailable}"
+                         Text="{Binding DebugApproachNote}"
+                         Classes="mutedHint"
+                         Margin="0,0,0,6" />
+
+              <Panel Grid.Row="4" IsVisible="{Binding IsDebugAvailable}">
+                <ListBox ItemsSource="{Binding DebugSteps}"
+                         SelectedItem="{Binding SelectedDebugStep}"
+                         Classes="matchList"
+                         Background="{DynamicResource BackgroundTertiaryBrush}"
+                         BorderBrush="{DynamicResource BorderSubtleBrush}"
+                         BorderThickness="1"
+                         CornerRadius="4"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         AutomationProperties.Name="Debug step list">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DebugStepViewModel">
+                      <Border HorizontalAlignment="Stretch"
+                              Padding="6,4"
+                              Margin="0,1"
+                              Background="{DynamicResource BackgroundSecondaryBrush}"
+                              BorderBrush="{DynamicResource BorderSubtleBrush}"
+                              BorderThickness="1"
+                              CornerRadius="3">
+                        <Grid ColumnDefinitions="Auto,*" HorizontalAlignment="Stretch">
+                          <Border Background="{DynamicResource AccentBlueSoftBrush}"
+                                  CornerRadius="3"
+                                  Padding="6,2"
+                                  Margin="0,0,8,0"
+                                  VerticalAlignment="Top">
+                            <TextBlock Text="{Binding KindLabel}"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryBlueBrush}" />
+                          </Border>
+                          <TextBlock Grid.Column="1"
+                                     Text="{Binding SummaryLine}"
+                                     FontSize="11"
+                                     TextWrapping="Wrap"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" />
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Panel>
+
+              <TextBlock Grid.Row="5"
+                         Classes="mutedHint"
+                         Margin="0,8,0,0"
+                         Text="Shortcuts: F10 step forward · F11 step back · Ctrl+7 open Debug. Educational walk-through — not a full engine simulator." />
             </Grid>
           </Grid>
         </DockPanel>
