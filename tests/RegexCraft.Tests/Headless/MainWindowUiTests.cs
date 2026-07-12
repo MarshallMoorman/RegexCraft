@@ -102,6 +102,67 @@ public sealed class MainWindowUiTests
     }
 
     [AvaloniaTest]
+    public void CompareMode_ExpandsRightPanel_AndRestoresOnLeave()
+    {
+        var vm = HeadlessTestHelpers.CreateViewModel(_tempDir);
+        var window = HeadlessTestHelpers.CreateMainWindow(vm);
+        window.Width = 1320;
+        window.Height = 860;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // Force layout pass so Bounds are non-zero.
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        var body = window.FindControl<Avalonia.Controls.Grid>("MainBodyGrid");
+        Assert.That(body, Is.Not.Null);
+        Assert.That(body!.ColumnDefinitions.Count, Is.GreaterThanOrEqualTo(5));
+
+        // Start on Test (Normal): right should be absolute, center star.
+        Assert.That(vm.IsCompareTab, Is.False);
+        Assert.That(body.ColumnDefinitions[2].Width.IsStar, Is.True);
+        Assert.That(body.ColumnDefinitions[4].Width.IsAbsolute, Is.True);
+        var normalRight = body.ColumnDefinitions[4].Width.Value;
+
+        vm.SelectRightTabCommand.Execute("Compare");
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        // Compare: center collapses to a fixed strip; right is star (or large absolute).
+        Assert.That(vm.IsCompareTab, Is.True);
+        Assert.That(body.ColumnDefinitions[2].Width.IsAbsolute, Is.True,
+            "center should shrink to a fixed strip in Compare");
+        Assert.That(body.ColumnDefinitions[2].Width.Value,
+            Is.EqualTo(RegexCraft.Core.Settings.LayoutDefaults.CenterWidthWhenCompare).Within(1));
+        Assert.That(
+            body.ColumnDefinitions[4].Width.IsStar
+            || body.ColumnDefinitions[4].Width.Value > normalRight + 100,
+            "right panel should expand to take most of the body in Compare");
+
+        var rightHost = window.FindControl<Avalonia.Controls.Border>("RightPanelHost");
+        Assert.That(rightHost, Is.Not.Null);
+        if (rightHost!.Bounds.Width > 0 && body.Bounds.Width > 0)
+        {
+            var share = rightHost.Bounds.Width / body.Bounds.Width;
+            Assert.That(share, Is.GreaterThan(0.45),
+                $"Compare right host should dominate body (share={share:F2})");
+        }
+
+        vm.SelectRightTabCommand.Execute("Test");
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.That(body.ColumnDefinitions[2].Width.IsStar, Is.True, "center star restored");
+        Assert.That(body.ColumnDefinitions[4].Width.IsAbsolute, Is.True, "normal absolute right restored");
+        Assert.That(body.ColumnDefinitions[4].Width.Value, Is.EqualTo(normalRight).Within(2));
+
+        window.Close();
+    }
+
+    [AvaloniaTest]
     public void ChangeFlavor_UpdatesEngineAndRetests()
     {
         var vm = HeadlessTestHelpers.CreateViewModel(_tempDir);

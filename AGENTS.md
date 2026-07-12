@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — Phase 10 complete (**v1.0.0**)  
+**Last updated**: 2026-07-12 — **v1.0.1** (Compare majority layout + publish workflow fixes)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -42,7 +42,7 @@ Living guide for AI agents and humans working on RegexCraft.
 - Left: Tokens / Library / History — Library shows **Built-in** badge; built-ins not deletable  
 - Center: Pattern editor (AvaloniaEdit) + Analysis Tree  
 - Right: **single mode host** — Test / Replace / Split / Generate / GREP / **Compare**  
-- **Right-panel widths**: Normal (non-Compare modes) and Compare stored separately; switch to Compare expands; leave restores Normal; splitter drags update the active mode’s memory  
+- **Right-panel widths**: Normal absolute width for non-Compare modes; **Compare collapses the center editor to ~280px and gives the right panel star/majority space**; leave restores Normal; splitter drags update memory; stale narrow Compare widths ignored  
 - Toolbar: **expanded Flavor list**, modes (Ctrl+1–6), Options, Theme (persisted correctly)  
 - Fidelity **banner** when testing is High/Approximate  
 - Options: flavor-aware enable/disable (e.g. JS has no ExplicitCapture / free-spacing)  

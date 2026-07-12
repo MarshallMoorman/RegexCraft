@@ -111,37 +111,48 @@ jobs:
             echo "self_contained=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # MSYS/Git-Bash on Windows converts args that look like Unix paths (/p:...).
+      # Use -p: (dash form) and disable conversion for safety.
       - name: Publish
         shell: bash
+        env:
+          MSYS_NO_PATHCONV: 1
+          MSYS2_ARG_CONV_EXCL: "*"
         run: |
+          set -e
           OUT="artifacts/RegexCraft-${{ matrix.rid }}"
           mkdir -p "$OUT"
-          SC_FLAG="--self-contained ${{ steps.cfg.outputs.self_contained }}"
+          SC="${{ steps.cfg.outputs.self_contained }}"
+          # Avoid /p: switches — Git Bash on windows-latest mangles them into extra "projects".
           dotnet publish src/RegexCraft.App/RegexCraft.App.csproj \
             -c "${{ steps.cfg.outputs.configuration }}" \
             -r "${{ matrix.rid }}" \
-            $SC_FLAG \
+            --self-contained "$SC" \
             -o "$OUT" \
-            /p:PublishSingleFile=false \
-            /p:IncludeNativeLibrariesForSelfExtract=true
+            -p:PublishSingleFile=false \
+            -p:IncludeNativeLibrariesForSelfExtract=true
           echo "Published to $OUT"
-          ls -la "$OUT" | head -40
+          # Do not pipe ls into head under pipefail — SIGPIPE fails the step on Linux.
+          ls -la "$OUT" || true
 
       - name: Zip artifact
         shell: bash
         run: |
+          set -e
           cd artifacts
           # Prefer zip on all platforms. Windows runners often lack zip(1).
           if command -v zip >/dev/null 2>&1; then
             zip -r "RegexCraft-${{ matrix.rid }}.zip" "RegexCraft-${{ matrix.rid }}"
-          elif command -v powershell >/dev/null 2>&1 || command -v pwsh >/dev/null 2>&1; then
-            PS=$(command -v pwsh || command -v powershell)
-            "$PS" -NoProfile -Command \
+          elif command -v pwsh >/dev/null 2>&1; then
+            pwsh -NoProfile -Command \
+              "Compress-Archive -Path 'RegexCraft-${{ matrix.rid }}' -DestinationPath 'RegexCraft-${{ matrix.rid }}.zip' -Force"
+          elif command -v powershell >/dev/null 2>&1; then
+            powershell -NoProfile -Command \
               "Compress-Archive -Path 'RegexCraft-${{ matrix.rid }}' -DestinationPath 'RegexCraft-${{ matrix.rid }}.zip' -Force"
           else
             tar -czf "RegexCraft-${{ matrix.rid }}.tar.gz" "RegexCraft-${{ matrix.rid }}"
           fi
-          ls -la
+          ls -la || true
 
       - name: Upload published folder
         uses: actions/upload-artifact@v4

@@ -124,6 +124,13 @@ What happens next:
    - Marks pre-release when the tag contains `-`, `rc`, `beta`, or `alpha`  
    - **Refuses** to create a release with zero archives (no empty half-created releases)
 
+### Publish pitfalls (fixed in 1.0.1 workflow)
+
+| Issue | Cause | Fix in workflow |
+|-------|--------|-----------------|
+| **win-x64** fails with `MSB1008: Only one project can be specified` | Git Bash converts `/p:Property=value` into a bare `p:…` “project” | Use `-p:Property=value` and `MSYS2_ARG_CONV_EXCL=*` |
+| **linux-x64** fails after a successful publish with exit code 2 | `ls \| head` under `pipefail` gets SIGPIPE | List the folder without piping to `head` |
+
 ### Manual artifacts (no GitHub Release)
 
 1. GitHub → **Actions** → **Publish** → **Run workflow**  

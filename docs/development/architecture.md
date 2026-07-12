@@ -1,6 +1,6 @@
 # RegexCraft Architecture
 
-**Version**: 1.0.0
+**Version**: 1.0.1
 
 ## Overview
 
@@ -55,7 +55,7 @@ Status: Flavor (+ fidelity) | Engine | Counts | Time | Shortcuts
 
 Right modes share one DockPanel last-child **Grid host**. Only one mode is visible; each mode Grid uses `rightMode` + star rows so previews/lists stretch.
 
-**Right-panel width memory** (`LayoutDefaults` + `AppSettings`): Normal width for Test/Replace/Split/Generate/GREP, Compare width when Compare is active. Mode switches apply the target width; splitter drags update the active mode’s stored value.
+**Right-panel width memory** (`LayoutDefaults` + `AppSettings`): Normal absolute width for Test/Replace/Split/Generate/GREP. On **Compare**, the center column collapses to a fixed strip (~280 px) and the right panel takes the remaining star space (~72% of the body by default) so multi-flavor cards fit. Leaving Compare restores Normal. Splitter drags update the active mode’s stored value; stale narrow Compare widths from older builds are ignored.
 
 ### Modes
 

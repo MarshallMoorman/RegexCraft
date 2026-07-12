@@ -1419,26 +1419,28 @@
                 <Border Classes="listFrame" IsVisible="{Binding !CompareCards.Count}">
                   <TextBlock Text="{Binding CompareEmptyMessage}" Classes="emptyState" />
                 </Border>
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto"
                               IsVisible="{Binding CompareCards.Count}">
                   <ItemsControl ItemsSource="{Binding CompareCards}"
                                 AutomationProperties.Name="Compare result cards">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="10" />
+                        <WrapPanel Orientation="Horizontal" />
                       </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:CompareCardViewModel">
-                        <Border Width="260"
+                        <Border MinWidth="260"
+                                MaxWidth="360"
+                                Width="300"
                                 MinHeight="200"
+                                Margin="0,0,10,10"
                                 Background="{DynamicResource BackgroundSecondaryBrush}"
                                 BorderBrush="{DynamicResource BorderSubtleBrush}"
                                 BorderThickness="1"
                                 CornerRadius="8"
-                                Padding="12,10"
-                                Margin="0,0,2,4">
+                                Padding="12,10">
                           <DockPanel>
                             <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
                               <TextBlock Text="{Binding Header}"

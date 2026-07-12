@@ -1,17 +1,31 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: **1.0.0** (Phase 10 complete — stable release)  
-**Date**: 2026-07-11  
+**Current Version**: **1.0.1** (Phase 10 + layout/publish hotfixes)  
+**Date**: 2026-07-12  
 **Next**: Post-1.0 roadmap — **Debug / step-through for 1.1**, website, fidelity, installers  
+
+---
+
+## 1.0.1 hotfixes (after 1.0.0)
+
+1. **Compare takes most of the editor area**  
+   - Center column collapses to ~280 px; right panel is `*` (majority of body)  
+   - Cards wrap in a multi-row grid  
+   - Leaving Compare restores Normal absolute right width  
+   - Stale ~520 px Compare widths from 1.0.0 are ignored  
+
+2. **Publish workflow**  
+   - win-x64: `-p:` properties (not `/p:`) so Git Bash does not mangle MSBuild args  
+   - linux-x64: no `ls | head` under `pipefail`  
+   - Tag **`v1.0.1`** for a full four-RID release (v1.0.0 only got osx zips)
 
 ---
 
 ## What Was Completed in Phase 10 (1.0.0)
 
-1. **Smart right-panel sizing**  
-   - Normal width (Test / Replace / Split / Generate / GREP) vs Compare width  
-   - Switch **to** Compare → expand to remembered Compare width (or default ~520 px / min ~480)  
-   - Switch **away** → restore Normal width  
+1. **Smart right-panel sizing** (refined in 1.0.1 to majority-of-body Compare layout)  
+   - Normal width (Test / Replace / Split / Generate / GREP) vs Compare layout  
+   - Switch **to** Compare → expand aggressively; **away** → restore Normal  
    - Splitter drags update the active mode’s stored width  
    - Persisted in `AppSettings` via `JsonSettingsStore`  
    - Constants in `LayoutDefaults` (no magic numbers in the view)
@@ -35,21 +49,22 @@
 
 ---
 
-## How to ship the public tag (human step if not yet pushed)
+## How to ship v1.0.1 (recommended after 1.0.0 osx-only release)
 
 ```bash
 git checkout main
 git pull origin main
-# Confirm version and latest commit
-grep '<Version>' Directory.Build.props   # 1.0.0
+grep '<Version>' Directory.Build.props   # 1.0.1
 git log -1 --oneline
 
-git tag -a v1.0.0 -m "RegexCraft 1.0.0"
+git tag -a v1.0.1 -m "RegexCraft 1.0.1"
 git push origin main
-git push origin v1.0.0
+git push origin v1.0.1
 ```
 
-Then verify on GitHub: **Actions → Publish** green, **Releases → v1.0.0** has four zips.
+Then verify on GitHub: **Actions → Publish** — all four RIDs green, **Releases → v1.0.1** has win/linux/osx zips.
+
+Optional: leave `v1.0.0` as-is (macOS-only assets) or edit the release notes to point users at 1.0.1.
 
 ---
 

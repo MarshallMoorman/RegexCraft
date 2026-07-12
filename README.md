@@ -7,7 +7,7 @@
 
 | | |
 |---|---|
-| **Version** | **1.0.0** |
+| **Version** | **1.0.1** |
 | **Domain** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
 | **License** | MIT |
@@ -186,7 +186,7 @@ RegexCraft/
 │   ├── screenshots/           # Auto-captured PNGs for README/docs
 │   ├── user/                  # End-user guides (incl. comparing.md, flavors.md)
 │   └── development/           # Architecture, packaging, phase requirements
-├── Directory.Build.props      # Version (1.0.0)
+├── Directory.Build.props      # Version (1.0.1)
 └── AGENTS.md / HANDOFF.md
 ```
 

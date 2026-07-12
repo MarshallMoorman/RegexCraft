@@ -122,15 +122,35 @@ public sealed class MainWindowViewModelExpandedTests
     }
 
     [Test]
+    public void GetTargetRightPanelWidth_Compare_UsesBodyShare()
+    {
+        var vm = CreateVm();
+        var w = vm.GetTargetRightPanelWidth(compareMode: true, bodyWidth: 1320);
+        Assert.That(w, Is.GreaterThan(700), "Compare should claim most of the body content row");
+    }
+
+    [Test]
     public void GetTargetRightPanelWidth_UsesStoredSettings()
     {
         var vm = CreateVm(new AppSettings
         {
             RightPanelNormalWidth = 360,
-            RightPanelCompareWidth = 580,
+            RightPanelCompareWidth = 900,
         });
         Assert.That(vm.GetTargetRightPanelWidth(false), Is.EqualTo(360));
-        Assert.That(vm.GetTargetRightPanelWidth(true), Is.EqualTo(580));
+        // Large stored Compare width is usable
+        Assert.That(vm.GetTargetRightPanelWidth(true), Is.EqualTo(900));
+    }
+
+    [Test]
+    public void GetTargetRightPanelWidth_IgnoresStaleNarrowCompareStore()
+    {
+        var vm = CreateVm(new AppSettings
+        {
+            RightPanelNormalWidth = 400,
+            RightPanelCompareWidth = 520, // old default — not usable
+        });
+        Assert.That(vm.GetTargetRightPanelWidth(true, bodyWidth: 1320), Is.GreaterThan(700));
     }
 
     [Test]
@@ -138,17 +158,25 @@ public sealed class MainWindowViewModelExpandedTests
     {
         var vm = CreateVm();
         vm.RememberRightPanelWidth(370, compareMode: false);
-        vm.RememberRightPanelWidth(550, compareMode: true);
+        vm.RememberRightPanelWidth(850, compareMode: true);
 
         var store = new JsonSettingsStore(Path.Combine(_tempDir, "settings.json"));
         var loaded = store.Load();
         Assert.That(loaded.RightPanelNormalWidth, Is.EqualTo(370));
-        Assert.That(loaded.RightPanelCompareWidth, Is.EqualTo(550));
+        Assert.That(loaded.RightPanelCompareWidth, Is.EqualTo(850));
 
         var vm2 = CreateVm(); // same settings path via CreateVm without seed reloads file
-        // CreateVm without seed does NOT re-save; it loads whatever is on disk
         Assert.That(vm2.GetTargetRightPanelWidth(false), Is.EqualTo(370));
-        Assert.That(vm2.GetTargetRightPanelWidth(true), Is.EqualTo(550));
+        Assert.That(vm2.GetTargetRightPanelWidth(true), Is.EqualTo(850));
+    }
+
+    [Test]
+    public void RememberRightPanelWidth_DoesNotPersistTooNarrowCompare()
+    {
+        var vm = CreateVm();
+        vm.RememberRightPanelWidth(400, compareMode: true); // below CompareMin
+        var store = new JsonSettingsStore(Path.Combine(_tempDir, "settings.json"));
+        Assert.That(store.Load().RightPanelCompareWidth, Is.Null);
     }
 
     [Test]

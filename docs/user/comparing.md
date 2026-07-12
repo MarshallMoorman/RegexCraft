@@ -43,14 +43,14 @@ Approximate flavors (Python, Go, Rust, …) still run on the closest real engine
 
 ## Layout (right panel width)
 
-Compare needs more horizontal space than Match or Replace. RegexCraft remembers **two** right-panel widths:
+Compare needs far more horizontal space than Match or Replace. When you open **Compare**, the right panel **takes most of the editor area** (the center editor shrinks to a narrow strip so the pattern stays visible). When you switch to any other mode, the previous Normal layout is restored.
 
 | Mode | Behavior |
 |------|----------|
-| **Compare** | Expanding to a wider panel (default ~520 px, minimum ~480 px) so multi-flavor cards stay readable |
-| **Other modes** | Restores your previous Normal width (Test / Replace / Split / Generate / GREP) |
+| **Compare** | Right panel expands to ~70%+ of the body (star layout); multi-flavor cards wrap |
+| **Other modes** | Restores your previous Normal right-panel width (Test / Replace / Split / Generate / GREP) |
 
-Drag the splitter between the center editor and the right panel to resize. Your widths are saved with the rest of the app settings and restored on the next launch.
+Drag the splitter between the center editor and the right panel to fine-tune. Your Normal width and a usable Compare width are saved with the rest of the app settings.
 
 ## Tips
 

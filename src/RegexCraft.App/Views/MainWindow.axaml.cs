@@ -145,24 +145,62 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Apply the remembered (or default) right-panel width for the current mode.
+    /// Apply Normal vs Compare column layout.
+    /// Compare: center column shrinks to a fixed strip; right panel takes the remaining star space
+    /// (most of the former editor area). Normal: center is star; right is absolute remembered width.
     /// </summary>
     private void ApplyRightPanelWidthFromSettings()
     {
         if (_vm is null || MainBodyGrid?.ColumnDefinitions is not { Count: > 4 } cols)
             return;
 
-        var target = _vm.GetTargetRightPanelWidth();
         _applyingRightPanelWidth = true;
         try
         {
-            cols[4].Width = new GridLength(target, GridUnitType.Pixel);
-            // Keep Compare cards usable: raise MinWidth when on Compare.
-            if (RightPanelHost is not null)
+            if (_vm.IsCompareTab)
             {
-                RightPanelHost.MinWidth = _vm.IsCompareTab
-                    ? LayoutDefaults.RightPanelCompareMin
-                    : LayoutDefaults.RightPanelMin;
+                // Center (editor + analysis) collapses to a narrow strip; right fills the rest.
+                cols[2].Width = new GridLength(LayoutDefaults.CenterWidthWhenCompare, GridUnitType.Pixel);
+                cols[2].MinWidth = LayoutDefaults.CenterMinWhenCompare;
+
+                // Prefer star so Compare always claims residual space after left + center.
+                // If the user previously dragged a usable absolute Compare width, honor it
+                // only when it is still a majority of the body (otherwise re-expand).
+                var body = MainBodyGrid.Bounds.Width;
+                if (body <= 0)
+                    body = Bounds.Width > 0 ? Bounds.Width : 1320;
+
+                var target = _vm.GetTargetRightPanelWidth(compareMode: true, bodyWidth: body);
+                var content = Math.Max(body - LayoutDefaults.LeftSidebarWidth - 10, target);
+                var majority = content * LayoutDefaults.CompareShareOfBody;
+
+                if (LayoutDefaults.IsUsableCompareWidth(_vm.LoadedSettings.RightPanelCompareWidth)
+                    && _vm.LoadedSettings.RightPanelCompareWidth >= majority * 0.85)
+                {
+                    cols[4].Width = new GridLength(
+                        LayoutDefaults.ClampCompare(_vm.LoadedSettings.RightPanelCompareWidth!.Value),
+                        GridUnitType.Pixel);
+                }
+                else
+                {
+                    cols[4].Width = new GridLength(1, GridUnitType.Star);
+                }
+
+                cols[4].MinWidth = LayoutDefaults.RightPanelCompareMin;
+                if (RightPanelHost is not null)
+                    RightPanelHost.MinWidth = LayoutDefaults.RightPanelCompareMin;
+            }
+            else
+            {
+                // Restore flexible editor + fixed Normal right width.
+                cols[2].Width = new GridLength(1, GridUnitType.Star);
+                cols[2].MinWidth = 280;
+
+                var normal = _vm.GetTargetRightPanelWidth(compareMode: false);
+                cols[4].Width = new GridLength(normal, GridUnitType.Pixel);
+                cols[4].MinWidth = LayoutDefaults.RightPanelMin;
+                if (RightPanelHost is not null)
+                    RightPanelHost.MinWidth = LayoutDefaults.RightPanelMin;
             }
         }
         finally

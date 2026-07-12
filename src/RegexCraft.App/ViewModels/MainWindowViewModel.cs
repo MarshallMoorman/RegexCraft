@@ -477,18 +477,22 @@ public partial class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     /// Target pixel width for the right panel given the current (or specified) mode.
+    /// Pass <paramref name="bodyWidth"/> when available so Compare can claim ~72% of the body.
     /// </summary>
-    public double GetTargetRightPanelWidth(bool? compareMode = null)
+    public double GetTargetRightPanelWidth(bool? compareMode = null, double bodyWidth = 0)
     {
         var compare = compareMode ?? IsCompareTab;
         return LayoutDefaults.ResolveRightPanelWidth(
             compare,
             _settings.RightPanelNormalWidth,
-            _settings.RightPanelCompareWidth);
+            _settings.RightPanelCompareWidth,
+            bodyWidth);
     }
 
     /// <summary>
     /// Remember the user-dragged (or programmatically measured) right-panel width for a mode.
+    /// Stale narrow Compare widths from older builds are not re-persisted as "user choice"
+    /// when the live measurement is still below the usable floor — the next open re-expands.
     /// </summary>
     public void RememberRightPanelWidth(double width, bool compareMode)
     {
@@ -496,9 +500,16 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
 
         if (compareMode)
+        {
+            // Don't lock in a too-narrow width; leave null so the next enter uses the share formula.
+            if (width < LayoutDefaults.RightPanelCompareMin)
+                return;
             _settings.RightPanelCompareWidth = LayoutDefaults.ClampCompare(width);
+        }
         else
+        {
             _settings.RightPanelNormalWidth = LayoutDefaults.ClampNormal(width);
+        }
 
         PersistSettings();
     }

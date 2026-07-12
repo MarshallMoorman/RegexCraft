@@ -5,6 +5,19 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] — 2026-07-12
+
+### Fixed
+
+- **Compare layout** — opening Compare now shrinks the center editor to a narrow strip and gives the right panel most of the body (star layout, ~72% share). Leaving Compare restores the previous Normal width. Stale ~520px stored widths from 1.0.0 are ignored and re-expanded.
+- **Compare cards** — wrap into a multi-row grid instead of a fixed-width horizontal strip so four flavor cards fit.
+- **Publish workflow (win-x64)** — Git Bash was mangling `/p:…` MSBuild switches (`MSB1008`); now uses `-p:` and disables MSYS path conversion.
+- **Publish workflow (linux-x64)** — `ls | head` under `pipefail` caused exit code 2 after a successful publish; listing no longer pipes through `head`.
+
+### Notes
+
+- Re-cut portable binaries with tag `v1.0.1` so Windows and Linux packages are included (v1.0.0 Release only shipped the macOS zips due to the publish bugs above).
+
 ## [1.0.0] — 2026-07-11
 
 First stable **1.0.0** release.
