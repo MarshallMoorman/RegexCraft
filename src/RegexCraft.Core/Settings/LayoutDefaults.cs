@@ -9,57 +9,63 @@ public static class LayoutDefaults
     /// <summary>Default left sidebar (Tokens / Library / History) width in px.</summary>
     public const double LeftSidebarWidth = 280;
 
-    /// <summary>Default right panel width for Test / Replace / Split / Generate / GREP.</summary>
-    public const double RightPanelNormalDefault = 400;
+    /// <summary>
+    /// Default right panel width for Test / Replace / Split / Generate / GREP.
+    /// Wide enough that the six mode tabs (including full "Compare") usually fit without scrolling.
+    /// </summary>
+    public const double RightPanelNormalDefault = 460;
 
     /// <summary>
     /// Fallback absolute Compare width when window size is unknown (tests / first layout).
     /// Prefer <see cref="ResolveCompareWidth"/> with live body width.
     /// </summary>
-    public const double RightPanelCompareDefault = 780;
+    public const double RightPanelCompareDefault = 860;
 
     /// <summary>Hard minimum for the right panel (matches MainWindow MinWidth on host).</summary>
-    public const double RightPanelMin = 300;
+    public const double RightPanelMin = 320;
 
     /// <summary>
     /// Minimum usable Compare width. Stored values below this are treated as stale
-    /// (e.g. from the old ~520px default) and re-expanded.
+    /// and re-expanded.
     /// </summary>
-    public const double RightPanelCompareMin = 640;
+    public const double RightPanelCompareMin = 700;
 
     /// <summary>
-    /// When Compare is active, the center (editor + analysis) column is fixed to this
-    /// width so the right panel can take the rest of the body (star).
+    /// When Compare is active, the center column is a pattern-only strip of this width
+    /// (analysis tree is hidden) so the right panel can claim the rest.
     /// </summary>
-    public const double CenterWidthWhenCompare = 280;
+    public const double CenterWidthWhenCompare = 240;
 
-    /// <summary>Floor for the center column while Compare is active (still readable).</summary>
-    public const double CenterMinWhenCompare = 200;
+    /// <summary>Floor for the center column while Compare is active.</summary>
+    public const double CenterMinWhenCompare = 180;
 
     /// <summary>
-    /// Fraction of the body width (left sidebar excluded) that Compare should claim
+    /// When Compare is active, shrink the left sidebar to this width so cards get more room.
+    /// </summary>
+    public const double LeftSidebarWidthWhenCompare = 200;
+
+    /// <summary>
+    /// Fraction of the body width (after left sidebar) that Compare should claim
     /// when applying an absolute pixel fallback.
     /// </summary>
-    public const double CompareShareOfBody = 0.72;
+    public const double CompareShareOfBody = 0.78;
 
     /// <summary>Upper clamp for remembered Normal widths.</summary>
     public const double RightPanelNormalMax = 900;
 
     /// <summary>Upper clamp for remembered Compare widths (large monitors).</summary>
-    public const double RightPanelCompareMax = 1600;
+    public const double RightPanelCompareMax = 1800;
 
     /// <summary>Clamp a Normal-mode width to the allowed range.</summary>
     public static double ClampNormal(double width) =>
         Math.Clamp(width, RightPanelMin, RightPanelNormalMax);
 
-    /// <summary>
-    /// Clamp a Compare-mode absolute width.
-    /// </summary>
+    /// <summary>Clamp a Compare-mode absolute width.</summary>
     public static double ClampCompare(double width) =>
         Math.Clamp(width, RightPanelCompareMin, RightPanelCompareMax);
 
     /// <summary>
-    /// Whether a stored Compare width is large enough to honor (not a pre-1.0.1 small default).
+    /// Whether a stored Compare width is large enough to honor.
     /// </summary>
     public static bool IsUsableCompareWidth(double? stored) =>
         stored is >= RightPanelCompareMin;
@@ -75,25 +81,22 @@ public static class LayoutDefaults
 
     /// <summary>
     /// Resolve the preferred absolute Compare right-panel width from the live body width.
-    /// Used when star layout is not applied, or to seed remembered widths.
     /// </summary>
     /// <param name="bodyWidth">Full main body grid width (includes left sidebar).</param>
     /// <param name="storedCompare">Optional user-remembered Compare width.</param>
     public static double ResolveCompareWidth(double bodyWidth, double? storedCompare)
     {
-        // Content row after left sidebar + two splitters (~5+5).
-        var contentWidth = bodyWidth > LeftSidebarWidth + 20
-            ? bodyWidth - LeftSidebarWidth - 10
-            : Math.Max(bodyWidth * 0.75, RightPanelCompareDefault);
+        var left = LeftSidebarWidthWhenCompare;
+        var contentWidth = bodyWidth > left + 20
+            ? bodyWidth - left - 10
+            : Math.Max(bodyWidth * 0.8, RightPanelCompareDefault);
 
         var preferred = contentWidth * CompareShareOfBody;
-        // Leave a thin strip for the editor so the pattern remains visible.
         var maxForRight = Math.Max(RightPanelCompareMin, contentWidth - CenterMinWhenCompare);
         preferred = Math.Clamp(preferred, RightPanelCompareMin, maxForRight);
 
         if (IsUsableCompareWidth(storedCompare))
         {
-            // Honor a user drag, but never collapse below the share floor for this window.
             var floor = Math.Min(preferred, maxForRight);
             return Math.Clamp(storedCompare!.Value, floor * 0.9, maxForRight);
         }

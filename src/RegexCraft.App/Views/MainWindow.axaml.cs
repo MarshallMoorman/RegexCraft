@@ -146,8 +146,9 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Apply Normal vs Compare column layout.
-    /// Compare: center column shrinks to a fixed strip; right panel takes the remaining star space
-    /// (most of the former editor area). Normal: center is star; right is absolute remembered width.
+    /// Compare: left sidebar narrows, analysis is hidden, center is a pattern-only strip,
+    /// and the right panel takes the remaining star space (most of the window).
+    /// Normal: left + center + absolute remembered right width.
     /// </summary>
     private void ApplyRightPanelWidthFromSettings()
     {
@@ -159,40 +160,28 @@ public partial class MainWindow : Window
         {
             if (_vm.IsCompareTab)
             {
-                // Center (editor + analysis) collapses to a narrow strip; right fills the rest.
+                // Narrow the left sidebar so cards get more horizontal room.
+                cols[0].Width = new GridLength(LayoutDefaults.LeftSidebarWidthWhenCompare, GridUnitType.Pixel);
+                cols[0].MinWidth = 160;
+
+                // Pattern-only strip (analysis rows collapsed below).
                 cols[2].Width = new GridLength(LayoutDefaults.CenterWidthWhenCompare, GridUnitType.Pixel);
                 cols[2].MinWidth = LayoutDefaults.CenterMinWhenCompare;
 
-                // Prefer star so Compare always claims residual space after left + center.
-                // If the user previously dragged a usable absolute Compare width, honor it
-                // only when it is still a majority of the body (otherwise re-expand).
-                var body = MainBodyGrid.Bounds.Width;
-                if (body <= 0)
-                    body = Bounds.Width > 0 ? Bounds.Width : 1320;
-
-                var target = _vm.GetTargetRightPanelWidth(compareMode: true, bodyWidth: body);
-                var content = Math.Max(body - LayoutDefaults.LeftSidebarWidth - 10, target);
-                var majority = content * LayoutDefaults.CompareShareOfBody;
-
-                if (LayoutDefaults.IsUsableCompareWidth(_vm.LoadedSettings.RightPanelCompareWidth)
-                    && _vm.LoadedSettings.RightPanelCompareWidth >= majority * 0.85)
-                {
-                    cols[4].Width = new GridLength(
-                        LayoutDefaults.ClampCompare(_vm.LoadedSettings.RightPanelCompareWidth!.Value),
-                        GridUnitType.Pixel);
-                }
-                else
-                {
-                    cols[4].Width = new GridLength(1, GridUnitType.Star);
-                }
-
+                // Always star: guaranteed majority of remaining body for Compare cards.
+                cols[4].Width = new GridLength(1, GridUnitType.Star);
                 cols[4].MinWidth = LayoutDefaults.RightPanelCompareMin;
                 if (RightPanelHost is not null)
                     RightPanelHost.MinWidth = LayoutDefaults.RightPanelCompareMin;
+
+                CollapseAnalysisRows(collapse: true);
             }
             else
             {
-                // Restore flexible editor + fixed Normal right width.
+                // Restore default three-column proportions.
+                cols[0].Width = new GridLength(LayoutDefaults.LeftSidebarWidth, GridUnitType.Pixel);
+                cols[0].MinWidth = 200;
+
                 cols[2].Width = new GridLength(1, GridUnitType.Star);
                 cols[2].MinWidth = 280;
 
@@ -201,11 +190,36 @@ public partial class MainWindow : Window
                 cols[4].MinWidth = LayoutDefaults.RightPanelMin;
                 if (RightPanelHost is not null)
                     RightPanelHost.MinWidth = LayoutDefaults.RightPanelMin;
+
+                CollapseAnalysisRows(collapse: false);
             }
         }
         finally
         {
             _applyingRightPanelWidth = false;
+        }
+    }
+
+    /// <summary>
+    /// Zero out the analysis tree rows while Compare is active so the pattern editor
+    /// can use the full center strip height (analysis is not useful during multi-flavor compare).
+    /// </summary>
+    private void CollapseAnalysisRows(bool collapse)
+    {
+        if (CenterColumnGrid?.RowDefinitions is not { Count: >= 3 } rows)
+            return;
+
+        if (collapse)
+        {
+            rows[1].Height = new GridLength(0);
+            rows[2].Height = new GridLength(0);
+            rows[2].MinHeight = 0;
+        }
+        else
+        {
+            rows[1].Height = new GridLength(5);
+            rows[2].Height = new GridLength(200);
+            rows[2].MinHeight = 100;
         }
     }
 

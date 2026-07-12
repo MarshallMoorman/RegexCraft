@@ -43,14 +43,16 @@ Approximate flavors (Python, Go, Rust, …) still run on the closest real engine
 
 ## Layout (right panel width)
 
-Compare needs far more horizontal space than Match or Replace. When you open **Compare**, the right panel **takes most of the editor area** (the center editor shrinks to a narrow strip so the pattern stays visible). When you switch to any other mode, the previous Normal layout is restored.
+Compare needs far more horizontal space than Match or Replace. When you open **Compare**:
 
-| Mode | Behavior |
-|------|----------|
-| **Compare** | Right panel expands to ~70%+ of the body (star layout); multi-flavor cards wrap |
-| **Other modes** | Restores your previous Normal right-panel width (Test / Replace / Split / Generate / GREP) |
+- The **right panel expands** to fill most of the window (star layout)
+- The **center** becomes a narrow pattern-only strip (analysis tree is hidden while comparing)
+- The **left sidebar** narrows slightly so cards get more room
+- Result cards sit in a **2-column grid** that fills the panel
 
-Drag the splitter between the center editor and the right panel to fine-tune. Your Normal width and a usable Compare width are saved with the rest of the app settings.
+When you switch to any other mode, the previous Normal layout is restored (full analysis tree, wider editor, remembered right-panel width).
+
+The mode tabs (Test … Compare) scroll horizontally if the panel is narrow so labels are never clipped.
 
 ## Tips
 

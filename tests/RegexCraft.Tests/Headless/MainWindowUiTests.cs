@@ -130,23 +130,28 @@ public sealed class MainWindowUiTests
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        // Compare: center collapses to a fixed strip; right is star (or large absolute).
+        // Compare: left narrows, center is a pattern strip, right is star.
         Assert.That(vm.IsCompareTab, Is.True);
+        Assert.That(body.ColumnDefinitions[0].Width.IsAbsolute, Is.True);
+        Assert.That(body.ColumnDefinitions[0].Width.Value,
+            Is.EqualTo(RegexCraft.Core.Settings.LayoutDefaults.LeftSidebarWidthWhenCompare).Within(1));
         Assert.That(body.ColumnDefinitions[2].Width.IsAbsolute, Is.True,
             "center should shrink to a fixed strip in Compare");
         Assert.That(body.ColumnDefinitions[2].Width.Value,
             Is.EqualTo(RegexCraft.Core.Settings.LayoutDefaults.CenterWidthWhenCompare).Within(1));
-        Assert.That(
-            body.ColumnDefinitions[4].Width.IsStar
-            || body.ColumnDefinitions[4].Width.Value > normalRight + 100,
-            "right panel should expand to take most of the body in Compare");
+        Assert.That(body.ColumnDefinitions[4].Width.IsStar, Is.True,
+            "right panel should be star and claim residual body width in Compare");
+
+        var analysis = window.FindControl<Avalonia.Controls.Border>("AnalysisPanel");
+        Assert.That(analysis, Is.Not.Null);
+        Assert.That(analysis!.IsVisible, Is.False, "analysis tree should hide during Compare");
 
         var rightHost = window.FindControl<Avalonia.Controls.Border>("RightPanelHost");
         Assert.That(rightHost, Is.Not.Null);
         if (rightHost!.Bounds.Width > 0 && body.Bounds.Width > 0)
         {
             var share = rightHost.Bounds.Width / body.Bounds.Width;
-            Assert.That(share, Is.GreaterThan(0.45),
+            Assert.That(share, Is.GreaterThan(0.5),
                 $"Compare right host should dominate body (share={share:F2})");
         }
 
@@ -155,9 +160,12 @@ public sealed class MainWindowUiTests
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
+        Assert.That(body.ColumnDefinitions[0].Width.Value,
+            Is.EqualTo(RegexCraft.Core.Settings.LayoutDefaults.LeftSidebarWidth).Within(1));
         Assert.That(body.ColumnDefinitions[2].Width.IsStar, Is.True, "center star restored");
         Assert.That(body.ColumnDefinitions[4].Width.IsAbsolute, Is.True, "normal absolute right restored");
         Assert.That(body.ColumnDefinitions[4].Width.Value, Is.EqualTo(normalRight).Within(2));
+        Assert.That(analysis.IsVisible, Is.True, "analysis tree restored");
 
         window.Close();
     }

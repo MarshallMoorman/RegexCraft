@@ -52,13 +52,17 @@
     </Style>
 
     <Style Selector="Button.panelTab">
-      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="Padding" Value="10,8" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0,0,0,2" />
       <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="CornerRadius" Value="0" />
       <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
       <Setter Property="MinHeight" Value="34" />
+      <Setter Property="FontSize" Value="12" />
+      <!-- Never clip label text (e.g. "Compare" → "Comp") -->
+      <Setter Property="ClipToBounds" Value="False" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.panelTab:pointerover">
       <Setter Property="Background" Value="{DynamicResource AccentBlueSoftBrush}" />
@@ -422,7 +426,7 @@
 
     <!-- Body: left | splitter | center | splitter | right
          Right column width is managed in code-behind (Normal vs Compare memory). -->
-    <Grid x:Name="MainBodyGrid" ColumnDefinitions="280,5,*,5,400" Margin="0">
+    <Grid x:Name="MainBodyGrid" ColumnDefinitions="280,5,*,5,460" Margin="0">
 
       <!-- LEFT: Tokens / Library / History -->
       <Border Grid.Column="0"
@@ -688,8 +692,11 @@
       <GridSplitter Grid.Column="1" Classes="columnSplit"
                     ToolTip.Tip="Drag to resize left sidebar" />
 
-      <!-- CENTER: Editor + Analysis -->
-      <Grid Grid.Column="2" RowDefinitions="*,5,200" MinWidth="280">
+      <!-- CENTER: Editor + Analysis (analysis hidden while Compare so the right panel can grow) -->
+      <Grid x:Name="CenterColumnGrid"
+            Grid.Column="2"
+            RowDefinitions="*,5,200"
+            MinWidth="200">
         <Border Grid.Row="0" Background="{DynamicResource BackgroundSecondaryBrush}">
           <DockPanel>
             <Border DockPanel.Dock="Top"
@@ -719,16 +726,20 @@
           </DockPanel>
         </Border>
 
-        <GridSplitter Grid.Row="1"
+        <GridSplitter x:Name="AnalysisRowSplitter"
+                      Grid.Row="1"
                       Background="{DynamicResource BorderSubtleBrush}"
                       ResizeDirection="Rows"
-                      Height="5" />
+                      Height="5"
+                      IsVisible="{Binding !IsCompareTab}" />
 
-        <Border Grid.Row="2"
+        <Border x:Name="AnalysisPanel"
+                Grid.Row="2"
                 MinHeight="100"
                 Background="{DynamicResource BackgroundSecondaryBrush}"
                 BorderBrush="{DynamicResource BorderSubtleBrush}"
-                BorderThickness="0,1,0,0">
+                BorderThickness="0,1,0,0"
+                IsVisible="{Binding !IsCompareTab}">
           <DockPanel>
             <Border DockPanel.Dock="Top"
                     Padding="12,7"
@@ -784,52 +795,57 @@
               BorderBrush="{DynamicResource BorderSubtleBrush}"
               BorderThickness="0">
         <DockPanel LastChildFill="True">
-          <StackPanel DockPanel.Dock="Top"
-                      Orientation="Horizontal"
-                      Background="{DynamicResource BackgroundTertiaryBrush}">
-            <Button Content="Test"
-                    Classes="panelTab"
-                    Classes.active="{Binding IsTestTab}"
-                    Command="{Binding SelectRightTabCommand}"
-                    CommandParameter="Test"
-                    ToolTip.Tip="Match testing with highlighting"
-                    AutomationProperties.Name="Test mode tab" />
-            <Button Content="Replace"
-                    Classes="panelTab"
-                    Classes.active="{Binding IsReplaceTab}"
-                    Command="{Binding SelectRightTabCommand}"
-                    CommandParameter="Replace"
-                    ToolTip.Tip="Replace preview with highlighting"
-                    AutomationProperties.Name="Replace mode tab" />
-            <Button Content="Split"
-                    Classes="panelTab"
-                    Classes.active="{Binding IsSplitTab}"
-                    Command="{Binding SelectRightTabCommand}"
-                    CommandParameter="Split"
-                    ToolTip.Tip="Split subject on matches"
-                    AutomationProperties.Name="Split mode tab" />
-            <Button Content="Generate"
-                    Classes="panelTab"
-                    Classes.active="{Binding IsGenerateTab}"
-                    Command="{Binding SelectRightTabCommand}"
-                    CommandParameter="Generate"
-                    ToolTip.Tip="Generate code snippets"
-                    AutomationProperties.Name="Generate mode tab" />
-            <Button Content="GREP"
-                    Classes="panelTab"
-                    Classes.active="{Binding IsGrepTab}"
-                    Command="{Binding SelectRightTabCommand}"
-                    CommandParameter="Grep"
-                    ToolTip.Tip="Search &amp; replace across files"
-                    AutomationProperties.Name="GREP mode tab" />
-            <Button Content="Compare"
-                    Classes="panelTab"
-                    Classes.active="{Binding IsCompareTab}"
-                    Command="{Binding SelectRightTabCommand}"
-                    CommandParameter="Compare"
-                    ToolTip.Tip="Side-by-side multi-flavor comparison"
-                    AutomationProperties.Name="Compare mode tab" />
-          </StackPanel>
+          <!-- Scroll so "Compare" is never clipped to "Comp" when the panel is narrow -->
+          <ScrollViewer DockPanel.Dock="Top"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Disabled"
+                        Background="{DynamicResource BackgroundTertiaryBrush}"
+                        AllowAutoHide="True">
+            <StackPanel Orientation="Horizontal">
+              <Button Content="Test"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsTestTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Test"
+                      ToolTip.Tip="Match testing with highlighting"
+                      AutomationProperties.Name="Test mode tab" />
+              <Button Content="Replace"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsReplaceTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Replace"
+                      ToolTip.Tip="Replace preview with highlighting"
+                      AutomationProperties.Name="Replace mode tab" />
+              <Button Content="Split"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsSplitTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Split"
+                      ToolTip.Tip="Split subject on matches"
+                      AutomationProperties.Name="Split mode tab" />
+              <Button Content="Generate"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsGenerateTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Generate"
+                      ToolTip.Tip="Generate code snippets"
+                      AutomationProperties.Name="Generate mode tab" />
+              <Button Content="GREP"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsGrepTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Grep"
+                      ToolTip.Tip="Search &amp; replace across files"
+                      AutomationProperties.Name="GREP mode tab" />
+              <Button Content="Compare"
+                      Classes="panelTab"
+                      Classes.active="{Binding IsCompareTab}"
+                      Command="{Binding SelectRightTabCommand}"
+                      CommandParameter="Compare"
+                      ToolTip.Tip="Side-by-side multi-flavor comparison"
+                      AutomationProperties.Name="Compare mode tab" />
+            </StackPanel>
+          </ScrollViewer>
 
           <Border DockPanel.Dock="Top"
                   IsVisible="{Binding ShowFidelityBanner}"
@@ -1421,21 +1437,24 @@
                 </Border>
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto"
-                              IsVisible="{Binding CompareCards.Count}">
+                              IsVisible="{Binding CompareCards.Count}"
+                              HorizontalAlignment="Stretch">
                   <ItemsControl ItemsSource="{Binding CompareCards}"
+                                HorizontalAlignment="Stretch"
                                 AutomationProperties.Name="Compare result cards">
+                    <!-- 2-column grid fills the expanded Compare panel (no fixed card widths) -->
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" />
+                        <UniformGrid Columns="2" />
                       </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:CompareCardViewModel">
-                        <Border MinWidth="260"
-                                MaxWidth="360"
-                                Width="300"
+                        <Border MinWidth="200"
                                 MinHeight="200"
                                 Margin="0,0,10,10"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
                                 Background="{DynamicResource BackgroundSecondaryBrush}"
                                 BorderBrush="{DynamicResource BorderSubtleBrush}"
                                 BorderThickness="1"

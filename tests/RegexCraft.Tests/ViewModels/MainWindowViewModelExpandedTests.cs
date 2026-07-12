@@ -134,12 +134,12 @@ public sealed class MainWindowViewModelExpandedTests
     {
         var vm = CreateVm(new AppSettings
         {
-            RightPanelNormalWidth = 360,
-            RightPanelCompareWidth = 900,
+            RightPanelNormalWidth = 380,
+            RightPanelCompareWidth = 950,
         });
-        Assert.That(vm.GetTargetRightPanelWidth(false), Is.EqualTo(360));
+        Assert.That(vm.GetTargetRightPanelWidth(false), Is.EqualTo(380));
         // Large stored Compare width is usable
-        Assert.That(vm.GetTargetRightPanelWidth(true), Is.EqualTo(900));
+        Assert.That(vm.GetTargetRightPanelWidth(true), Is.EqualTo(950));
     }
 
     [Test]
@@ -150,31 +150,31 @@ public sealed class MainWindowViewModelExpandedTests
             RightPanelNormalWidth = 400,
             RightPanelCompareWidth = 520, // old default — not usable
         });
-        Assert.That(vm.GetTargetRightPanelWidth(true, bodyWidth: 1320), Is.GreaterThan(700));
+        Assert.That(vm.GetTargetRightPanelWidth(true, bodyWidth: 1320), Is.GreaterThan(800));
     }
 
     [Test]
     public void RememberRightPanelWidth_PersistsSeparately_AndSurvivesReload()
     {
         var vm = CreateVm();
-        vm.RememberRightPanelWidth(370, compareMode: false);
-        vm.RememberRightPanelWidth(850, compareMode: true);
+        vm.RememberRightPanelWidth(380, compareMode: false);
+        vm.RememberRightPanelWidth(920, compareMode: true);
 
         var store = new JsonSettingsStore(Path.Combine(_tempDir, "settings.json"));
         var loaded = store.Load();
-        Assert.That(loaded.RightPanelNormalWidth, Is.EqualTo(370));
-        Assert.That(loaded.RightPanelCompareWidth, Is.EqualTo(850));
+        Assert.That(loaded.RightPanelNormalWidth, Is.EqualTo(380));
+        Assert.That(loaded.RightPanelCompareWidth, Is.EqualTo(920));
 
         var vm2 = CreateVm(); // same settings path via CreateVm without seed reloads file
-        Assert.That(vm2.GetTargetRightPanelWidth(false), Is.EqualTo(370));
-        Assert.That(vm2.GetTargetRightPanelWidth(true), Is.EqualTo(850));
+        Assert.That(vm2.GetTargetRightPanelWidth(false), Is.EqualTo(380));
+        Assert.That(vm2.GetTargetRightPanelWidth(true), Is.EqualTo(920));
     }
 
     [Test]
     public void RememberRightPanelWidth_DoesNotPersistTooNarrowCompare()
     {
         var vm = CreateVm();
-        vm.RememberRightPanelWidth(400, compareMode: true); // below CompareMin
+        vm.RememberRightPanelWidth(500, compareMode: true); // below CompareMin
         var store = new JsonSettingsStore(Path.Combine(_tempDir, "settings.json"));
         Assert.That(store.Load().RightPanelCompareWidth, Is.Null);
     }
