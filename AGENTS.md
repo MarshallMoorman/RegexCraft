@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — **v1.1.0** (Debug step-through + equal-width Matches cards)  
+**Last updated**: 2026-07-11 — **v1.1.0** + Phase 12 website (`website/` → regexcraft.com)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -24,7 +24,8 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Persistence**: Library/History/Settings JSON under OS ApplicationData `RegexCraft/`  
 - **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)  
 - **Branding**: App icon in `src/RegexCraft.App/Assets/regexcraft-icon.*`; About is custom (`AboutWindow`), menu **About RegexCraft**  
-- **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml) — must stay green without interactive secrets for basic CI  
+- **Website**: Static site source in-repo under **`website/`** (plain HTML/CSS); public URL **https://regexcraft.com**; deploy via `.github/workflows/pages.yml`; human DNS/Pages steps in `docs/development/website.md`; keep blue theme (no purple)  
+- **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml, **pages.yml**) — must stay green without interactive secrets for basic CI  
 - **Releases**: Tag `v*` → Publish workflow tests, multi-RID publish, GitHub Release with zip artifacts (see packaging.md)  
 - **Layout**: Right-panel Normal vs Compare widths live in `AppSettings` + `LayoutDefaults` — no magic pixels in views  
 - **NuGet**: Solution `NuGet.config` uses nuget.org (public packages)  
@@ -37,6 +38,15 @@ Living guide for AI agents and humans working on RegexCraft.
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
 | `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel**, **Debug panel**, **smart right-panel sizing** |
 | `RegexCraft.Tests` | NUnit unit + **Avalonia headless UI** + **screenshot capture** |
+| `website/` (not a .NET project) | Public marketing site for **regexcraft.com** (GitHub Pages) |
+
+### Website (Phase 12)
+
+- Source: `website/` — `index.html`, `download.html`, `docs.html`, `about.html`, `styles.css`, `CNAME`  
+- Deploy: GitHub Actions **Deploy website** uploads `website/` to Pages (Source must be **GitHub Actions** in repo settings)  
+- Custom domain: `website/CNAME` = `regexcraft.com`; DNS A/CNAME at registrar — see `docs/development/website.md`  
+- Screenshots for the site are copies under `website/assets/screenshots/` (refresh from `docs/screenshots/` after UI changes)  
+- Do not break app CI; website is independent of `dotnet build` / `dotnet test`  
 
 ### UI map (Phase 6–11)
 
@@ -208,7 +218,8 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
 - Built-in library: `src/RegexCraft.Core/Library/BuiltInLibrary.cs`  
 - Theme: `src/RegexCraft.App/Themes/Colors.axaml`  
-- CI: `.github/workflows/ci.yml`, `.github/workflows/publish.yml`  
+- CI: `.github/workflows/ci.yml`, `.github/workflows/publish.yml`, `.github/workflows/pages.yml`  
+- Website: `website/` · setup: `docs/development/website.md`  
 - Headless tests: `tests/RegexCraft.Tests/Headless/`  
 - Compare tests: `tests/RegexCraft.Tests/Compare/`  
 - Debug tests: `tests/RegexCraft.Tests/Debug/`  

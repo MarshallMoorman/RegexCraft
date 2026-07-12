@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RegexCraft — Modern Cross-Platform Regex Workbench</title>
+  <meta name="description" content="RegexCraft is a modern, cross-platform regular expression workbench for testing, replacing, grepping, comparing, debugging, and generating code across many regex flavors." />
+  <meta name="theme-color" content="#0078D4" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
+  <meta property="og:title" content="RegexCraft — Modern Cross-Platform Regex Workbench" />
+  <meta property="og:description" content="Test, replace, GREP, compare, and debug regular expressions across .NET, PCRE2, JavaScript, and more." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://regexcraft.com/" />
+  <meta property="og:image" content="https://regexcraft.com/assets/screenshots/main-test-light.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="index.html">
+        <img src="assets/favicon.png" alt="" width="36" height="36" />
+        RegexCraft
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
+      <ul class="nav-links" data-nav-links>
+        <li><a href="index.html" aria-current="page">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#screenshots">Screenshots</a></li>
+        <li><a href="download.html">Download</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="hero-badge">v1.1 · Stable · MIT License</span>
+          <h1>Modern regex workbench for every platform</h1>
+          <p class="hero-lead">
+            Test, replace, GREP, compare, debug, and generate code across
+            <strong>.NET</strong>, <strong>PCRE2</strong>, <strong>JavaScript</strong>, and a dozen more flavors —
+            with live highlighting, a flavor-aware token palette, and portable desktop builds for Windows, macOS, and Linux.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download latest</a>
+            <a class="btn btn-secondary btn-lg" href="https://github.com/MarshallMoorman/RegexCraft">View on GitHub</a>
+            <a class="btn btn-ghost btn-lg" href="docs.html">Documentation</a>
+          </div>
+          <p class="hero-meta">
+            Free &amp; open source · Self-contained zips · Built with .NET&nbsp;10 + Avalonia&nbsp;12
+          </p>
+        </div>
+        <figure class="hero-shot">
+          <img
+            src="assets/screenshots/main-test-light.png"
+            alt="RegexCraft Match mode showing pattern editor, analysis tree, and highlighted matches"
+            width="960"
+            height="600"
+          />
+        </figure>
+      </div>
+    </section>
+
+    <section id="features" class="section-alt">
+      <div class="container">
+        <div class="section-header">
+          <h2>Everything you need to craft regexes</h2>
+          <p>A single desktop app for exploration, debugging, and production-ready patterns — not just a web playground.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="feature-icon">M</div>
+            <h3>Live Match &amp; Groups</h3>
+            <p>Subject highlighting for matches and capture groups, expandable equal-width match cards, and one-click copy or jump.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">R</div>
+            <h3>Replace &amp; Split</h3>
+            <p>Live preview with substitution highlighting and familiar backreferences — <code>$1</code>, <code>${name}</code>, and more.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">≡</div>
+            <h3>Multi-flavor testing</h3>
+            <p>.NET, PCRE2, JavaScript (Jint), plus High/Approximate flavors for Python, Java, PHP, Ruby, Go, Rust, and others.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">C</div>
+            <h3>Compare mode</h3>
+            <p>Side-by-side results for 2–4 flavors: validity, matches, groups, fidelity badges, known differences, and a copyable summary.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">D</div>
+            <h3>Debug step-through</h3>
+            <p>Educational walk-through for the .NET engine — F10/F11, pattern and subject focus, captures, and clear messaging when unavailable.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">G</div>
+            <h3>GREP across files</h3>
+            <p>Search and replace over folders with include/exclude globs, async progress, cancellation, dry-run, and backups.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">{ }</div>
+            <h3>Code generation</h3>
+            <p>Emit ready-to-paste snippets for C#, JavaScript, TypeScript, Python, PHP, Java, Go, Rust, Ruby, Perl, Kotlin, and Swift.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">L</div>
+            <h3>Library &amp; History</h3>
+            <p>Twenty built-in common patterns plus your saves, categories, tags, favorites, and searchable history — persisted locally.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenshots">
+      <div class="container">
+        <div class="section-header">
+          <h2>See it in action</h2>
+          <p>Light and dark themes, professional syntax highlighting, and modes for every workflow.</p>
+        </div>
+        <div class="gallery">
+          <figure class="gallery-item">
+            <img src="assets/screenshots/main-test-dark.png" alt="Match mode in dark theme" loading="lazy" width="800" height="500" />
+            <figcaption>Match mode — dark theme</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img src="assets/screenshots/main-compare.png" alt="Compare mode with multi-flavor cards" loading="lazy" width="800" height="500" />
+            <figcaption>Compare — multi-flavor side-by-side</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img src="assets/screenshots/main-generate.png" alt="Generate mode producing C# code" loading="lazy" width="800" height="500" />
+            <figcaption>Generate — language-aware code snippets</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img src="assets/screenshots/main-grep.png" alt="GREP mode searching files" loading="lazy" width="800" height="500" />
+            <figcaption>GREP — folder search &amp; replace</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img src="assets/screenshots/main-replace.png" alt="Replace mode with live preview" loading="lazy" width="800" height="500" />
+            <figcaption>Replace — live substitution preview</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img src="assets/screenshots/main-library.png" alt="Library sidebar with built-in patterns" loading="lazy" width="800" height="500" />
+            <figcaption>Library — built-ins and your patterns</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-alt" id="engines">
+      <div class="container">
+        <div class="section-header">
+          <h2>Engines &amp; fidelity</h2>
+          <p>Three real engines back a full flavor registry. Full / High / Approximate banners keep honesty front and center.</p>
+        </div>
+        <div class="engines-wrap">
+          <table class="engines">
+            <thead>
+              <tr>
+                <th>Flavor</th>
+                <th>Engine</th>
+                <th>Fidelity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>.NET</td>
+                <td>dotnet</td>
+                <td><span class="badge badge-full">Full</span></td>
+              </tr>
+              <tr>
+                <td>PCRE2</td>
+                <td>pcre2</td>
+                <td><span class="badge badge-full">Full</span></td>
+              </tr>
+              <tr>
+                <td>JavaScript / TypeScript</td>
+                <td>javascript (Jint)</td>
+                <td><span class="badge badge-full">Full</span></td>
+              </tr>
+              <tr>
+                <td>PHP</td>
+                <td>pcre2</td>
+                <td><span class="badge badge-high">High</span></td>
+              </tr>
+              <tr>
+                <td>Python, Java, Kotlin, Swift</td>
+                <td>dotnet</td>
+                <td><span class="badge badge-approx">Approximate</span></td>
+              </tr>
+              <tr>
+                <td>Go, Rust</td>
+                <td>dotnet</td>
+                <td><span class="badge badge-approx">Approximate</span> (RE2 limits modeled)</td>
+              </tr>
+              <tr>
+                <td>Ruby, Perl</td>
+                <td>pcre2</td>
+                <td><span class="badge badge-approx">Approximate</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top: 1.25rem; text-align: center; color: var(--text-muted); font-size: 0.92rem;">
+          Details and option matrices:
+          <a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/docs/user/flavors.md">docs/user/flavors.md</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container">
+        <h2>Ready to try RegexCraft?</h2>
+        <p>Portable builds for Windows, macOS (Intel &amp; Apple Silicon), and Linux.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Get the latest release</a>
+          <a class="btn btn-secondary btn-lg" href="download.html">Platform details</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">
+            <img src="assets/favicon.png" alt="" width="28" height="28" />
+            RegexCraft
+          </div>
+          <p>Modern, cross-platform regular expression workbench. Free and open source under the MIT License.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/releases">Releases</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Source</h4>
+          <ul>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft">GitHub repository</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/LICENSE">MIT License</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/docs/CHANGELOG.md">Changelog</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/issues">Issues</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Marshall Moorman</span>
+        <span><a href="https://regexcraft.com">regexcraft.com</a> · Hosted on GitHub Pages</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var toggle = document.querySelector("[data-nav-toggle]");
+      var links = document.querySelector("[data-nav-links]");
+      if (!toggle || !links) return;
+      toggle.addEventListener("click", function () {
+        var open = links.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    })();
+  </script>
+</body>
+</html>

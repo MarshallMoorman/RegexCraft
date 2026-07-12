@@ -1,62 +1,68 @@
 # RegexCraft – HANDOFF.md
 
-**Current Version**: **1.1.0** (Phase 11 — Debug + equal-width match cards)  
+**Current Version**: **1.1.0** (app) + **Phase 12 website** (source shipped; Pages/DNS may still need human enablement)  
 **Date**: 2026-07-11  
-**Next**: Website, Debug for more engines, export, fidelity, installers  
+**Next**: Human enables GitHub Pages + DNS → then product tracks (Export, Debug expansion, installers, fidelity)
 
 ---
 
-## What Shipped in 1.1.0 (Phase 11)
+## What Shipped in Phase 12 (Website)
 
-1. **Debug / step-through (.NET)**  
-   - New **Debug** tab (Ctrl+7); F10 forward / F11 back; Reset / End / Refresh  
-   - Hybrid **educational** session: real .NET `Match` results + Analysis Tree walk  
-   - Pattern selection + subject highlight + step list + capture explanations  
-   - Clear unavailable message for PCRE2 / JavaScript engines  
-   - Core: `IRegexDebugService` / `RegexDebugService` under `src/RegexCraft.Core/Debug/`  
-   - User doc: `docs/user/debugging.md`  
+1. **Static site** under `website/`  
+   - Landing (hero, features, screenshots, engines table, CTA)  
+   - Download, Docs, About pages  
+   - Blue professional theme matching the app (`#0078D4`)  
+   - Responsive; light default + `prefers-color-scheme` dark  
 
-2. **Matches & Groups equal width**  
-   - `ListBox.matchList` styles force stretch so cards share one consistent width  
+2. **GitHub Pages plumbing**  
+   - `website/CNAME` → `regexcraft.com`  
+   - Workflow `.github/workflows/pages.yml` deploys `website/` via Actions  
 
-3. **Tests**  
-   - `Category=Debug` unit + ViewModel tests  
-   - Headless: Debug step + match card width assertions  
-   - Full suite green (653+ tests at ship)  
+3. **Human setup docs**  
+   - `docs/development/website.md` — exact Pages settings + DNS A/CNAME checklist  
+   - `website/README.md` — structure and local preview  
 
-4. **Release**  
-   - Version **1.1.0** in `Directory.Build.props`  
-   - Tag `v1.1.0` → Publish workflow multi-RID zips  
+4. **Repo docs**  
+   - README, CHANGELOG (Unreleased/Phase 12), AGENTS.md, this HANDOFF  
 
-### Debug approach (for future agents)
+**App version was not bumped** (pure website). No new app features in this phase.
 
-Do **not** try to re-implement the full .NET NFA. Extend `RegexDebugService` (or add engine-specific builders behind `IRegexDebugService`) so UI stays engine-agnostic. Prefer real Match overlays + structural walk-throughs over cycle-accurate simulation.
+### Marshall must still do (one-time)
+
+See the full checklist in **`docs/development/website.md`**. Short form:
+
+1. Repo **Settings → Pages → Source: GitHub Actions**  
+2. Run **Deploy website** (or push) and confirm `*.github.io/RegexCraft/` loads  
+3. Custom domain: `regexcraft.com` + Enforce HTTPS when ready  
+4. Registrar DNS: apex **A** records to GitHub Pages IPs; **www** CNAME → `marshallmoorman.github.io`  
 
 ---
 
-## Post-1.1 Roadmap
+## What Shipped in 1.1.0 (Phase 11) — still current app
 
-Work these as separate tracks on `main` (or short-lived branches if needed). Prefer small, shippable increments.
+1. **Debug / step-through (.NET)** — Debug tab, F10/F11, hybrid educational session  
+2. **Equal-width Matches & Groups cards**  
+3. Tests: `Category=Debug` + headless coverage  
+4. Tag `v1.1.0` → multi-RID portable zips on GitHub Releases  
 
-### Website (regexcraft.com)
+Debug approach for future agents: do **not** re-implement the full .NET NFA; extend `RegexDebugService` / engine-specific builders behind `IRegexDebugService`.
 
-- Landing: value prop, feature list, screenshots from `docs/screenshots/`  
-- Download: link to GitHub Releases  
-- Docs mirror or deep links into `docs/user/`  
-- **GitHub Pages** is fine: `gh-pages` or `/docs`, CNAME `regexcraft.com`, registrar CNAME → Pages host  
-- Not blocking for binary distribution (Releases already work)
+---
+
+## Post–Phase 12 Roadmap
+
+Work these as separate tracks on `main`. Prefer small, shippable increments.
+
+### Human / ops (immediate)
+
+- [ ] Complete Pages + DNS so https://regexcraft.com is live  
+- [ ] Optional: announce site + Releases from README / social  
 
 ### Debug expansion
 
 - PCRE2 / JavaScript educational steppers (same UI, new engine builders)  
 - Optional play/pause auto-step  
 - Richer backtracking narratives where cheap  
-
-### Higher engine fidelity
-
-- True Python / Java interop only with a clear packaging story  
-- True RE2 if a maintained .NET wrapper appears  
-- Improve approximate-flavor notes and token matrices as dialects change  
 
 ### Product depth (any 1.x)
 
@@ -68,6 +74,18 @@ Work these as separate tracks on `main` (or short-lived branches if needed). Pre
 | **Layout persistence** | Left sidebar width / analysis height (right panel already done) |
 | **Virtualization** | Huge match lists / GREP; cancel in-flight Test |
 | **Installers** | MSI / DMG / AppImage — packaging.md documents portable zips today |
+
+### Higher engine fidelity
+
+- True Python / Java interop only with a clear packaging story  
+- True RE2 if a maintained .NET wrapper appears  
+- Improve approximate-flavor notes and token matrices as dialects change  
+
+### Website maintenance (ongoing)
+
+- After major UI changes: regenerate screenshots → copy into `website/assets/screenshots/`  
+- Keep download CTAs pointing at GitHub Releases  
+- Do not introduce a heavy SPA framework without a strong reason  
 
 ### Release process (ongoing)
 
@@ -100,30 +118,34 @@ Work these as separate tracks on `main` (or short-lived branches if needed). Pre
 - Screenshot dark-mode pattern editor may need an extra highlight refresh if theme is forced only after first paint.  
 - Right-panel Compare minimum (~480 px) can feel large on very small windows (window min width is 1000).  
 - Local NuGet: solution `NuGet.config` pins nuget.org (avoids private-feed NUnit resolution issues).  
+- **Website is not live until Marshall enables Pages + DNS** (source is in-repo).  
 
 ## How to Continue in a New Conversation
 
-1. Open latest `main` at **v1.1.0** (or after the Phase 11 commit).  
+1. Open latest `main` (Phase 12 website commit or later).  
 2. Read this `HANDOFF.md` and `AGENTS.md`.  
-3. Prefer **website**, **export**, or **Debug for PCRE2/JS** — do not re-litigate Phases 0–11.  
-4. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating a baseline.  
-5. Keep CI green: `dotnet test` and watch Actions on push.  
-6. Releases: see `docs/development/packaging.md`.  
-7. Flavor/engine/compare/debug tests:  
+3. Prefer **Export**, **Debug for PCRE2/JS**, or **installers** — do not re-litigate Phases 0–12 unless fixing bugs.  
+4. Website tweaks: edit `website/` only; follow `docs/development/website.md`.  
+5. Do **not** commit `docs/development/current_screenshot.png` unless intentionally updating a baseline.  
+6. Keep CI green: `dotnet test` and watch Actions on push.  
+7. Releases: see `docs/development/packaging.md`.  
+8. Flavor/engine/compare/debug tests:  
    `dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare|Category=Debug"`  
 
-## Key Files for Post-1.1 Work
+## Key Files for Post–Phase 12 Work
 
 | Path | Why |
 |------|-----|
 | `HANDOFF.md` / `AGENTS.md` | Process + conventions |
+| `website/` | Public site source |
+| `docs/development/website.md` | Pages + DNS for humans |
+| `.github/workflows/pages.yml` | Site deploy |
 | `src/RegexCraft.Core/Debug/` | Debug service — extend for more engines |
-| `src/RegexCraft.Core/Compare/` | Compare service (parallel multi-flavor) |
-| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Modes, Debug commands, panel widths |
-| `src/RegexCraft.Core/Settings/` | `AppSettings`, `LayoutDefaults`, `JsonSettingsStore` |
+| `src/RegexCraft.Core/Compare/` | Compare service |
+| `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs` | Modes, Debug, panel widths |
+| `src/RegexCraft.Core/Settings/` | `AppSettings`, `LayoutDefaults` |
 | `src/RegexCraft.Engines/` | Real engines |
 | `.github/workflows/publish.yml` | Release pipeline |
 | `docs/development/packaging.md` | How to cut releases |
-| `docs/user/debugging.md` | User-facing Debug guide |
 | `Directory.Build.props` | Version only |
 | `docs/CHANGELOG.md` | User-facing history |

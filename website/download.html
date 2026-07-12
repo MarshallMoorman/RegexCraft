@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Download — RegexCraft</title>
+  <meta name="description" content="Download RegexCraft portable binaries for Windows, macOS, and Linux from GitHub Releases." />
+  <meta name="theme-color" content="#0078D4" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="index.html">
+        <img src="assets/favicon.png" alt="" width="36" height="36" />
+        RegexCraft
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
+      <ul class="nav-links" data-nav-links>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="index.html#screenshots">Screenshots</a></li>
+        <li><a href="download.html" aria-current="page">Download</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-hero">
+      <div class="container">
+        <h1>Download RegexCraft</h1>
+        <p>Self-contained portable zips — no installer required. Unzip and run.</p>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="container prose" style="max-width: 800px;">
+        <p>
+          <a class="btn btn-primary btn-lg" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Get the latest release on GitHub</a>
+        </p>
+
+        <div class="note-box">
+          <strong>Current stable:</strong> 1.1.x (includes Debug step-through, Compare, GREP, multi-flavor testing).
+          Always prefer the newest <strong>non-prerelease</strong> tag on the Releases page.
+        </div>
+
+        <h2>Supported platforms</h2>
+        <p>Each GitHub Release attaches these assets (names may include the version):</p>
+
+        <div class="platform-grid">
+          <div class="platform-card">
+            <h3>Windows x64</h3>
+            <p>RegexCraft-win-x64.zip</p>
+            <a class="btn btn-secondary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a>
+          </div>
+          <div class="platform-card">
+            <h3>Linux x64</h3>
+            <p>RegexCraft-linux-x64.zip</p>
+            <a class="btn btn-secondary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a>
+          </div>
+          <div class="platform-card">
+            <h3>macOS Intel</h3>
+            <p>RegexCraft-osx-x64.zip</p>
+            <a class="btn btn-secondary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a>
+          </div>
+          <div class="platform-card">
+            <h3>macOS Apple Silicon</h3>
+            <p>RegexCraft-osx-arm64.zip</p>
+            <a class="btn btn-secondary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a>
+          </div>
+        </div>
+
+        <h2>How to install</h2>
+        <ol>
+          <li>Download the zip for your platform from
+            <a href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">GitHub Releases</a>.</li>
+          <li>Extract the archive to a folder you control.</li>
+          <li>Run <code>RegexCraft.App</code> (or <code>RegexCraft.App.exe</code> on Windows).</li>
+        </ol>
+        <p>
+          Builds are <strong>self-contained</strong> — they include the .NET runtime. On macOS, the first launch may require
+          right-click → <em>Open</em> (or System Settings → Privacy &amp; Security) if Gatekeeper blocks an unsigned app.
+        </p>
+
+        <h2>Or build from source</h2>
+        <p>Requires the <a href="https://dotnet.microsoft.com/download">.NET 10 SDK</a>.</p>
+        <pre style="background: var(--bg-tertiary); padding: 1rem 1.15rem; border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.88rem; line-height: 1.5; color: var(--text-primary);"><code>git clone https://github.com/MarshallMoorman/RegexCraft.git
+cd RegexCraft
+dotnet build
+dotnet run --project src/RegexCraft.App</code></pre>
+        <p>
+          Full packaging and release notes:
+          <a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/docs/development/packaging.md">packaging.md</a>
+          · <a href="https://github.com/MarshallMoorman/RegexCraft#build--run">README</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">
+            <img src="assets/favicon.png" alt="" width="28" height="28" />
+            RegexCraft
+          </div>
+          <p>Modern, cross-platform regular expression workbench. Free and open source under the MIT License.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/releases">Releases</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Source</h4>
+          <ul>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft">GitHub repository</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/LICENSE">MIT License</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/docs/CHANGELOG.md">Changelog</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/issues">Issues</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Marshall Moorman</span>
+        <span><a href="https://regexcraft.com">regexcraft.com</a> · Hosted on GitHub Pages</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var toggle = document.querySelector("[data-nav-toggle]");
+      var links = document.querySelector("[data-nav-links]");
+      if (!toggle || !links) return;
+      toggle.addEventListener("click", function () {
+        var open = links.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -5,6 +5,26 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Phase 12 website (2026-07-11)
+
+App version remains **1.1.0** (no app code changes).
+
+### Added
+
+- **Public website source** under [`website/`](../website/) — landing, features, screenshots, download, docs links, about; blue professional theme matching the app
+- **`website/CNAME`** with `regexcraft.com` for GitHub Pages custom domain
+- **GitHub Actions** workflow [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) — deploys `website/` to GitHub Pages on push to `main` (or manual)
+- Setup guide: [`docs/development/website.md`](development/website.md) — exact Pages settings + DNS records for Marshall
+
+### Changed
+
+- Root README, AGENTS.md, and HANDOFF updated for website / post–Phase 12 roadmap
+
+### Notes
+
+- **Human steps required** after merge: enable Pages (source **GitHub Actions**), set custom domain `regexcraft.com`, create apex A records + `www` CNAME at the registrar. See `docs/development/website.md`.
+- No app version bump; tag only if a future 1.1.1 ships code fixes.
+
 ## [1.1.0] — 2026-07-11
 
 ### Added

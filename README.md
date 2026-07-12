@@ -2,13 +2,15 @@
 
 **Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, comparing, debugging, and generating code across many regex flavors.
 
+**Website:** [https://regexcraft.com](https://regexcraft.com) · **Site source:** [`website/`](website/)
+
 [![CI](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml/badge.svg)](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/MarshallMoorman/RegexCraft)](https://github.com/MarshallMoorman/RegexCraft/releases)
 
 | | |
 |---|---|
 | **Version** | **1.1.0** |
-| **Domain** | [regexcraft.com](https://regexcraft.com) |
+| **Website** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
 | **License** | MIT |
 | **Status** | Stable 1.1 |
@@ -26,11 +28,20 @@
 
 ---
 
+## Website
+
+Public marketing site (landing, features, screenshots, download CTA, docs links) lives in this repo under **[`website/`](website/)** and is published to **GitHub Pages** as **[regexcraft.com](https://regexcraft.com)**.
+
+- Setup / DNS / Pages checklist: **[docs/development/website.md](docs/development/website.md)**
+- Deploy workflow: [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
+
+Until Pages + DNS are configured, the GitHub Release downloads below still work.
+
 ## Download
 
 **Pre-built portable binaries** are published on every version tag:
 
-**[→ GitHub Releases](https://github.com/MarshallMoorman/RegexCraft/releases)**
+**[→ GitHub Releases](https://github.com/MarshallMoorman/RegexCraft/releases)** · **[→ regexcraft.com/download](https://regexcraft.com/download.html)**
 
 | Asset | Platform |
 |-------|----------|
@@ -123,8 +134,9 @@ Library, History, and Settings live in the OS application-data folder:
 |----------|------|------|
 | [CI](.github/workflows/ci.yml) | Push / PR to `main` | Restore, Debug + Release build, full NUnit suite, TRX upload |
 | [Publish](.github/workflows/publish.yml) | Manual or tag `v*` | Test → publish win-x64 / linux-x64 / osx-x64 / osx-arm64 → **GitHub Release** on tag |
+| [Deploy website](.github/workflows/pages.yml) | Push to `main` (`website/**`) or manual | Static site → **GitHub Pages** (regexcraft.com) |
 
-No secrets are required for the basic CI path. Tag a version (`git tag v1.0.0 && git push origin v1.0.0`) to cut a Release; see packaging docs.
+No secrets are required for the basic CI path. Tag a version (`git tag v1.0.0 && git push origin v1.0.0`) to cut a Release; see packaging docs. Website DNS/Pages setup: [docs/development/website.md](docs/development/website.md).
 
 ## Running the tests
 
@@ -177,17 +189,18 @@ Do **not** commit temporary or low-quality captures; only regenerate and keep im
 
 ```
 RegexCraft/
-├── .github/workflows/         # CI + Publish (GitHub Releases)
+├── .github/workflows/         # CI + Publish (Releases) + Pages (website)
+├── website/                   # Public site source → regexcraft.com (GitHub Pages)
 ├── src/
-│   ├── RegexCraft.Core/       # Flavors, Compare, tokens, analysis, GREP, codegen, library, settings
+│   ├── RegexCraft.Core/       # Flavors, Compare, Debug, tokens, analysis, GREP, codegen, library, settings
 │   ├── RegexCraft.Engines/    # DotNet + PCRE2 + JavaScript (Jint)
 │   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit + icon + About
 ├── tests/RegexCraft.Tests/    # NUnit unit + Avalonia headless UI + screenshots
 ├── docs/
 │   ├── screenshots/           # Auto-captured PNGs for README/docs
-│   ├── user/                  # End-user guides (incl. comparing.md, flavors.md)
-│   └── development/           # Architecture, packaging, phase requirements
-├── Directory.Build.props      # Version (1.0.1)
+│   ├── user/                  # End-user guides (incl. comparing.md, debugging.md, flavors.md)
+│   └── development/           # Architecture, packaging, website setup, phase requirements
+├── Directory.Build.props      # Version (1.1.0)
 └── AGENTS.md / HANDOFF.md
 ```
 
@@ -202,13 +215,17 @@ RegexCraft/
 | Ctrl+4 | Generate |
 | Ctrl+5 | GREP |
 | Ctrl+6 | Compare |
+| Ctrl+7 | Debug |
+| F10 / F11 | Debug step forward / back |
 
 ## Documentation
 
+- **[Website (regexcraft.com)](https://regexcraft.com)** · [site source](website/) · [Pages + DNS setup](docs/development/website.md)
 - [Getting started](docs/user/getting-started.md)
 - [Flavors & testing fidelity](docs/user/flavors.md)
 - [Testing regexes](docs/user/testing-regexes.md)
 - [Comparing flavors](docs/user/comparing.md)
+- [Debugging](docs/user/debugging.md)
 - [Replacing](docs/user/replacing.md)
 - [GREP (file search & replace)](docs/user/grepping.md)
 - [Generating code](docs/user/generating-code.md)

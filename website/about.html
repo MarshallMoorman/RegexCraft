@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About — RegexCraft</title>
+  <meta name="description" content="About RegexCraft: a modern cross-platform regex workbench by Marshall Moorman, built with Avalonia and .NET, open source under MIT." />
+  <meta name="theme-color" content="#0078D4" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="index.html">
+        <img src="assets/favicon.png" alt="" width="36" height="36" />
+        RegexCraft
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
+      <ul class="nav-links" data-nav-links>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="index.html#screenshots">Screenshots</a></li>
+        <li><a href="download.html">Download</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="about.html" aria-current="page">About</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-hero">
+      <div class="container">
+        <h1>About RegexCraft</h1>
+        <p>A professional desktop workbench for people who live in regular expressions.</p>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="container prose">
+        <p>
+          <strong>RegexCraft</strong> started as a focused answer to a simple need: a modern, cross-platform tool
+          that treats regex as first-class craft — testing with real engines, honest multi-flavor fidelity,
+          GREP for whole trees, code generation you can paste into production, and room to compare and debug
+          without leaving the desktop.
+        </p>
+
+        <h2>Who builds it</h2>
+        <p>
+          Created and maintained by <strong>Marshall Moorman</strong>.
+          The project is open source on
+          <a href="https://github.com/MarshallMoorman/RegexCraft">GitHub</a>.
+        </p>
+
+        <h2>Stack</h2>
+        <ul>
+          <li><strong>.NET 10</strong> — application runtime and <code>System.Text.RegularExpressions</code></li>
+          <li><strong>Avalonia 12</strong> — cross-platform UI (Windows, macOS, Linux)</li>
+          <li><strong>AvaloniaEdit</strong> — pattern and subject editors with syntax highlighting</li>
+          <li><strong>PCRE.NET</strong> — PCRE2 engine</li>
+          <li><strong>Jint</strong> — embedded JavaScript engine for JS / TypeScript flavors</li>
+          <li><strong>NUnit</strong> — unit and headless UI tests</li>
+        </ul>
+
+        <h2>License</h2>
+        <p>
+          RegexCraft is released under the
+          <a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/LICENSE">MIT License</a>.
+          You are free to use, modify, and distribute it with attribution.
+        </p>
+
+        <h2>Privacy</h2>
+        <p>
+          RegexCraft is a local desktop app. Library, history, and settings are stored in your OS application-data
+          folder. There is no account system and no cloud sync in the core product.
+        </p>
+
+        <p style="margin-top: 2rem;">
+          <a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft">View on GitHub</a>
+          <a class="btn btn-secondary" href="download.html" style="margin-left: 0.5rem;">Download</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">
+            <img src="assets/favicon.png" alt="" width="28" height="28" />
+            RegexCraft
+          </div>
+          <p>Modern, cross-platform regular expression workbench. Free and open source under the MIT License.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/releases">Releases</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Source</h4>
+          <ul>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft">GitHub repository</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/LICENSE">MIT License</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/docs/CHANGELOG.md">Changelog</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft/issues">Issues</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Marshall Moorman</span>
+        <span><a href="https://regexcraft.com">regexcraft.com</a> · Hosted on GitHub Pages</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var toggle = document.querySelector("[data-nav-toggle]");
+      var links = document.querySelector("[data-nav-links]");
+      if (!toggle || !links) return;
+      toggle.addEventListener("click", function () {
+        var open = links.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    })();
+  </script>
+</body>
+</html>
