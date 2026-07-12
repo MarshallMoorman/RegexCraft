@@ -21,5 +21,8 @@ public sealed class AboutWindowInfoTests
         Assert.That(AboutWindow.WebsiteUrl, Does.Contain("regexcraft.com"));
         Assert.That(AboutWindow.GitHubUrl, Does.StartWith("https://"));
         Assert.That(AboutWindow.GitHubUrl, Does.Contain("github.com"));
+        Assert.That(AboutWindow.GitHubUrl, Does.Contain("RegexCraft-Releases"));
+        Assert.That(AboutWindow.PricingUrl, Does.Contain("pricing"));
+        Assert.That(AboutWindow.EulaUrl, Does.Contain("eula"));
     }
 }

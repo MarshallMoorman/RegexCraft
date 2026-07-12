@@ -4,47 +4,40 @@
 
 RegexCraft is a modern, cross-platform regular expression workbench built for **multiple regex flavors**. Test patterns under **.NET**, **PCRE2**, and **JavaScript**, with approximate testing for Python, Java, PHP, and more — plus professional highlighting, replace/split previews, **GREP across files**, **multi-flavor Compare**, code generation, and a live analysis tree.
 
-**Current version**: 1.0.1
+**Current version**: 1.2.0
 
 ## Download (pre-built)
 
-Portable self-contained builds for Windows, Linux, and macOS are on **[GitHub Releases](https://github.com/MarshallMoorman/RegexCraft/releases)**. Unzip and run `RegexCraft.App` / `RegexCraft.App.exe`.
+Portable self-contained builds for Windows, Linux, and macOS are on the public
+**[RegexCraft-Releases](https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest)** page
+(or [regexcraft.com/download](https://regexcraft.com/download.html)). Unzip and run `RegexCraft.App` / `RegexCraft.App.exe`.
 
-## Requirements (from source)
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- macOS, Windows, or Linux (Avalonia desktop)
-
-## Build and run
-
-```bash
-dotnet build
-dotnet test
-dotnet run --project src/RegexCraft.App
-```
+**License:** free for personal use; business use requires a paid license (honor system — no keys). See [Pricing](https://regexcraft.com/pricing.html) and the [EULA](https://regexcraft.com/eula.html).
 
 ## First five minutes
 
 1. Launch the app — the window title is **RegexCraft**, with a sample email pattern pre-filled.
 2. Watch matches highlight in the **Subject** editor and expand groups on the right.
-3. Expand the **Analysis Tree** — named groups and sequence parts should appear nested; click a node to select it in the editor.
-4. Open the **Flavor** dropdown — try **JavaScript**, **Python**, or **PHP**. Note the fidelity banner when testing is approximate.
-5. Search **Tokens** for `named` and click to insert a named group.
-6. Open **Replace**, set a replacement like `[$1]` or `[${user}]`, and preview highlighted substitutions.
-7. Try **Split** with a pattern like `,\s*` on a comma-separated subject.
-8. Open **Generate** — **C# code appears immediately**; switch language to see other snippets and **Copy code**.
-9. Open **GREP**, pick a project folder, set include globs (e.g. `*.cs`), and **Search**.
-10. Open **Compare** (Ctrl+6) — select 2–4 flavors and review side-by-side match results and differences.
-11. Open **Library** — load a **Built-in** pattern (email, UUID, …), or save your own with category/tags.
-12. Cycle **Theme** (System → Light → Dark), quit, and relaunch — your theme should restore.
-13. Open **Help → About RegexCraft** (macOS application menu, or the Help native menu) for version, copyright, and links.
+3. Export matches with **CSV** / **JSON** / **Copy JSON** next to **Run** (see [Exporting](exporting.md)).
+4. Expand the **Analysis Tree** — named groups and sequence parts should appear nested; click a node to select it in the editor.
+5. Open the **Flavor** dropdown — try **JavaScript**, **Python**, or **PHP**. Note the fidelity banner when testing is approximate.
+6. Search **Tokens** for `named` and click to insert a named group.
+7. Open **Replace**, set a replacement like `[$1]` or `[${user}]`, and preview highlighted substitutions.
+8. Try **Split** with a pattern like `,\s*` on a comma-separated subject.
+9. Open **Generate** — **C# code appears immediately**; switch language to see other snippets and **Copy code**.
+10. Open **GREP**, pick a project folder, set include globs (e.g. `*.cs`), and **Search**.
+11. Open **Compare** (Ctrl+6) — select 2–4 flavors and review side-by-side match results and differences.
+12. Open **Library** — load a **Built-in** pattern (email, UUID, …), or save your own with category/tags.
+13. Cycle **Theme** (System → Light → Dark), quit, and relaunch — your theme should restore.
+14. Open **Help → About RegexCraft** for version, EULA/pricing links, and the optional business-license checkbox.
 
 ## Keyboard shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | Ctrl+Enter (⌘+Enter on macOS) | Run current mode (Test / Replace / Split / GREP Search / Compare) |
-| Ctrl+1 … Ctrl+6 | Switch Test / Replace / Split / Generate / GREP / Compare |
+| Ctrl+1 … Ctrl+7 | Switch Test / Replace / Split / Generate / GREP / Compare / Debug |
+| F10 / F11 | Debug step (when Debug mode is available) |
 
 ## Learn more
 

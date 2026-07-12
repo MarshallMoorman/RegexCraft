@@ -39,6 +39,9 @@ publish/
 *.nupkg
 *.snupkg
 
+## Built public site (scripts/build-site.sh)
+site-dist/
+
 ## Local development baselines (do not commit)
 docs/development/current_screenshot.png
 

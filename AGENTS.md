@@ -1,6 +1,6 @@
 # RegexCraft – AGENTS.md
 
-**Last updated**: 2026-07-11 — **v1.1.0** + Phase 12 website (`website/` → regexcraft.com)  
+**Last updated**: 2026-07-12 — **v1.2.0** Phase 13 (monorepo + public dist/site, commercial EULA, Export)  
 **Owner**: Marshall Moorman  
 
 Living guide for AI agents and humans working on RegexCraft.
@@ -10,10 +10,10 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Language / Framework**: C# / .NET 10 + Avalonia 12 + AvaloniaEdit + Jint  
 - **UI Pattern**: MVVM (CommunityToolkit.Mvvm)  
 - **Testing**: NUnit only. All new code must have tests. `dotnet test`  
-  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, Compare, **Debug**, ViewModels, Flavors, Branding  
+  - Unit categories: Engines, Analysis, Highlighting, Tokens, Codegen, Library, Grep, Compare, **Debug**, **Export**, ViewModels, Flavors, Branding  
   - UI / headless: `Category=UI`, `Category=Headless` (Avalonia.Headless.NUnit + Skia)  
   - Screenshots: `Category=Screenshots` → `docs/screenshots/` via `CaptureRenderedFrame()`  
-  - **Quality bar**: significant tests for every real engine (deep) and every selectable flavor (mapping + fidelity + tokens + codegen); Compare + Debug have dedicated service + VM + headless tests  
+  - **Quality bar**: significant tests for every real engine (deep) and every selectable flavor (mapping + fidelity + tokens + codegen); Compare + Debug + Export have dedicated tests  
 - **Logging**: Microsoft.Extensions.Logging + Serilog file sink. No `Console.WriteLine` for real logging  
 - **Theme**: Named resources only from `Themes/Colors.axaml`. No hard-coded UI colors  
 - **Tokens**: Text-only palette — **no icons for individual tokens**; support is **flavor-aware** (not only engine-aware)  
@@ -24,9 +24,11 @@ Living guide for AI agents and humans working on RegexCraft.
 - **Persistence**: Library/History/Settings JSON under OS ApplicationData `RegexCraft/`  
 - **Window identity**: `Application.Name` and window title must be **RegexCraft** (never leave Avalonia defaults)  
 - **Branding**: App icon in `src/RegexCraft.App/Assets/regexcraft-icon.*`; About is custom (`AboutWindow`), menu **About RegexCraft**  
-- **Website**: Static site source in-repo under **`website/`** (plain HTML/CSS); public URL **https://regexcraft.com**; deploy via `.github/workflows/pages.yml`; human DNS/Pages steps in `docs/development/website.md`; keep blue theme (no purple)  
-- **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml, **pages.yml**) — must stay green without interactive secrets for basic CI  
-- **Releases**: Tag `v*` → Publish workflow tests, multi-RID publish, GitHub Release with zip artifacts (see packaging.md)  
+- **License**: Commercial **EULA** (`LICENSE`) — free personal / paid business, **no license keys**; never reintroduce MIT as product license  
+- **Working model**: Single monorepo on `main` (app + website + user docs + private development docs). Actions publish **binaries** and **user-facing site only** to public targets. See `docs/development/commercial.md`  
+- **Website**: Source in-repo under **`website/`** + user docs from `docs/user/`; public URL **https://regexcraft.com**; build via `scripts/build-site.sh`; deploy to public dist **`gh-pages`** (`.github/workflows/pages.yml`); **never** publish `docs/development/`; blue theme (no purple)  
+- **CI**: GitHub Actions under `.github/workflows/` (ci.yml, publish.yml, pages.yml) — basic CI stays green without secrets; publish/site need `DIST_REPO_TOKEN`  
+- **Releases**: Tag `v*` → Publish workflow tests, multi-RID publish, release on **public dist repo** (`MarshallMoorman/RegexCraft-Releases`) — see packaging.md / commercial.md  
 - **Layout**: Right-panel Normal vs Compare widths live in `AppSettings` + `LayoutDefaults` — no magic pixels in views  
 - **NuGet**: Solution `NuGet.config` uses nuget.org (public packages)  
 
@@ -34,18 +36,20 @@ Living guide for AI agents and humans working on RegexCraft.
 
 | Project | Role |
 |---------|------|
-| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, **Debug**, tokens, analysis, highlight builders, token insertion, codegen, library/history/**settings + layout defaults**, **GREP**, built-in library |
+| `RegexCraft.Core` | `IRegexEngine`, models, **flavors + fidelity + options/token matrices**, **Compare**, **Debug**, **Export**, **Commercial links**, tokens, analysis, highlight builders, token insertion, codegen, library/history/**settings + layout defaults**, **GREP**, built-in library |
 | `RegexCraft.Engines` | `DotNetRegexEngine`, `PcreRegexEngine`, **`JavaScriptRegexEngine` (Jint)**, `EngineFactory` |
-| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare panel**, **Debug panel**, **smart right-panel sizing** |
+| `RegexCraft.App` | Avalonia UI, AvaloniaEdit, theme, Serilog, ViewModels, **About dialog**, **app icon**, **Compare**, **Debug**, **Export buttons**, **smart right-panel sizing** |
 | `RegexCraft.Tests` | NUnit unit + **Avalonia headless UI** + **screenshot capture** |
-| `website/` (not a .NET project) | Public marketing site for **regexcraft.com** (GitHub Pages) |
+| `website/` (not a .NET project) | Public marketing site source for **regexcraft.com** |
 
-### Website (Phase 12)
+### Website + public dist (Phase 13)
 
-- Source: `website/` — `index.html`, `download.html`, `docs.html`, `about.html`, `styles.css`, `CNAME`  
-- Deploy: GitHub Actions **Deploy website** uploads `website/` to Pages (Source must be **GitHub Actions** in repo settings)  
-- Custom domain: `website/CNAME` = `regexcraft.com`; DNS A/CNAME at registrar — see `docs/development/website.md`  
-- Screenshots for the site are copies under `website/assets/screenshots/` (refresh from `docs/screenshots/` after UI changes)  
+- Source: `website/` — landing, download, pricing, eula, docs hub, about, styles, CNAME  
+- User docs: `docs/user/` converted at build time into `site-dist/docs/`  
+- Deploy: **Deploy website** workflow → public dist repo `gh-pages` (token `DIST_REPO_TOKEN`)  
+- Binaries: **Publish** workflow on tag → dist repo GitHub Releases  
+- Download page links: `https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest`  
+- Human checklist: `docs/development/commercial.md`  
 - Do not break app CI; website is independent of `dotnet build` / `dotnet test`  
 
 ### UI map (Phase 6–11)
@@ -62,17 +66,18 @@ Living guide for AI agents and humans working on RegexCraft.
 - Generate: auto-runs; **preferred language follows selected flavor**  
 - **Compare**: 2–4 flavors, live re-run, cards + cross-flavor notes + copy summary  
 - **Debug**: educational step-through for **.NET** engine; F10/F11; unavailable message for other engines  
-- **Matches & Groups**: equal-width stretched cards (`ListBox.matchList`)  
-- **Help → About RegexCraft** (native menu) opens custom About dialog  
+- **Matches & Groups**: equal-width stretched cards (`ListBox.matchList`); **Export CSV / JSON / Copy JSON**  
+- **Help → About RegexCraft** (native menu) opens custom About dialog (EULA / pricing / honor checkbox)  
 
 ### Still relevant from Phase 3–10
 
 - `IGrepService` / GREP models, settings store, library favorites, resizable columns  
-- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**, **Debug**, **panel width memory**  
+- `MainWindowViewModel` live test/replace/split, GREP async, settings, **Compare**, **Debug**, **Export**, **panel width memory**  
 - `TokenCatalog` / `TokenInsertion` / `RegexToken.SupportedEngines` + **`FlavorDefinition.IsTokenSupported`**  
 - `RegexAnalysisService`, highlight builders, codegen service  
 - `IRegexCompareService` / `RegexCompareService`  
 - `IRegexDebugService` / `RegexDebugService`  
+- `MatchExportService`  
 - Branding + headless UI + screenshots  
 - `LayoutDefaults` + `AppSettings.RightPanelNormalWidth` / `RightPanelCompareWidth`  
 
@@ -113,6 +118,18 @@ Only flavors whose `EngineId` is registered are shown.
 - Primary engine: `dotnet`; others show unavailable reason  
 - Shortcuts: Ctrl+7, F10 / F11, Ctrl+← / Ctrl+→  
 
+### Export
+
+- Core: `src/RegexCraft.Core/Export/MatchExportService.cs`  
+- UI: Test panel buttons (CSV, JSON, Copy JSON) + save dialog  
+- Tests: `Category=Export`  
+
+### Commercial (no keys)
+
+- `LICENSE` = EULA; `CommercialLinks` for public URLs  
+- About honor checkbox → `AppSettings.BusinessLicenseAcknowledged`  
+- Go-live: `docs/development/commercial.md`  
+
 ## How to Run
 
 ```bash
@@ -128,7 +145,8 @@ dotnet test --filter Category=Engines
 dotnet test --filter Category=Flavors
 dotnet test --filter Category=Compare
 dotnet test --filter Category=Debug
-dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare|Category=Debug"
+dotnet test --filter Category=Export
+dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare|Category=Debug|Category=Export"
 dotnet test --filter Category=UI
 dotnet test --filter Category=Screenshots   # writes docs/screenshots/*.png
 ```
@@ -147,12 +165,12 @@ dotnet test -c Release
 ### Cut a release
 
 ```bash
-# After version + CHANGELOG are on main:
-git tag -a v1.1.0 -m "RegexCraft 1.1.0"
-git push origin v1.1.0
+# After version + CHANGELOG are on main and DIST_REPO_TOKEN is set:
+git tag -a v1.2.0 -m "RegexCraft 1.2.0"
+git push origin v1.2.0
 ```
 
-See `docs/development/packaging.md`.
+See `docs/development/packaging.md` and `docs/development/commercial.md`.
 
 ## Theme Colors
 
@@ -192,6 +210,7 @@ dotnet test --filter Category=Library
 dotnet test --filter Category=Grep
 dotnet test --filter Category=Compare
 dotnet test --filter Category=Debug
+dotnet test --filter Category=Export
 dotnet test --filter Category=ViewModels
 dotnet test --filter Category=Flavors
 dotnet test --filter Category=UI
@@ -213,20 +232,23 @@ Library/History/Settings: `%AppData%/RegexCraft` (Windows) or `~/Library/Applica
 - VM: `src/RegexCraft.App/ViewModels/MainWindowViewModel.cs`  
 - Compare: `src/RegexCraft.Core/Compare/`  
 - Debug: `src/RegexCraft.Core/Debug/`  
+- Export: `src/RegexCraft.Core/Export/`  
+- Commercial: `src/RegexCraft.Core/Commercial/CommercialLinks.cs`  
 - Layout: `src/RegexCraft.Core/Settings/LayoutDefaults.cs`, `AppSettings` panel width fields  
 - Flavors: `src/RegexCraft.Core/Flavors/` (`FlavorDefinition`, `FlavorService`, `FlavorTokenSets`)  
 - JS engine: `src/RegexCraft.Engines/JavaScript/JavaScriptRegexEngine.cs`  
 - Built-in library: `src/RegexCraft.Core/Library/BuiltInLibrary.cs`  
 - Theme: `src/RegexCraft.App/Themes/Colors.axaml`  
 - CI: `.github/workflows/ci.yml`, `.github/workflows/publish.yml`, `.github/workflows/pages.yml`  
-- Website: `website/` · setup: `docs/development/website.md`  
+- Site build: `scripts/build-site.sh`  
+- Website: `website/` · setup: `docs/development/website.md` · commercial: `docs/development/commercial.md`  
 - Headless tests: `tests/RegexCraft.Tests/Headless/`  
 - Compare tests: `tests/RegexCraft.Tests/Compare/`  
 - Debug tests: `tests/RegexCraft.Tests/Debug/`  
+- Export tests: `tests/RegexCraft.Tests/Export/`  
 - Flavor tests: `tests/RegexCraft.Tests/Flavors/`  
 - Engine tests: `tests/RegexCraft.Tests/Engines/`  
 - Settings tests: `tests/RegexCraft.Tests/Settings/`  
 - Screenshots: `docs/screenshots/`  
-- User Compare doc: `docs/user/comparing.md`  
-- User Debug doc: `docs/user/debugging.md`  
-- User flavors doc: `docs/user/flavors.md`  
+- User docs: `docs/user/` (including `exporting.md`)  
+

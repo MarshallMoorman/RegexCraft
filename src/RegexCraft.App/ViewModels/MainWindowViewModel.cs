@@ -13,6 +13,7 @@ using RegexCraft.Core.Compare;
 using RegexCraft.Core.Debug;
 using RegexCraft.Core.Editing;
 using RegexCraft.Core.Engines;
+using RegexCraft.Core.Export;
 using RegexCraft.Core.Flavors;
 using RegexCraft.Core.Grep;
 using RegexCraft.Core.Highlighting;
@@ -46,6 +47,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string? _lastHistoryFlavor;
     private AppSettings _settings;
     private bool _suppressSettingsSave;
+    private MatchCollectionResult? _lastMatchResult;
 
     public MainWindowViewModel(
         IFlavorService flavorService,
@@ -158,6 +160,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public event Action? GrepPreviewChanged;
     /// <summary>Raised to request a folder picker; view sets GrepRootPath.</summary>
     public event Func<Task<string?>>? PickFolderRequested;
+    /// <summary>
+    /// Raised to request a save-file dialog. Argument: (title, suggestedFileName, defaultExtension).
+    /// Returns local path or null if cancelled.
+    /// </summary>
+    public event Func<string, string, string, Task<string?>>? SaveFileRequested;
     /// <summary>
     /// Raised after a right-panel mode switch so the view can apply Normal vs Compare widths.
     /// Argument is the previous tab name (before the switch).
@@ -624,6 +631,109 @@ public partial class MainWindowViewModel : ViewModelBase
         if (match is null) return;
         SelectSubjectRangeRequested?.Invoke(match.Start, match.Length);
     }
+
+    /// <summary>True when the last Test run produced a successful match collection (may be empty).</summary>
+    public bool CanExportMatches =>
+        _lastMatchResult is { Success: true };
+
+    [RelayCommand(CanExecute = nameof(CanExportMatches))]
+    private async Task ExportMatchesCsvAsync()
+    {
+        await ExportMatchesAsync(csv: true);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExportMatches))]
+    private async Task ExportMatchesJsonAsync()
+    {
+        await ExportMatchesAsync(csv: false);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExportMatches))]
+    private void CopyMatchesJson()
+    {
+        if (_lastMatchResult is not { Success: true })
+        {
+            StatusText = "Nothing to export — run Test first";
+            return;
+        }
+
+        var json = MatchExportService.ToJson(_lastMatchResult, BuildMatchExportContext());
+        CopyTextRequested?.Invoke(json);
+        StatusText = "Match results (JSON) copied to clipboard";
+        _logger.LogInformation("Exported matches to clipboard as JSON ({Count})", _lastMatchResult.Matches.Count);
+    }
+
+    private async Task ExportMatchesAsync(bool csv)
+    {
+        if (_lastMatchResult is not { Success: true })
+        {
+            StatusText = "Nothing to export — run Test first";
+            return;
+        }
+
+        var ext = csv ? "csv" : "json";
+        var suggested = MatchExportService.SuggestedFileName(ext);
+        var title = csv ? "Export matches as CSV" : "Export matches as JSON";
+        string? path = null;
+
+        if (SaveFileRequested is not null)
+            path = await SaveFileRequested(title, suggested, ext);
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            StatusText = "Export cancelled";
+            return;
+        }
+
+        try
+        {
+            var ctx = BuildMatchExportContext();
+            var content = csv
+                ? MatchExportService.ToCsv(_lastMatchResult, ctx)
+                : MatchExportService.ToJson(_lastMatchResult, ctx);
+            await File.WriteAllTextAsync(path, content);
+            StatusText = csv
+                ? $"Exported {_lastMatchResult.Matches.Count} match(es) to CSV"
+                : $"Exported {_lastMatchResult.Matches.Count} match(es) to JSON";
+            _logger.LogInformation("Exported matches to {Path} ({Format}, {Count})",
+                path, ext.ToUpperInvariant(), _lastMatchResult.Matches.Count);
+        }
+        catch (Exception ex)
+        {
+            StatusText = "Export failed";
+            HasError = true;
+            ErrorText = $"Export failed: {ex.Message}";
+            _logger.LogWarning(ex, "Failed to export matches to {Path}", path);
+        }
+    }
+
+    private MatchExportContext BuildMatchExportContext()
+    {
+        var engine = ResolveEngine();
+        return new MatchExportContext
+        {
+            Pattern = Pattern ?? string.Empty,
+            Subject = Subject ?? string.Empty,
+            FlavorId = SelectedFlavor?.Id ?? string.Empty,
+            FlavorDisplayName = SelectedFlavor?.DisplayName ?? string.Empty,
+            EngineId = engine?.Id ?? SelectedFlavor?.EngineId ?? string.Empty,
+            EngineDisplayName = engine?.DisplayName ?? string.Empty,
+            IgnoreCase = IgnoreCase,
+            Multiline = Multiline,
+            Singleline = Singleline,
+            ExplicitCapture = ExplicitCapture,
+            IgnorePatternWhitespace = IgnorePatternWhitespace,
+            ExportedAt = DateTimeOffset.UtcNow,
+        };
+    }
+
+    /// <summary>Builds CSV for the last successful match result (tests / scripting).</summary>
+    public string BuildMatchesCsv() =>
+        MatchExportService.ToCsv(_lastMatchResult, BuildMatchExportContext());
+
+    /// <summary>Builds JSON for the last successful match result (tests / scripting).</summary>
+    public string BuildMatchesJson() =>
+        MatchExportService.ToJson(_lastMatchResult, BuildMatchExportContext());
 
     [RelayCommand]
     private void SaveToLibrary()
@@ -1248,6 +1358,8 @@ public partial class MainWindowViewModel : ViewModelBase
             HasError = true;
             ErrorText = "No engine available for the selected flavor.";
             Matches.Clear();
+            _lastMatchResult = null;
+            NotifyExportCommandsCanExecuteChanged();
             CurrentHighlights = Array.Empty<HighlightSpan>();
             HighlightsChanged?.Invoke();
             StatusMatches = "Matches: —";
@@ -1266,6 +1378,8 @@ public partial class MainWindowViewModel : ViewModelBase
             HasError = true;
             ErrorText = result.ErrorMessage ?? "Invalid pattern";
             Matches.Clear();
+            _lastMatchResult = result;
+            NotifyExportCommandsCanExecuteChanged();
             CurrentHighlights = Array.Empty<HighlightSpan>();
             HighlightsChanged?.Invoke();
             StatusMatches = "Matches: error";
@@ -1280,6 +1394,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         HasError = false;
         ErrorText = string.Empty;
+        _lastMatchResult = result;
+        NotifyExportCommandsCanExecuteChanged();
         Matches.Clear();
         for (var i = 0; i < result.Matches.Count; i++)
         {
@@ -1309,6 +1425,13 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!live)
             _logger.LogInformation("Match: {Count} via {Engine} in {Ms:F2}ms",
                 result.Matches.Count, engine.Id, result.Duration.TotalMilliseconds);
+    }
+
+    private void NotifyExportCommandsCanExecuteChanged()
+    {
+        ExportMatchesCsvCommand.NotifyCanExecuteChanged();
+        ExportMatchesJsonCommand.NotifyCanExecuteChanged();
+        CopyMatchesJsonCommand.NotifyCanExecuteChanged();
     }
 
     private void RunReplaceCore(bool live = false)
@@ -1785,6 +1908,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             HasError = false;
             ErrorText = string.Empty;
+            _lastMatchResult = matchResult;
+            NotifyExportCommandsCanExecuteChanged();
             Matches.Clear();
             for (var i = 0; i < matchResult.Matches.Count; i++)
             {

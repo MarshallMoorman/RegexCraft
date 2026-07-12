@@ -1,64 +1,38 @@
-# RegexCraft public website
+# RegexCraft public website (source)
 
-Static site for **https://regexcraft.com**, source-controlled in this repository under `website/`.
+Marketing site for **https://regexcraft.com**. Built with plain HTML/CSS (no SPA framework).
 
-## Stack
+## Structure
 
-- Plain HTML + CSS (no build step, no JS framework)
-- Optional tiny nav toggle script for mobile
-- Brand blues match the desktop app (`#0078D4`, light/dark via `prefers-color-scheme`)
+| File | Role |
+|------|------|
+| `index.html` | Landing |
+| `download.html` | Public dist download links |
+| `pricing.html` | Personal free / business paid |
+| `eula.html` | End user license |
+| `docs.html` | User docs index |
+| `about.html` | About / stack / license summary |
+| `site-config.js` | Buy URL / version placeholders |
+| `styles.css` | Blue professional theme |
+| `CNAME` | `regexcraft.com` |
+| `assets/` | Favicon, logo, screenshots |
 
-## Layout
+User guide HTML under `docs/` is **generated** from `docs/user/*.md` by `scripts/build-site.sh` (pandoc) and is not committed as HTML.
 
-```
-website/
-  index.html          # Landing
-  download.html       # Platforms + GitHub Releases CTA
-  docs.html           # Links into docs/user/ on GitHub
-  about.html          # Project / license / stack
-  styles.css
-  CNAME               # regexcraft.com
-  assets/
-    favicon.png
-    logo.png
-    screenshots/      # Copies of docs/screenshots for deploy isolation
-  README.md           # This file
+## Local preview
+
+```bash
+# Marketing pages only
+python3 -m http.server 8080 --directory website
+
+# Full public build (marketing + user docs)
+bash scripts/build-site.sh
+python3 -m http.server 8080 --directory site-dist
 ```
 
 ## Deploy
 
-GitHub Pages is deployed by **GitHub Actions** from this folder:
+GitHub Action **Deploy website** builds `site-dist` and pushes to the public dist repo `gh-pages` branch.  
+See `docs/development/website.md` and `docs/development/commercial.md`.
 
-- Workflow: [`.github/workflows/pages.yml`](../.github/workflows/pages.yml)
-- Trigger: push to `main` that touches `website/**`, or manual `workflow_dispatch`
-- Artifact path: entire `website/` directory (including `CNAME`)
-
-**Human setup** (Pages source + DNS) is documented in detail in:
-
-**[docs/development/website.md](../docs/development/website.md)**
-
-## Local preview
-
-No server required for a quick look:
-
-```bash
-# From repo root
-open website/index.html          # macOS
-# or
-python3 -m http.server 8080 --directory website
-# then http://localhost:8080
-```
-
-## Updating content
-
-| Task | What to edit |
-|------|----------------|
-| Copy / features | `index.html` |
-| Platforms | `download.html` |
-| Doc links | `docs.html` |
-| Story / license | `about.html` |
-| Colors / layout | `styles.css` |
-| Screenshots | Replace files under `assets/screenshots/`; prefer regenerating from the app first (`dotnet test --filter Category=Screenshots`) and copying from `docs/screenshots/` |
-| Favicon / logo | Copy from `src/RegexCraft.App/Assets/` |
-
-After editing, commit and push to `main`. The Pages workflow publishes automatically once Pages is enabled with **Source: GitHub Actions**.
+**Never** include `docs/development/` in the public site.

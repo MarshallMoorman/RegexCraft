@@ -5,25 +5,33 @@ All notable changes to RegexCraft are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Phase 12 website (2026-07-11)
+## [1.2.0] — 2026-07-12
 
-App version remains **1.1.0** (no app code changes).
+**Phase 13** — private-source monorepo model, public dist binaries + site via Actions, commercial EULA (no keys), Export.
 
 ### Added
 
-- **Public website source** under [`website/`](../website/) — landing, features, screenshots, download, docs links, about; blue professional theme matching the app
-- **`website/CNAME`** with `regexcraft.com` for GitHub Pages custom domain
-- **GitHub Actions** workflow [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) — deploys `website/` to GitHub Pages on push to `main` (or manual)
-- Setup guide: [`docs/development/website.md`](development/website.md) — exact Pages settings + DNS records for Marshall
+- **Commercial EULA** replaces MIT as the product license (free personal / paid business, honor system, no license keys)
+- **Export** match results from Test → **CSV** and **JSON** (groups, pattern, flavor, options, timestamp); Copy JSON; save dialog
+- **`MatchExportService`** + tests (`Category=Export`)
+- **Pricing** and **EULA** pages on the website; download links point at public **RegexCraft-Releases**
+- Full **user docs** published with the site (`docs/user/` → HTML via `scripts/build-site.sh` + pandoc)
+- **`docs/development/commercial.md`** — Marshall’s ordered go-live checklist (dist repo, token, payment, tag, private, re-verify)
+- About dialog: license summary, Buy / EULA / Pricing / Downloads links, optional “I use this for business and hold a license” checkbox
+- Publish workflow creates releases on the **public dist repo** (`DIST_REPO_TOKEN`); optional `SHA256SUMS.txt`
+- Site deploy pushes built `site-dist` to dist repo **`gh-pages`** (works when monorepo is private)
 
 ### Changed
 
-- Root README, AGENTS.md, and HANDOFF updated for website / post–Phase 12 roadmap
+- Version **1.2.0**
+- Root README describes proprietary monorepo + public binaries/site flow
+- Website messaging: remove open-source / MIT claims; product positioning for free personal / paid business
+- Packaging and website docs updated for Phase 13 Actions model
 
 ### Notes
 
-- **Human steps required** after merge: enable Pages (source **GitHub Actions**), set custom domain `regexcraft.com`, create apex A records + `www` CNAME at the registrar. See `docs/development/website.md`.
-- No app version bump; tag only if a future 1.1.1 ships code fixes.
+- **No license keys** by design. Same binaries for personal and business.
+- Marshall must create public `RegexCraft-Releases`, add `DIST_REPO_TOKEN`, set payment URL, tag `v1.2.0`, verify downloads, then make main private. See `docs/development/commercial.md`.
 
 ## [1.1.0] — 2026-07-11
 

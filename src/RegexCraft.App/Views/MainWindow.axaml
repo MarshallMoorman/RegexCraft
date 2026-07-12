@@ -923,11 +923,27 @@
 
               <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
                 <TextBlock Text="Matches &amp; Groups" Classes="sectionLabel" />
-                <Button Grid.Column="1"
-                        Content="Run"
-                        Classes="primaryAction"
-                        Command="{Binding RunTestCommand}"
-                        ToolTip.Tip="Run match immediately (Ctrl+Enter)" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                  <Button Content="CSV"
+                          Classes="ghost"
+                          Command="{Binding ExportMatchesCsvCommand}"
+                          ToolTip.Tip="Export matches as CSV"
+                          AutomationProperties.Name="Export matches CSV" />
+                  <Button Content="JSON"
+                          Classes="ghost"
+                          Command="{Binding ExportMatchesJsonCommand}"
+                          ToolTip.Tip="Export matches as JSON"
+                          AutomationProperties.Name="Export matches JSON" />
+                  <Button Content="Copy JSON"
+                          Classes="ghost"
+                          Command="{Binding CopyMatchesJsonCommand}"
+                          ToolTip.Tip="Copy match results as JSON to clipboard"
+                          AutomationProperties.Name="Copy matches JSON" />
+                  <Button Content="Run"
+                          Classes="primaryAction"
+                          Command="{Binding RunTestCommand}"
+                          ToolTip.Tip="Run match immediately (Ctrl+Enter)" />
+                </StackPanel>
               </Grid>
 
               <Panel Grid.Row="3">

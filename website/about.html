@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About — RegexCraft</title>
-  <meta name="description" content="About RegexCraft: a modern cross-platform regex workbench by Marshall Moorman, built with Avalonia and .NET, open source under MIT." />
+  <meta name="description" content="About RegexCraft: a modern cross-platform regex workbench by Marshall Moorman. Free personal use; paid business license." />
   <meta name="theme-color" content="#0078D4" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="stylesheet" href="styles.css" />
@@ -19,12 +19,11 @@
       <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
       <ul class="nav-links" data-nav-links>
         <li><a href="index.html">Home</a></li>
-        <li><a href="index.html#features">Features</a></li>
-        <li><a href="index.html#screenshots">Screenshots</a></li>
         <li><a href="download.html">Download</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
         <li><a href="docs.html">Docs</a></li>
         <li><a href="about.html" aria-current="page">About</a></li>
-        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft/releases/latest">Download</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest">Download</a></li>
       </ul>
     </div>
   </header>
@@ -40,17 +39,17 @@
     <div class="page-content">
       <div class="container prose">
         <p>
-          <strong>RegexCraft</strong> started as a focused answer to a simple need: a modern, cross-platform tool
-          that treats regex as first-class craft — testing with real engines, honest multi-flavor fidelity,
-          GREP for whole trees, code generation you can paste into production, and room to compare and debug
-          without leaving the desktop.
+          <strong>RegexCraft</strong> is a modern, cross-platform tool that treats regex as first-class craft —
+          testing with real engines, honest multi-flavor fidelity, GREP for whole trees, code generation you can
+          paste into production, Compare and Debug panels, and Export for match results — without leaving the desktop.
         </p>
 
         <h2>Who builds it</h2>
         <p>
           Created and maintained by <strong>Marshall Moorman</strong>.
-          The project is open source on
-          <a href="https://github.com/MarshallMoorman/RegexCraft">GitHub</a>.
+          Portable binaries are published on
+          <a href="https://github.com/MarshallMoorman/RegexCraft-Releases">GitHub Releases (public dist)</a>.
+          Application source is proprietary.
         </p>
 
         <h2>Stack</h2>
@@ -65,10 +64,15 @@
 
         <h2>License</h2>
         <p>
-          RegexCraft is released under the
-          <a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/LICENSE">MIT License</a>.
-          You are free to use, modify, and distribute it with attribution.
+          RegexCraft is proprietary software under a commercial
+          <a href="eula.html">EULA</a>:
         </p>
+        <ul>
+          <li><strong>Personal / non-commercial / education</strong> — free</li>
+          <li><strong>Business / commercial / organizational</strong> — paid one-time license</li>
+          <li><strong>No license keys</strong> — honor system, no DRM, no phone-home</li>
+        </ul>
+        <p>See <a href="pricing.html">Pricing</a> for the current business license offer.</p>
 
         <h2>Privacy</h2>
         <p>
@@ -77,8 +81,9 @@
         </p>
 
         <p style="margin-top: 2rem;">
-          <a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft">View on GitHub</a>
-          <a class="btn btn-secondary" href="download.html" style="margin-left: 0.5rem;">Download</a>
+          <a class="btn btn-primary" href="download.html">Download</a>
+          <a class="btn btn-secondary" href="pricing.html" style="margin-left: 0.5rem;">Pricing</a>
+          <a class="btn btn-ghost" href="eula.html" style="margin-left: 0.5rem;">EULA</a>
         </p>
       </div>
     </div>
@@ -92,30 +97,29 @@
             <img src="assets/favicon.png" alt="" width="28" height="28" />
             RegexCraft
           </div>
-          <p>Modern, cross-platform regular expression workbench. Free and open source under the MIT License.</p>
+          <p>Free for personal use. Business license available. Proprietary software under the EULA.</p>
         </div>
         <div class="footer-col">
           <h4>Product</h4>
           <ul>
             <li><a href="download.html">Download</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
             <li><a href="docs.html">Documentation</a></li>
             <li><a href="about.html">About</a></li>
-            <li><a href="https://github.com/MarshallMoorman/RegexCraft/releases">Releases</a></li>
           </ul>
         </div>
         <div class="footer-col">
-          <h4>Source</h4>
+          <h4>Legal &amp; downloads</h4>
           <ul>
-            <li><a href="https://github.com/MarshallMoorman/RegexCraft">GitHub repository</a></li>
-            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/LICENSE">MIT License</a></li>
-            <li><a href="https://github.com/MarshallMoorman/RegexCraft/blob/main/docs/CHANGELOG.md">Changelog</a></li>
-            <li><a href="https://github.com/MarshallMoorman/RegexCraft/issues">Issues</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases">Public releases</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft-Releases">Dist repository</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <span>© 2026 Marshall Moorman</span>
-        <span><a href="https://regexcraft.com">regexcraft.com</a> · Hosted on GitHub Pages</span>
+        <span><a href="https://regexcraft.com">regexcraft.com</a></span>
       </div>
     </div>
   </footer>

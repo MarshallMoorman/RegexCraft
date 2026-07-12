@@ -1,21 +1,92 @@
-MIT License
+RegexCraft End User License Agreement (EULA)
+============================================
 
-Copyright (c) 2026 Marshall Moorman
+Copyright © 2026 Marshall Moorman. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+IMPORTANT — READ CAREFULLY. By downloading, installing, or using RegexCraft
+(“the Software”), you agree to this End User License Agreement (“Agreement”).
+If you do not agree, do not use the Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Ownership and source
+-----------------------
+The Software, its source code, documentation (other than publicly published
+user guides), branding, and related materials are proprietary to Marshall
+Moorman. This Agreement does not transfer ownership. Source code is not
+licensed for public copying, redistribution, or creation of derivative works
+except as expressly allowed below for your personal or licensed business use
+of the distributed binaries.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+2. License grant — personal / non-commercial
+--------------------------------------------
+You may use the Software free of charge for personal, non-commercial, hobby,
+educational, and evaluation purposes on computers you own or control.
+
+3. License grant — business / commercial
+----------------------------------------
+Use of the Software for business, commercial, organizational, government, or
+revenue-generating work requires a paid commercial license (one-time purchase
+per the pricing published at https://regexcraft.com). Payment is on the honor
+system: there are no license keys, activation servers, or DRM. Purchasing a
+commercial license authorizes use within your organization under the terms
+stated at purchase (typically one license per paying organization seat or as
+otherwise described on the pricing page).
+
+4. What you may do
+------------------
+- Install and run the official distributed binaries on supported platforms.
+- Use match results, generated code snippets, and exported data you produce
+  with the Software in your own projects.
+- Make reasonable backup copies of the binaries for your own use.
+
+5. What you may not do
+----------------------
+- Redistribute the Software (or substantial portions of it) as a competing
+  product, SaaS, or public download, whether free or paid.
+- Reverse engineer, decompile, or attempt to extract source for the purpose
+  of creating a competing product, except to the extent such restriction is
+  prohibited by applicable law.
+- Remove or obscure copyright, trademark, or proprietary notices.
+- Claim that the Software is open source or licensed under MIT or similar
+  permissive terms (it is not).
+- Publish private development documentation, phase requirements, or source
+  from the private development repository.
+
+6. No warranty
+--------------
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE AUTHOR IS NOT
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF THE
 SOFTWARE.
+
+7. Limitation of liability
+--------------------------
+To the maximum extent permitted by law, Marshall Moorman’s total liability
+under this Agreement shall not exceed the amount you paid for a commercial
+license (if any) in the twelve months preceding the claim.
+
+8. Third-party components
+-------------------------
+The Software may include third-party libraries under their own licenses
+(e.g., open-source components used by the .NET / Avalonia stack). Those
+licenses continue to apply to those components; this EULA governs RegexCraft
+as a product.
+
+9. Termination
+--------------
+This license terminates automatically if you breach it. Upon termination you
+must stop using the Software and destroy copies in your possession, except
+for archival copies required by law.
+
+10. Governing law
+-----------------
+This Agreement is governed by the laws applicable in the author’s
+jurisdiction, without regard to conflict-of-law principles. Courts there have
+exclusive venue, except where mandatory consumer protections apply.
+
+11. Contact
+-----------
+Website: https://regexcraft.com
+Copyright holder: Marshall Moorman
+
+Last updated: 2026-07-12 (RegexCraft 1.2.0)

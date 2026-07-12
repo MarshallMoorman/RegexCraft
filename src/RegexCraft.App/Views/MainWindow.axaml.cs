@@ -329,6 +329,7 @@ public partial class MainWindow : Window
             _vm.CopyTextRequested -= OnCopyText;
             _vm.GrepPreviewChanged -= OnGrepPreviewChanged;
             _vm.PickFolderRequested -= OnPickFolderRequested;
+            _vm.SaveFileRequested -= OnSaveFileRequested;
             _vm.RightPanelModeChanged -= OnRightPanelModeChanged;
             _vm.PropertyChanged -= OnVmPropertyChanged;
         }
@@ -345,6 +346,7 @@ public partial class MainWindow : Window
         _vm.CopyTextRequested += OnCopyText;
         _vm.GrepPreviewChanged += OnGrepPreviewChanged;
         _vm.PickFolderRequested += OnPickFolderRequested;
+        _vm.SaveFileRequested += OnSaveFileRequested;
         _vm.RightPanelModeChanged += OnRightPanelModeChanged;
         _vm.PropertyChanged += OnVmPropertyChanged;
 
@@ -733,6 +735,41 @@ public partial class MainWindow : Window
 
             // Prefer local path
             return folder.TryGetLocalPath() ?? folder.Path.LocalPath;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<string?> OnSaveFileRequested(string title, string suggestedFileName, string defaultExtension)
+    {
+        try
+        {
+            var top = TopLevel.GetTopLevel(this);
+            if (top is null)
+                return null;
+
+            var ext = defaultExtension.TrimStart('.');
+            var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = title,
+                SuggestedFileName = suggestedFileName,
+                DefaultExtension = ext,
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType(ext.ToUpperInvariant())
+                    {
+                        Patterns = new[] { $"*.{ext}" },
+                    },
+                    FilePickerFileTypes.All,
+                },
+            });
+
+            if (file is null)
+                return null;
+
+            return file.TryGetLocalPath() ?? file.Path.LocalPath;
         }
         catch
         {

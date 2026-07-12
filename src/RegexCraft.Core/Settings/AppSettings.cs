@@ -32,4 +32,10 @@ public sealed class AppSettings
     public bool Singleline { get; set; }
     public bool ExplicitCapture { get; set; }
     public bool IgnorePatternWhitespace { get; set; }
+
+    /// <summary>
+    /// Honor-system acknowledgment: user indicates business use and holds a commercial license.
+    /// No keys or activation — local preference only.
+    /// </summary>
+    public bool BusinessLicenseAcknowledged { get; set; }
 }

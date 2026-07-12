@@ -112,7 +112,8 @@ public partial class App : Application
 
     public static void ShowAboutDialog(Window? owner = null)
     {
-        var about = new AboutWindow();
+        // Same ApplicationData path as the main VM — honor-system checkbox persists here.
+        var about = new AboutWindow(new JsonSettingsStore());
         if (owner is not null)
         {
             _ = about.ShowDialog(owner);

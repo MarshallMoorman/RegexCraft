@@ -85,57 +85,59 @@ Run the executable from that folder (or ship the whole folder as a portable zip)
 
 ---
 
-## GitHub Actions
+## GitHub Actions (Phase 13+)
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
-| **CI** | `.github/workflows/ci.yml` | Push / PR to `main` | Restore, Debug + Release build, full `dotnet test`, TRX + optional screenshots |
-| **Publish** | `.github/workflows/publish.yml` | Manual (`workflow_dispatch`) or tag `v*` | Test → `dotnet publish` for win-x64, linux-x64, osx-x64, osx-arm64 → artifacts; on tag create a **GitHub Release** with zips attached |
+| **CI** | `.github/workflows/ci.yml` | Push / PR to `main` | Restore, Debug + Release build, full `dotnet test` |
+| **Publish** | `.github/workflows/publish.yml` | Tag `v*` (or manual) | Test → multi-RID publish → **public dist repo** GitHub Release |
+| **Deploy website** | `.github/workflows/pages.yml` | Push `website/**` / `docs/user/**`, or manual | Build site (user docs only) → public dist **`gh-pages`** |
 
-### How to cut a public release (1.0.0 and later)
+Public binaries live on **`MarshallMoorman/RegexCraft-Releases`**, not on the private monorepo.  
+Full go-live order: [commercial.md](commercial.md).
 
-Version lives only in `Directory.Build.props`. Changelog lives in `docs/CHANGELOG.md`.
+### How to cut a public release
+
+Version lives only in `Directory.Build.props`. Changelog lives in `docs/CHANGELOG.md`.  
+Prerequisites: public dist repo exists + monorepo secret **`DIST_REPO_TOKEN`**.
 
 ```bash
 # 1. Ensure main is green and version/CHANGELOG already committed
 git checkout main
 git pull origin main
-grep '<Version>' Directory.Build.props   # e.g. 1.0.0
+grep '<Version>' Directory.Build.props   # e.g. 1.2.0
 
-# 2. Tag and push the tag (this triggers Publish + GitHub Release)
-git tag -a v1.0.0 -m "RegexCraft 1.0.0"
-git push origin v1.0.0
+# 2. Tag and push the tag (this triggers Publish → public dist release)
+git tag -a v1.2.0 -m "RegexCraft 1.2.0"
+git push origin v1.2.0
 ```
 
 What happens next:
 
-1. **Test** job on Ubuntu runs `dotnet build` + `dotnet test` (screenshots skipped for speed).  
-2. **Publish** matrix builds self-contained binaries for:
-   - `win-x64`
-   - `linux-x64`
-   - `osx-x64`
-   - `osx-arm64`  
-   Strategy is `fail-fast: false` so one RID failure does not cancel the others.  
-3. Each successful RID uploads a folder artifact and a **zip** archive (`RegexCraft-<rid>.zip`).  
-4. **GitHub Release** job (tag only):
-   - Downloads matrix artifacts  
-   - Attaches zips (or tar.gz fallback) to a new Release for that tag  
-   - Writes release notes from the matching `docs/CHANGELOG.md` section plus auto-generated commit notes  
-   - Marks pre-release when the tag contains `-`, `rc`, `beta`, or `alpha`  
-   - **Refuses** to create a release with zero archives (no empty half-created releases)
+1. **Test** job: `dotnet build` + `dotnet test` (screenshots skipped).  
+2. **Publish** matrix: self-contained `win-x64`, `linux-x64`, `osx-x64`, `osx-arm64` (`fail-fast: false`).  
+3. Each RID uploads folder + **`RegexCraft-<rid>.zip`**.  
+4. **Public dist release** job (tag only; needs `DIST_REPO_TOKEN`):
+   - Creates/updates a Release on `MarshallMoorman/RegexCraft-Releases`
+   - Uploads zips + `SHA256SUMS.txt` when present  
+   - Notes from CHANGELOG + EULA/pricing links  
+   - Refuses empty releases  
 
-### Publish pitfalls (fixed in 1.0.1 workflow)
+Download page: https://regexcraft.com/download.html → public dist URLs.
+
+### Publish pitfalls (still relevant)
 
 | Issue | Cause | Fix in workflow |
 |-------|--------|-----------------|
-| **win-x64** fails with `MSB1008: Only one project can be specified` | Git Bash converts `/p:Property=value` into a bare `p:…` “project” | Use `-p:Property=value` and `MSYS2_ARG_CONV_EXCL=*` |
-| **linux-x64** fails after a successful publish with exit code 2 | `ls \| head` under `pipefail` gets SIGPIPE | List the folder without piping to `head` |
+| **win-x64** `MSB1008` | Git Bash mangles `/p:` | Use `-p:` and `MSYS2_ARG_CONV_EXCL=*` |
+| **linux-x64** exit 2 | `ls \| head` + pipefail | Do not pipe `ls` to `head` |
+| Dist release fails immediately | Missing `DIST_REPO_TOKEN` | Create PAT + secret (commercial.md) |
 
-### Manual artifacts (no GitHub Release)
+### Manual artifacts (no dist release)
 
-1. GitHub → **Actions** → **Publish** → **Run workflow**  
-2. Choose configuration (Release) and self-contained (true)  
-3. Download platform artifacts from the run summary  
+1. **Actions → Publish → Run workflow**  
+2. Leave **publish_to_dist** false to only keep workflow artifacts  
+3. Set **publish_to_dist** true to also create a dist release (needs token)
 
 ### Expected release assets
 
@@ -145,18 +147,19 @@ What happens next:
 | `RegexCraft-linux-x64.zip` | Linux x64 |
 | `RegexCraft-osx-x64.zip` | macOS Intel |
 | `RegexCraft-osx-arm64.zip` | macOS Apple Silicon |
+| `SHA256SUMS.txt` | Checksums (when generated) |
 
-Unzip and run `RegexCraft.App` / `RegexCraft.App.exe` from the extracted folder. No installer is required for portable use.
+Unzip and run `RegexCraft.App` / `RegexCraft.App.exe`. No installer required for portable use.
 
-### Permissions
+### Permissions / secrets
 
-- Basic CI: no secrets.  
-- Publish / Release: default `GITHUB_TOKEN` with `contents: write` (configured in the workflow).  
-- No interactive secrets are required for open-source tag releases.
+- **CI**: no secrets.  
+- **Publish to public dist**: repository secret **`DIST_REPO_TOKEN`** (contents write on dist repo).  
+- **Site deploy**: same **`DIST_REPO_TOKEN`** (push `gh-pages` on dist repo).  
 
 ---
 
-## Future installer work (out of scope for 1.0 portable zips)
+## Future installer work (out of scope for portable zips)
 
 | Platform | Direction |
 |----------|-----------|
@@ -164,18 +167,20 @@ Unzip and run `RegexCraft.App` / `RegexCraft.App.exe` from the extracted folder.
 | macOS | `.app` bundle + `.icns`, optional notarization, DMG |
 | Linux | AppImage, Flatpak, or distro packages from `linux-x64` |
 
-Until then, **portable self-contained zips** from GitHub Releases are the supported distribution format.
+Until then, **portable self-contained zips** from the public dist Releases are the supported distribution format.
 
 ---
 
 ## Versioning checklist
 
-1. Edit only `Directory.Build.props` → `<Version>1.0.0</Version>`  
-2. Update `docs/CHANGELOG.md` with a `## [1.0.0]` section  
+1. Edit only `Directory.Build.props` → `<Version>1.2.0</Version>`  
+2. Update `docs/CHANGELOG.md` with a `## [1.2.0]` section  
 3. Update README / AGENTS / HANDOFF as needed  
 4. Commit on `main`  
-5. Tag `v1.0.0` and `git push origin v1.0.0`  
-6. Confirm **Publish** workflow + GitHub Release assets on GitHub  
+5. Tag `v1.2.0` and `git push origin v1.2.0`  
+6. Confirm **Publish** → assets on **RegexCraft-Releases**  
+7. Confirm **Deploy website** if site/docs changed  
+
 
 ---
 

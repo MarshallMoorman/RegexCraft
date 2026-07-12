@@ -6,33 +6,52 @@
         x:Class="RegexCraft.App.Views.AboutWindow"
         Title="About RegexCraft"
         Icon="/Assets/regexcraft-icon.ico"
-        Width="440"
-        Height="460"
-        MinWidth="400"
-        MinHeight="400"
+        Width="460"
+        Height="560"
+        MinWidth="420"
+        MinHeight="480"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundPrimaryBrush}"
         ShowInTaskbar="False">
 
   <DockPanel Margin="28,24">
-    <Button DockPanel.Dock="Bottom"
-            Content="Close"
-            Classes="primaryAction"
-            HorizontalAlignment="Right"
-            MinWidth="96"
-            Margin="0,16,0,0"
-            Click="CloseButton_OnClick"
-            IsDefault="True"
-            IsCancel="True"
-            AutomationProperties.Name="Close About" />
+    <StackPanel DockPanel.Dock="Bottom" Spacing="10" Margin="0,16,0,0">
+      <CheckBox x:Name="BusinessAckCheckBox"
+                Content="I use this for business and hold a license"
+                FontSize="12"
+                Foreground="{DynamicResource TextSecondaryBrush}"
+                IsCheckedChanged="BusinessAck_OnCheckedChanged"
+                AutomationProperties.Name="Business license acknowledgment" />
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <Button Content="Buy license"
+                Classes="ghost"
+                HorizontalAlignment="Left"
+                Click="BuyLicense_OnClick"
+                AutomationProperties.Name="Buy license" />
+        <Button Grid.Column="1"
+                Content="EULA"
+                Classes="ghost"
+                Margin="0,0,8,0"
+                Click="Eula_OnClick"
+                AutomationProperties.Name="View EULA" />
+        <Button Grid.Column="2"
+                Content="Close"
+                Classes="primaryAction"
+                MinWidth="96"
+                Click="CloseButton_OnClick"
+                IsDefault="True"
+                IsCancel="True"
+                AutomationProperties.Name="Close About" />
+      </Grid>
+    </StackPanel>
 
-    <StackPanel Spacing="12" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+    <StackPanel Spacing="10" HorizontalAlignment="Stretch" VerticalAlignment="Top">
         <Image Source="/Assets/regexcraft-icon.png"
                Width="72"
                Height="72"
                HorizontalAlignment="Center"
-               Margin="0,8,0,4"
+               Margin="0,4,0,4"
                AutomationProperties.Name="RegexCraft icon" />
 
         <TextBlock Text="RegexCraft"
@@ -43,22 +62,34 @@
                    AutomationProperties.Name="App name" />
 
         <TextBlock x:Name="VersionTextBlock"
-                   Text="Version 0.8.0"
+                   Text="Version 1.2.0"
                    FontSize="13"
                    HorizontalAlignment="Center"
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    AutomationProperties.Name="App version" />
 
-        <TextBlock Text="Modern cross-platform regular expression workbench for exploring, testing, replacing, grepping, and generating code across many regex flavors."
+        <TextBlock Text="Modern cross-platform regular expression workbench for exploring, testing, replacing, grepping, comparing, debugging, and generating code across many regex flavors."
                    TextWrapping="Wrap"
                    TextAlignment="Center"
                    FontSize="13"
                    LineHeight="20"
-                   MaxWidth="360"
+                   MaxWidth="380"
                    HorizontalAlignment="Center"
                    Margin="0,4,0,0"
                    Foreground="{DynamicResource TextPrimaryBrush}"
                    AutomationProperties.Name="App description" />
+
+        <TextBlock x:Name="LicenseSummaryText"
+                   Text="Free for personal use. Business / commercial use requires a paid license (honor system — no keys)."
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   FontSize="12"
+                   LineHeight="18"
+                   MaxWidth="380"
+                   HorizontalAlignment="Center"
+                   Margin="0,6,0,0"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   AutomationProperties.Name="License summary" />
 
         <TextBlock Text="Copyright © Marshall Moorman 2026"
                    FontSize="12"
@@ -67,25 +98,30 @@
                    Foreground="{DynamicResource TextSecondaryBrush}"
                    AutomationProperties.Name="Copyright" />
 
-        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" Margin="0,6,0,0">
+        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,6,0,0">
           <Button Content="regexcraft.com"
                   Classes="ghost"
                   FontSize="13"
                   Click="Website_OnClick"
                   AutomationProperties.Name="Website link" />
-          <Button Content="GitHub"
+          <Button Content="Pricing"
                   Classes="ghost"
                   FontSize="13"
-                  Click="GitHub_OnClick"
-                  AutomationProperties.Name="GitHub link" />
+                  Click="Pricing_OnClick"
+                  AutomationProperties.Name="Pricing link" />
+          <Button Content="Downloads"
+                  Classes="ghost"
+                  FontSize="13"
+                  Click="Downloads_OnClick"
+                  AutomationProperties.Name="Downloads link" />
         </StackPanel>
 
         <Border Height="1"
                 Background="{DynamicResource BorderSubtleBrush}"
-                Margin="32,12"
+                Margin="32,10"
                 Opacity="0.8" />
 
-        <TextBlock Text="Built with Avalonia"
+        <TextBlock Text="Built with Avalonia · Proprietary software (EULA)"
                    FontSize="11"
                    HorizontalAlignment="Center"
                    Foreground="{DynamicResource TextMutedBrush}"

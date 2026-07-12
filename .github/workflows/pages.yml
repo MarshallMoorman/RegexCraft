@@ -1,5 +1,11 @@
-# Deploy the static site in website/ to GitHub Pages.
-# Requires repo Settings → Pages → Source: GitHub Actions (see docs/development/website.md).
+# Build the public site (website/ + user docs only) and deploy.
+#
+# Deploy target (Phase 13 — works after main is private):
+#   Pushes the built static site to the public dist repo's `gh-pages` branch
+#   using DIST_REPO_TOKEN. Configure that repo for GitHub Pages (branch gh-pages)
+#   and custom domain regexcraft.com — see docs/development/website.md.
+#
+# Never includes docs/development/, source, or tests.
 
 name: Deploy website
 
@@ -8,36 +14,71 @@ on:
     branches: [main]
     paths:
       - "website/**"
+      - "docs/user/**"
       - ".github/workflows/pages.yml"
+      - "scripts/build-site.sh"
   workflow_dispatch:
+
+env:
+  DIST_REPO: MarshallMoorman/RegexCraft-Releases
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-deploy:
+    name: Build site + deploy to public Pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Build public site
+        run: bash scripts/build-site.sh
+
+      - name: Verify no development docs leaked
+        run: |
+          set -euo pipefail
+          if find site-dist -type f -path '*/development/*' | grep -q .; then
+            echo "::error::docs/development must not appear in the public site build"
+            find site-dist -type f -path '*/development/*'
+            exit 1
+          fi
+          if find site-dist -type f \( -name 'PHASE-*.md' -o -name 'AGENTS.md' -o -name 'HANDOFF.md' \) | grep -q .; then
+            echo "::error::Internal monorepo docs must not appear in the public site build"
+            exit 1
+          fi
+          # Sanity: landing page exists
+          test -f site-dist/index.html
+          test -f site-dist/CNAME
+          test -f site-dist/docs.html
+          echo "Public site tree:"
+          find site-dist -type f | head -80
+
+      - name: Require DIST_REPO_TOKEN
+        env:
+          DIST_REPO_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+        run: |
+          if [ -z "$DIST_REPO_TOKEN" ]; then
+            echo "::error::DIST_REPO_TOKEN secret is not set. Site deploys to the public dist repo gh-pages branch. See docs/development/commercial.md."
+            exit 1
+          fi
+
+      - name: Deploy to dist repo gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: website
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          personal_token: ${{ secrets.DIST_REPO_TOKEN }}
+          external_repository: ${{ env.DIST_REPO }}
+          publish_dir: ./site-dist
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
+          cname: regexcraft.com
+          commit_message: "Deploy site from RegexCraft ${{ github.sha }}"

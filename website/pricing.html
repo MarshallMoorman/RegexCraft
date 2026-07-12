@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pricing — RegexCraft</title>
+  <meta name="description" content="RegexCraft pricing: free for personal use, one-time business license. No license keys — honor system." />
+  <meta name="theme-color" content="#0078D4" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="index.html">
+        <img src="assets/favicon.png" alt="" width="36" height="36" />
+        RegexCraft
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
+      <ul class="nav-links" data-nav-links>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="download.html">Download</a></li>
+        <li><a href="pricing.html" aria-current="page">Pricing</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-hero">
+      <div class="container">
+        <h1>Pricing</h1>
+        <p>Free for personal use. One-time license for business. No keys, no accounts, no DRM.</p>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="container" style="max-width: 900px;">
+        <div class="platform-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+          <div class="platform-card" style="text-align: left;">
+            <h3>Personal</h3>
+            <p style="font-size: 2rem; font-weight: 700; color: var(--primary-blue); margin: 0.5rem 0;">Free</p>
+            <p>Hobby, learning, side projects, and non-commercial work.</p>
+            <ul style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; padding-left: 1.2rem;">
+              <li>Full app features</li>
+              <li>All portable platforms</li>
+              <li>Export CSV / JSON</li>
+              <li>Same binaries as business</li>
+            </ul>
+            <a class="btn btn-secondary" href="download.html" style="margin-top: 1rem;">Download free</a>
+          </div>
+          <div class="platform-card" style="text-align: left; border-color: var(--primary-blue); box-shadow: var(--shadow-md);">
+            <h3>Business</h3>
+            <p style="font-size: 2rem; font-weight: 700; color: var(--primary-blue); margin: 0.5rem 0;">$49</p>
+            <p>One-time purchase for commercial / organizational use.</p>
+            <ul style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; padding-left: 1.2rem;">
+              <li>Everything in Personal</li>
+              <li>License for business use</li>
+              <li>Honor system — no activation</li>
+              <li>Supports ongoing development</li>
+            </ul>
+            <a id="buy" class="btn btn-primary" href="#buy" style="margin-top: 1rem;" data-buy-link>Buy business license</a>
+            <p class="hero-meta" style="margin-top: 0.75rem;">
+              Checkout URL is a placeholder until the payment product is live. Edit
+              <code>website/site-config.js</code> or this button’s <code>href</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="note-box" style="margin-top: 2rem;">
+          <strong>Honor system:</strong>
+          There are <strong>no license keys</strong> and no phone-home. If you use RegexCraft for business,
+          please purchase a license. The About dialog includes an optional checkbox:
+          “I use this for business and hold a license.”
+        </div>
+
+        <div class="prose" style="margin-top: 2rem;">
+          <h2>Same download for everyone</h2>
+          <p>
+            Personal and business users download the <strong>same portable zips</strong> from the public
+            <a href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest">RegexCraft-Releases</a>
+            repository. The legal difference is whether your use is personal or commercial — see the
+            <a href="eula.html">EULA</a>.
+          </p>
+          <h2>Price note</h2>
+          <p>
+            The suggested business price is <strong>$49</strong> one-time. Marshall can change this on the
+            payment product without changing the app binary.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">
+            <img src="assets/favicon.png" alt="" width="28" height="28" />
+            RegexCraft
+          </div>
+          <p>Free for personal use. Business license available. Proprietary software under the EULA.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="download.html">Download</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="about.html">About</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal &amp; downloads</h4>
+          <ul>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases">Public releases</a></li>
+            <li><a href="https://github.com/MarshallMoorman/RegexCraft-Releases">Dist repository</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Marshall Moorman</span>
+        <span><a href="https://regexcraft.com">regexcraft.com</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script>
+    (function () {
+      var toggle = document.querySelector("[data-nav-toggle]");
+      var links = document.querySelector("[data-nav-links]");
+      if (toggle && links) {
+        toggle.addEventListener("click", function () {
+          var open = links.classList.toggle("open");
+          toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+      }
+      if (window.RegexCraftSite && window.RegexCraftSite.buyUrl) {
+        document.querySelectorAll("[data-buy-link]").forEach(function (el) {
+          el.setAttribute("href", window.RegexCraftSite.buyUrl);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

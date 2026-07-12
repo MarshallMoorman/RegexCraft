@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>$pagetitle$</title>
+  <meta name="description" content="RegexCraft user documentation: $title$" />
+  <meta name="theme-color" content="#0078D4" />
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="../index.html">
+        <img src="../assets/favicon.png" alt="" width="36" height="36" />
+        RegexCraft
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
+      <ul class="nav-links" data-nav-links>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../download.html">Download</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../docs.html" aria-current="page">Docs</a></li>
+        <li><a href="../about.html">About</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-hero">
+      <div class="container">
+        <p class="hero-meta" style="margin:0 0 0.5rem;"><a href="../docs.html">← All docs</a></p>
+        <h1>$title$</h1>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="container prose" style="max-width: 800px;">
+$body$
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <span>© 2026 Marshall Moorman</span>
+        <span><a href="../eula.html">EULA</a> · <a href="https://regexcraft.com">regexcraft.com</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var toggle = document.querySelector("[data-nav-toggle]");
+      var links = document.querySelector("[data-nav-links]");
+      if (!toggle || !links) return;
+      toggle.addEventListener("click", function () {
+        var open = links.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    })();
+  </script>
+</body>
+</html>

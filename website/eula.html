@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EULA — RegexCraft</title>
+  <meta name="description" content="RegexCraft End User License Agreement: free personal use, paid business use, no license keys." />
+  <meta name="theme-color" content="#0078D4" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="nav-brand" href="index.html">
+        <img src="assets/favicon.png" alt="" width="36" height="36" />
+        RegexCraft
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" data-nav-toggle>☰</button>
+      <ul class="nav-links" data-nav-links>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="download.html">Download</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="about.html">About</a></li>
+        <li class="nav-cta"><a class="btn btn-primary" href="https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest">Download</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-hero">
+      <div class="container">
+        <h1>End User License Agreement</h1>
+        <p>Last updated: 2026-07-12 · RegexCraft 1.2.0</p>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="container prose" style="max-width: 800px;">
+        <p><strong>Copyright © 2026 Marshall Moorman. All rights reserved.</strong></p>
+        <p>
+          By downloading, installing, or using RegexCraft (“the Software”), you agree to this Agreement.
+          If you do not agree, do not use the Software.
+        </p>
+
+        <h2>1. Ownership and source</h2>
+        <p>
+          The Software, its source code, private development documentation, branding, and related materials
+          are proprietary to Marshall Moorman. This Agreement does not transfer ownership. Source code is
+          <strong>not</strong> licensed for public copying, redistribution, or creation of derivative works
+          except as expressly allowed for your use of the distributed binaries.
+        </p>
+
+        <h2>2. Personal / non-commercial use</h2>
+        <p>
+          You may use the Software <strong>free of charge</strong> for personal, non-commercial, hobby,
+          educational, and evaluation purposes on computers you own or control.
+        </p>
+
+        <h2>3. Business / commercial use</h2>
+        <p>
+          Use for business, commercial, organizational, government, or revenue-generating work requires a
+          <strong>paid commercial license</strong> (one-time purchase; see
+          <a href="pricing.html">Pricing</a>). Payment is on the <strong>honor system</strong>: there are
+          <strong>no license keys</strong>, activation servers, or DRM.
+        </p>
+
+        <h2>4. What you may do</h2>
+        <ul>
+          <li>Install and run the official distributed binaries on supported platforms.</li>
+          <li>Use match results, generated code snippets, and exported data you produce with the Software in your own projects.</li>
+          <li>Make reasonable backup copies of the binaries for your own use.</li>
+        </ul>
+
+        <h2>5. What you may not do</h2>
+        <ul>
+          <li>Redistribute the Software as a competing product, SaaS, or public download.</li>
+          <li>Reverse engineer for the purpose of creating a competing product (except where prohibited by law).</li>
+          <li>Remove copyright or proprietary notices.</li>
+          <li>Claim the Software is open source or MIT-licensed.</li>
+          <li>Publish private development documentation or source from the private monorepo.</li>
+        </ul>
+
+        <h2>6. No warranty</h2>
+        <p>
+          THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+          NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+          NON-INFRINGEMENT. THE AUTHOR IS NOT LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM
+          USE OF THE SOFTWARE.
+        </p>
+
+        <h2>7. Limitation of liability</h2>
+        <p>
+          To the maximum extent permitted by law, total liability under this Agreement shall not exceed the
+          amount you paid for a commercial license (if any) in the twelve months preceding the claim.
+        </p>
+
+        <h2>8. Third-party components</h2>
+        <p>
+          The Software may include third-party libraries under their own licenses. Those licenses continue to
+          apply to those components; this EULA governs RegexCraft as a product.
+        </p>
+
+        <h2>9. Contact</h2>
+        <p>
+          Website: <a href="https://regexcraft.com">regexcraft.com</a><br />
+          Copyright holder: Marshall Moorman
+        </p>
+
+        <p style="margin-top: 2rem;">
+          <a class="btn btn-primary" href="pricing.html">Pricing</a>
+          <a class="btn btn-secondary" href="download.html" style="margin-left: 0.5rem;">Download</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <span>© 2026 Marshall Moorman</span>
+        <span><a href="eula.html">EULA</a> · <a href="https://regexcraft.com">regexcraft.com</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var toggle = document.querySelector("[data-nav-toggle]");
+      var links = document.querySelector("[data-nav-links]");
+      if (!toggle || !links) return;
+      toggle.addEventListener("click", function () {
+        var open = links.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    })();
+  </script>
+</body>
+</html>

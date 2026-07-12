@@ -1,47 +1,41 @@
 # RegexCraft
 
-**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, comparing, debugging, and generating code across many regex flavors.
+**Modern, cross-platform regular expression workbench** for exploring, testing, replacing, grepping, comparing, debugging, exporting, and generating code across many regex flavors.
 
-**Website:** [https://regexcraft.com](https://regexcraft.com) · **Site source:** [`website/`](website/)
-
-[![CI](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml/badge.svg)](https://github.com/MarshallMoorman/RegexCraft/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/MarshallMoorman/RegexCraft)](https://github.com/MarshallMoorman/RegexCraft/releases)
+**Website:** [https://regexcraft.com](https://regexcraft.com) · **Public binaries:** [RegexCraft-Releases](https://github.com/MarshallMoorman/RegexCraft-Releases)
 
 | | |
 |---|---|
-| **Version** | **1.1.0** |
+| **Version** | **1.2.0** |
 | **Website** | [regexcraft.com](https://regexcraft.com) |
 | **Stack** | .NET 10 · Avalonia 12 · AvaloniaEdit · Jint · NUnit · Serilog |
-| **License** | MIT |
-| **Status** | Stable 1.1 |
+| **License** | Commercial [EULA](LICENSE) — free personal / paid business (no keys) |
+| **Status** | Stable 1.2 |
+
+> **This monorepo is the day-to-day working repository** (app, website source, user docs, private development docs).  
+> After public downloads work, it is intended to be **private**. Public users get binaries and the marketing/docs site only — see [docs/development/commercial.md](docs/development/commercial.md).
 
 ![RegexCraft Match mode (light)](docs/screenshots/main-test-light.png)
 
-<p align="center">
-  <img src="docs/screenshots/main-test-dark.png" alt="RegexCraft Match mode (dark)" width="49%" />
-  <img src="docs/screenshots/main-generate.png" alt="RegexCraft Generate mode" width="49%" />
-</p>
+---
 
-<p align="center">
-  <img src="docs/screenshots/main-compare.png" alt="RegexCraft Compare mode" width="66%" />
-</p>
+## License (not open source)
+
+RegexCraft is **proprietary** software under the product [EULA](LICENSE):
+
+- **Personal / non-commercial / education** — free  
+- **Business / commercial / organizational** — paid one-time license (suggested **$49**; see [pricing](https://regexcraft.com/pricing.html))  
+- **No license keys**, activation, DRM, or phone-home — honor system  
+
+Do not treat this repository as MIT/open-source for redistribution of the product.
 
 ---
 
-## Website
+## Public downloads
 
-Public marketing site (landing, features, screenshots, download CTA, docs links) lives in this repo under **[`website/`](website/)** and is published to **GitHub Pages** as **[regexcraft.com](https://regexcraft.com)**.
+Portable self-contained zips are published by Actions on every version tag to the **public** dist repository:
 
-- Setup / DNS / Pages checklist: **[docs/development/website.md](docs/development/website.md)**
-- Deploy workflow: [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
-
-Until Pages + DNS are configured, the GitHub Release downloads below still work.
-
-## Download
-
-**Pre-built portable binaries** are published on every version tag:
-
-**[→ GitHub Releases](https://github.com/MarshallMoorman/RegexCraft/releases)** · **[→ regexcraft.com/download](https://regexcraft.com/download.html)**
+**[→ Latest release](https://github.com/MarshallMoorman/RegexCraft-Releases/releases/latest)** · **[→ regexcraft.com/download](https://regexcraft.com/download.html)**
 
 | Asset | Platform |
 |-------|----------|
@@ -50,187 +44,104 @@ Until Pages + DNS are configured, the GitHub Release downloads below still work.
 | `RegexCraft-osx-x64.zip` | macOS Intel |
 | `RegexCraft-osx-arm64.zip` | macOS Apple Silicon |
 
-Unzip and run `RegexCraft.App` (or `RegexCraft.App.exe` on Windows) from the extracted folder. Builds are self-contained (include the .NET runtime).
-
-See [docs/development/packaging.md](docs/development/packaging.md) for how releases are cut and how to publish from source.
+Unzip and run `RegexCraft.App` (or `RegexCraft.App.exe` on Windows).
 
 ---
 
 ## Features
 
 - **Multi-flavor testing** — .NET, PCRE2, **JavaScript** (Jint), TypeScript, Python, Java, PHP, Ruby, Go, Rust, Perl, Kotlin, Swift  
-- **Compare mode** — side-by-side results for 2–4 flavors (validity, matches, groups, fidelity, key differences, copyable summary); **smart right-panel width** expands for cards and restores when you leave  
-- **Debug step-through** — educational walk-through for the **.NET** engine (F10/F11, pattern + subject focus, captures); clear “not available” for other engines ([guide](docs/user/debugging.md))  
-- **Hardened flavor definitions** — supported options, token support matrices, known differences, preferred codegen language  
-- **Clear fidelity** — Full / High / Approximate banners; token palette dims unsupported constructs (e.g. RE2 limits for Go/Rust)  
-- **Significant automated tests** — deep coverage per real engine; core + mapping + banner + token + codegen + Compare + **Debug** tests  
-- **Professional editor** — AvaloniaEdit with high-contrast light/dark regex syntax highlighting, line numbers, and live analysis  
-- **Live Match mode** — subject highlighting for matches and capture groups, **equal-width** expandable match cards with Copy / Go  
-- **Replace & Split** — live preview that fills the panel cleanly, substitution highlighting, backreferences (`$1`, `${name}`, …)  
-- **GREP** — search and replace across folders with include/exclude globs, async progress, cancellation, dry-run, and backups  
-- **Code generation** — C#, JavaScript, TypeScript, Python, PHP, Java, Go, Rust, Ruby, Perl, Kotlin, Swift  
-- **Analysis Tree** — hierarchical breakdown of the pattern; click a node to select it in the editor  
-- **Token palette** — searchable text-only tokens, flavor-aware support  
-- **Library & History** — **20 built-in** common patterns (email, URL, IP, dates, UUID, …) plus user saves with categories/tags; searchable history  
-- **Light / Dark / System themes** — preference **persisted and restored** correctly across restarts  
-- **Custom About dialog** + **RegexCraft application icon** (no Avalonia defaults)  
-- **GitHub Actions** — CI on every push/PR; tagged releases attach multi-RID portable zips  
-- **Keyboard shortcuts** — Ctrl+Enter (⌘+Enter) to run; Ctrl+1–7 for modes; F10/F11 for Debug step  
+- **Export** — Match results to **CSV** and **JSON** (groups, pattern, flavor, options, timestamp)  
+- **Compare mode** — side-by-side results for 2–4 flavors; smart right-panel width  
+- **Debug step-through** — educational walk-through for the **.NET** engine (F10/F11)  
+- **Hardened flavor definitions** — options, token matrices, known differences, preferred codegen language  
+- **Clear fidelity** — Full / High / Approximate banners; token palette dims unsupported constructs  
+- **Professional editor** — AvaloniaEdit, light/dark syntax highlighting, live analysis tree  
+- **Live Match mode** — subject highlighting, equal-width match cards  
+- **Replace & Split** — live preview, substitution highlighting  
+- **GREP** — search/replace across folders with globs, async progress, dry-run, backups  
+- **Code generation** — C#, JS/TS, Python, PHP, Java, Go, Rust, Ruby, Perl, Kotlin, Swift  
+- **Library & History** — 20 built-ins + user patterns; local persistence  
+- **Themes** — Light / Dark / System, persisted correctly  
+
+---
 
 ## Engines & flavors
 
-### Real engines
+| Engine Id | Display | Full Testing | Replace | Split | GREP | Debug |
+|-----------|---------|--------------|---------|-------|------|-------|
+| `dotnet` | .NET | Yes | Yes | Yes | Yes | **Yes** |
+| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | No |
+| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | No |
 
-| Id | Display | Match | Replace | Split | GREP | Compare | Debug | Notes |
-|----|---------|-------|---------|-------|------|---------|-------|-------|
-| `dotnet` | .NET | Yes | Yes | Yes | Yes | Yes | **Yes** | `System.Text.RegularExpressions` |
-| `pcre2` | PCRE2 | Yes | Yes | Yes | Yes | Yes | — | PCRE.NET |
-| `javascript` | JavaScript (Jint) | Yes | Yes | Yes | Yes | Yes | — | ECMAScript for JS / TypeScript flavors |
+Approximate flavors (Python, Java, Go, …) map to the closest real engine with fidelity notes. Details: [docs/user/flavors.md](docs/user/flavors.md).
 
-### Selectable flavors (fidelity)
+---
 
-| Flavor | Engine | Testing fidelity |
-|--------|--------|------------------|
-| .NET | `dotnet` | **Full** |
-| PCRE2 | `pcre2` | **Full** |
-| JavaScript | `javascript` | **Full** |
-| TypeScript | `javascript` | **Full** (same engine) |
-| PHP | `pcre2` | **High** |
-| Python, Java, Kotlin, Swift | `dotnet` | **Approximate** |
-| Go, Rust | `dotnet` | **Approximate** (RE2 limits modeled in tokens/docs) |
-| Ruby, Perl | `pcre2` | **Approximate** |
+## How releases work
 
-See [docs/user/flavors.md](docs/user/flavors.md) for option matrices, known differences, and engine evaluation notes.
+```
+git tag vX.Y.Z && git push origin vX.Y.Z
+        │
+        ▼
+Publish workflow on main
+  1. Restore, build, test
+  2. dotnet publish (win-x64, linux-x64, osx-x64, osx-arm64)
+  3. Create GitHub Release on PUBLIC dist repo + upload zips
+Deploy website workflow
+  4. Build website/ + docs/user only → dist repo gh-pages
+```
 
-**Engine evaluation:** Python.NET and RE2.Managed were evaluated and not integrated (embedding cost / maintenance). Go/Rust RE2 limits are modeled in the flavor layer; JS fidelity is strengthened via Jint tests and documented gaps.
+Requires secret **`DIST_REPO_TOKEN`**. Checklist: [docs/development/commercial.md](docs/development/commercial.md).  
+Packaging details: [docs/development/packaging.md](docs/development/packaging.md).
 
-## Build & run
+---
+
+## Build & run (maintainers)
 
 ```bash
-# Prerequisites: .NET 10 SDK
 dotnet build
 dotnet test
 dotnet run --project src/RegexCraft.App
 ```
 
-Publish a self-contained binary (example):
+```bash
+dotnet test --filter Category=Export
+dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare|Category=Debug|Category=Export"
+```
+
+### Site local build
 
 ```bash
-dotnet publish src/RegexCraft.App -c Release -r osx-arm64 --self-contained
+bash scripts/build-site.sh   # needs pandoc
+python3 -m http.server 8080 --directory site-dist
 ```
 
-See **[docs/development/packaging.md](docs/development/packaging.md)** for Windows / Linux / macOS publish commands, icons, portable zips, and how to trigger GitHub Actions release builds.
-
-Logs are written under `logs/` (gitignored).  
-Library, History, and Settings live in the OS application-data folder:
-
-- **macOS**: `~/Library/Application Support/RegexCraft`
-- **Windows**: `%AppData%/RegexCraft`
-- **Linux**: `~/.config/RegexCraft` (or equivalent ApplicationData)
-
-## CI / GitHub Actions
-
-| Workflow | When | What |
-|----------|------|------|
-| [CI](.github/workflows/ci.yml) | Push / PR to `main` | Restore, Debug + Release build, full NUnit suite, TRX upload |
-| [Publish](.github/workflows/publish.yml) | Manual or tag `v*` | Test → publish win-x64 / linux-x64 / osx-x64 / osx-arm64 → **GitHub Release** on tag |
-| [Deploy website](.github/workflows/pages.yml) | Push to `main` (`website/**`) or manual | Static site → **GitHub Pages** (regexcraft.com) |
-
-No secrets are required for the basic CI path. Tag a version (`git tag v1.0.0 && git push origin v1.0.0`) to cut a Release; see packaging docs. Website DNS/Pages setup: [docs/development/website.md](docs/development/website.md).
-
-## Running the tests
-
-```bash
-# Full suite (unit + headless UI + screenshots)
-dotnet test
-
-# By category
-dotnet test --filter Category=Engines
-dotnet test --filter Category=Flavors
-dotnet test --filter Category=Compare
-dotnet test --filter Category=Analysis
-dotnet test --filter Category=Codegen
-dotnet test --filter Category=Library
-dotnet test --filter Category=Grep
-dotnet test --filter Category=ViewModels
-dotnet test --filter Category=UI
-dotnet test --filter Category=Headless
-dotnet test --filter Category=Screenshots
-dotnet test --filter Category=Branding
-
-# Engines + Flavors + Compare
-dotnet test --filter "Category=Engines|Category=Flavors|Category=Compare"
-```
-
-Unit tests are fast. Headless UI tests use **Avalonia.Headless.NUnit** with Skia so they run on CI without a display.
-
-### Regenerating screenshots
-
-Screenshot tests render the main window and About dialog via `CaptureRenderedFrame()` and write PNGs to `docs/screenshots/`:
-
-```bash
-dotnet test --filter Category=Screenshots
-```
-
-| File | Description |
-|------|-------------|
-| `main-test-light.png` | Match mode, light theme |
-| `main-test-dark.png` | Match mode, dark theme |
-| `main-replace.png` | Replace mode |
-| `main-generate.png` | Generate mode (C#) |
-| `main-grep.png` | GREP mode |
-| `main-compare.png` | Compare mode (multi-flavor cards) |
-| `main-library.png` | Library sidebar |
-| `about-light.png` / `about-dark.png` | About RegexCraft dialog |
-
-Do **not** commit temporary or low-quality captures; only regenerate and keep images that look good in docs.
-
-## Solution layout
-
-```
-RegexCraft/
-├── .github/workflows/         # CI + Publish (Releases) + Pages (website)
-├── website/                   # Public site source → regexcraft.com (GitHub Pages)
-├── src/
-│   ├── RegexCraft.Core/       # Flavors, Compare, Debug, tokens, analysis, GREP, codegen, library, settings
-│   ├── RegexCraft.Engines/    # DotNet + PCRE2 + JavaScript (Jint)
-│   └── RegexCraft.App/        # Avalonia UI + AvaloniaEdit + icon + About
-├── tests/RegexCraft.Tests/    # NUnit unit + Avalonia headless UI + screenshots
-├── docs/
-│   ├── screenshots/           # Auto-captured PNGs for README/docs
-│   ├── user/                  # End-user guides (incl. comparing.md, debugging.md, flavors.md)
-│   └── development/           # Architecture, packaging, website setup, phase requirements
-├── Directory.Build.props      # Version (1.1.0)
-└── AGENTS.md / HANDOFF.md
-```
-
-## Keyboard shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+Enter (⌘+Enter on macOS) | Run current mode |
-| Ctrl+1 | Match / Test |
-| Ctrl+2 | Replace |
-| Ctrl+3 | Split |
-| Ctrl+4 | Generate |
-| Ctrl+5 | GREP |
-| Ctrl+6 | Compare |
-| Ctrl+7 | Debug |
-| F10 / F11 | Debug step forward / back |
+---
 
 ## Documentation
 
-- **[Website (regexcraft.com)](https://regexcraft.com)** · [site source](website/) · [Pages + DNS setup](docs/development/website.md)
-- [Getting started](docs/user/getting-started.md)
-- [Flavors & testing fidelity](docs/user/flavors.md)
-- [Testing regexes](docs/user/testing-regexes.md)
-- [Comparing flavors](docs/user/comparing.md)
-- [Debugging](docs/user/debugging.md)
-- [Replacing](docs/user/replacing.md)
-- [GREP (file search & replace)](docs/user/grepping.md)
-- [Generating code](docs/user/generating-code.md)
-- [Library and History](docs/user/library-and-history.md)
-- [Theme & appearance](docs/user/theme-and-appearance.md)
-- [Packaging & publish / GitHub Releases](docs/development/packaging.md)
-- [Architecture](docs/development/architecture.md)
-- [Changelog](docs/CHANGELOG.md)
+| Audience | Location |
+|----------|----------|
+| **Users** | [docs/user/](docs/user/) · published on [regexcraft.com/docs](https://regexcraft.com/docs.html) |
+| **Maintainers / agents** | [AGENTS.md](AGENTS.md), [HANDOFF.md](HANDOFF.md), [docs/development/](docs/development/) (**private**) |
+| **Commercial go-live** | [docs/development/commercial.md](docs/development/commercial.md) |
+| **Changelog** | [docs/CHANGELOG.md](docs/CHANGELOG.md) |
+
+---
+
+## Solution layout
+
+| Project | Role |
+|---------|------|
+| `RegexCraft.Core` | Engines API, flavors, Compare, Debug, Export, tokens, analysis, codegen, library/history/settings, GREP |
+| `RegexCraft.Engines` | .NET, PCRE2, JavaScript (Jint) |
+| `RegexCraft.App` | Avalonia UI, ViewModels, About, themes |
+| `RegexCraft.Tests` | NUnit unit + headless UI |
+| `website/` | Public marketing site source |
+
+---
+
+## Copyright
+
+Copyright © Marshall Moorman 2026. All rights reserved. See [LICENSE](LICENSE).

@@ -1,3 +1,8 @@
+# Build, test, publish RID zips on version tags.
+# Binaries are uploaded to the PUBLIC dist repo (default: MarshallMoorman/RegexCraft-Releases).
+# Requires repository secret DIST_REPO_TOKEN with contents:write on the dist repo.
+# See docs/development/commercial.md and docs/development/packaging.md.
+
 name: Publish
 
 on:
@@ -16,18 +21,22 @@ on:
         required: true
         default: true
         type: boolean
+      publish_to_dist:
+        description: "Also create release on public dist repo (needs DIST_REPO_TOKEN)"
+        required: true
+        default: false
+        type: boolean
   push:
     tags:
       - "v*"
 
-# Publish does not require secrets for artifact upload.
-# Creating a GitHub Release uses the default GITHUB_TOKEN.
+env:
+  DIST_REPO: MarshallMoorman/RegexCraft-Releases
 
 permissions:
   contents: write
 
 jobs:
-  # Fail fast on broken code before spending matrix minutes on publish.
   test:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -68,7 +77,6 @@ jobs:
     name: Publish ${{ matrix.rid }}
     needs: test
     runs-on: ${{ matrix.os }}
-    # Soft-fail per RID: one platform failing does not cancel the others.
     strategy:
       fail-fast: false
       matrix:
@@ -140,7 +148,6 @@ jobs:
         run: |
           set -e
           cd artifacts
-          # Prefer zip on all platforms. Windows runners often lack zip(1).
           if command -v zip >/dev/null 2>&1; then
             zip -r "RegexCraft-${{ matrix.rid }}.zip" "RegexCraft-${{ matrix.rid }}"
           elif command -v pwsh >/dev/null 2>&1; then
@@ -172,20 +179,31 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
-  release:
-    name: GitHub Release (on tag)
+  # Public dist release (tag always; workflow_dispatch only if publish_to_dist).
+  dist-release:
+    name: Public dist release
     needs: publish
-    # Create a release even if some RIDs failed, as long as at least one published.
-    # If every publish job failed, this job is skipped (no empty release).
     if: >-
       always() &&
-      startsWith(github.ref, 'refs/tags/v') &&
       needs.test.result == 'success' &&
-      (needs.publish.result == 'success' || needs.publish.result == 'partialSuccess' || needs.publish.result == 'failure')
+      (needs.publish.result == 'success' || needs.publish.result == 'partialSuccess' || needs.publish.result == 'failure') &&
+      (
+        startsWith(github.ref, 'refs/tags/v') ||
+        (github.event_name == 'workflow_dispatch' && inputs.publish_to_dist == true)
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Require DIST_REPO_TOKEN
+        env:
+          DIST_REPO_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+        run: |
+          if [ -z "$DIST_REPO_TOKEN" ]; then
+            echo "::error::DIST_REPO_TOKEN secret is not set. Create a fine-scoped PAT with contents:write on ${{ env.DIST_REPO }} and add it as a repo secret. See docs/development/commercial.md."
+            exit 1
+          fi
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -199,14 +217,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-upload
-          # Prefer zip / tar.gz archives produced by the matrix jobs
           find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' \) -print -exec cp {} release-upload/ \; || true
 
           if [ -z "$(ls -A release-upload 2>/dev/null || true)" ]; then
             for dir in release-assets/RegexCraft-*; do
               [ -d "$dir" ] || continue
               base=$(basename "$dir")
-              # Skip *-archive artifact dirs that only hold archives
               if [[ "$base" == *-archive ]]; then
                 continue
               fi
@@ -221,24 +237,44 @@ jobs:
           count=$(find release-upload -type f \( -name '*.zip' -o -name '*.tar.gz' \) | wc -l | tr -d ' ')
           echo "archive_count=$count" >> "$GITHUB_OUTPUT"
           if [ "$count" -eq 0 ]; then
-            echo "::error::No publish archives found. Refusing to create an empty GitHub Release."
+            echo "::error::No publish archives found. Refusing to create an empty dist release."
             exit 1
           fi
+
+          # SHA256 checksums (nice-to-have for integrity)
+          (
+            cd release-upload
+            for f in *.zip *.tar.gz; do
+              [ -f "$f" ] || continue
+              sha256sum "$f" >> SHA256SUMS.txt
+            done
+            ls -la SHA256SUMS.txt || true
+          )
 
       - name: Extract CHANGELOG section for this version
         id: notes
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          # Strip leading v for version match (v1.0.0 → 1.0.0)
-          VER="${TAG#v}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" != "true" ]; then
+            TAG="manual-${{ github.run_number }}"
+            VER="manual"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VER="${TAG#v}"
+          fi
           NOTES_FILE=release-notes.md
           {
             echo "## RegexCraft ${TAG}"
             echo ""
             echo "Portable self-contained builds for major desktop RIDs."
-            echo "Version is sourced from \`Directory.Build.props\`."
+            echo ""
+            echo "**Product site:** https://regexcraft.com"
+            echo ""
+            echo "**License:** Free for personal use. Business / commercial use requires a paid license"
+            echo "(honor system — no keys). See https://regexcraft.com/eula.html and https://regexcraft.com/pricing.html"
+            echo ""
+            echo "This repository hosts **binaries only**. Application source is proprietary."
             echo ""
             echo "### Downloads"
             echo ""
@@ -251,12 +287,15 @@ jobs:
             echo ""
             echo "Unzip and run \`RegexCraft.App\` (or \`RegexCraft.App.exe\` on Windows) from the extracted folder."
             echo ""
+            echo "### Checksums"
+            echo ""
+            echo "See \`SHA256SUMS.txt\` attached to this release when present."
+            echo ""
             echo "### Changelog"
             echo ""
           } > "$NOTES_FILE"
 
-          if [ -f docs/CHANGELOG.md ]; then
-            # Extract ## [VER] section until next ## heading
+          if [ -f docs/CHANGELOG.md ] && [ "$VER" != "manual" ]; then
             awk -v ver="$VER" '
               BEGIN { p=0 }
               $0 ~ "^## \\[" ver "\\]" { p=1; print; next }
@@ -265,23 +304,58 @@ jobs:
             ' docs/CHANGELOG.md >> "$NOTES_FILE" || true
           fi
 
-          if ! grep -q "## \\[${VER}\\]" "$NOTES_FILE" 2>/dev/null; then
-            echo "_No matching CHANGELOG section for ${VER}; see docs/CHANGELOG.md in the repository._" >> "$NOTES_FILE"
+          if [ "$VER" != "manual" ] && ! grep -q "## \\[${VER}\\]" "$NOTES_FILE" 2>/dev/null; then
+            echo "_No matching CHANGELOG section for ${VER}._" >> "$NOTES_FILE"
           fi
 
           echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
           echo "=== Release notes preview ==="
           head -80 "$NOTES_FILE"
 
-      - name: Create GitHub Release
+      - name: Create release on public dist repo
         uses: softprops/action-gh-release@v2
         with:
-          name: RegexCraft ${{ github.ref_name }}
+          repository: ${{ env.DIST_REPO }}
+          tag_name: ${{ steps.notes.outputs.tag_name }}
+          name: RegexCraft ${{ steps.notes.outputs.tag_name }}
           body_path: ${{ steps.notes.outputs.notes_file }}
-          generate_release_notes: true
-          files: release-upload/*
+          generate_release_notes: false
+          files: |
+            release-upload/*
           fail_on_unmatched_files: true
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          prerelease: ${{ contains(steps.notes.outputs.tag_name, '-') || contains(steps.notes.outputs.tag_name, 'rc') || contains(steps.notes.outputs.tag_name, 'beta') || contains(steps.notes.outputs.tag_name, 'alpha') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+
+      - name: Ensure dist repo README
+        env:
+          GH_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Best-effort: seed/update README on dist default branch (binaries-only notice).
+          # Failures here do not fail the release (assets already uploaded).
+          TMP=$(mktemp -d)
+          cd "$TMP"
+          if ! gh repo clone "${{ env.DIST_REPO }}" dist -- --depth 1; then
+            mkdir dist && cd dist
+            git init
+            git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ env.DIST_REPO }}.git"
+            git checkout -b main
+          else
+            cd dist
+          fi
+
+          cp "$GITHUB_WORKSPACE/docs/development/dist-repo-README.md" README.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "README unchanged"
+          else
+            git commit -m "docs: keep dist README (binaries only)"
+            git push -u origin HEAD:main || git push origin HEAD:main || true
+          fi
+        continue-on-error: true
